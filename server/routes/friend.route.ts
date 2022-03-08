@@ -196,23 +196,113 @@ router.post('/api/acceptfriendrequest/:notificationID',passport.authenticate("jw
     }
 })
 
-
-router.get('/api/isFriend/:id',async (req, res) => {
-     
+/**
+ * Kiểm tra xem user có phải là bạn không
+ */
+router.get('/api/isfriend/:id',passport.authenticate("jwt", {session: false}),async (req, res) => {
+    if(!req.auth) {
+        res.status(404)
+        return res.send({message: "unauthentication"})
+    }
+    const userID = req.auth._id.toString()
+    const user = await UserModel.findOne({_id: userID})
+    if(!user) {
+        res.status(404)
+        return res.send({message: "Lỗi"})
+    }
+    const friends = user.friends
+    const id:string = req.params.id
+    const index = friends.indexOf(id)
+    res.status(200)
+    if(index < 0) {
+        return res.send({isFriend: false})
+    }
+    return res.send({isFriend: true})
 }) 
-router.get('/api/areFriends',async (req, res) => {
+/**
+ * Kiểm tra danh sách bạn 
+ */
+router.get('/api/arefriends',passport.authenticate("jwt", {session: false}),async (req, res) => {
+    try {
+    if(!req.auth) {
+        res.status(404)
+        return res.send({message: "unauthentication"})
+    }
+    const userID = req.auth._id.toString()
+    const user = await UserModel.findOne({_id: userID})
+    if(!user) {
+        res.status(404)
+        return res.send({message: "Lỗi"})
+    }
+    if(!req.body.checkList) {
+        res.status(404)
+        return res.send({message: "req không có check list"})
+    }
+    // list user cần phải kiểm tra xem có phải là bạn hay không
+    const checkList:string[] = req.body.checkList
+    // list bạn
+    const friends = user.friends
+    // keết quả trả về của url
+    const resultList:Object[] = []
+    // kiểm tra
+    for(let i= 0 ;i < checkList.length; i++) {
+        const index = friends.indexOf(checkList[i])
 
+        if(index < 0) {
+            const temp = new Object({
+                id: checkList[i],
+                isFriend: false
+            })
+            resultList.push(temp)
+        }
+        else {
+            const temp = new Object({
+                id: checkList[i],
+                isFriend: true
+            })
+            resultList.push(temp)
+        }
+    }
+    res.status(200)
+    return res.send(resultList)
+    } catch(err) {
+        res.status(404)
+        return res.send({message: "Lỗi"})
+    }
 })
+
 
 
 //----------------------------------------------------------------------
 // gợi ý kết bạn
-router.get('/api/similarname/:name?', (req, res) => {
-
+router.get('/api/similarname/:name?',async (req, res) => {
+    const name = req.params.name
+    const user = await UserModel.find({username: {$regex: `^${name}`}}).limit(10)
+    let result:Object[] = []
+    for(let i = 0; i < user.length; i++) {
+        result.push({
+            id:user[i]._id.toString(),
+            username: user[i].username,
+            fullname: user[i].fullname
+        })
+    }
+    res.status(200)
+    return res.send(result)
 })
 
-router.get('/api/randomuser', (req, res) => {
-
-})
+router.get('/api/randomuser',async (req, res) => {
+    const user = await UserModel.find({}).sort({ createdAt: -1}).limit(5)
+    const result:Object[] = []
+    for(let i = 0; i < user.length; i++) {
+        const temp = new Object({
+            id:user[i]._id.toString(),
+            username: user[i].username,
+            fullname: user[i].fullname
+        })
+        result.push(temp)
+    }
+    res.status(200)
+    return res.send(user)
+})  
 
 export default router
