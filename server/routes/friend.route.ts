@@ -4,6 +4,7 @@ import SocketManager from '../helpers/socketManager'
 import NotificationModel from '../models/notificaiton.model'
 import UserModel from '../models/user.model'
 import ObjectID from 'mongoose'
+import RoomModel from '../models/room.model'
 const router = express.Router()
 /**
  * gửi lời mởi kết bạn
@@ -150,6 +151,16 @@ router.post('/api/acceptfriendrequest/:notificationID',passport.authenticate("jw
     for(let i = 0; i < sockets.length; i++) {
         req.io.to(sockets[i]).emit("notification", acceptedNotification)
     }
+    // tạo phòng chat riêng 
+    const PrivateRoom = new RoomModel({
+        'isGroup' : false,
+        userIDs: [new ObjectID.Types.ObjectId(userID), notification.infoNoti.userSent]
+    })
+    await PrivateRoom.save()
+    // thông báo cho cả 2 người dùng rằng có room mới vừa được tạo
+    const socketsForSendingNewRomNotification: string[] = SocketManager.getSockets(userID).concat(SocketManager.getSockets(notification.infoNoti.userSent.toString()))
+    for(let i = 0; i< socketsForSendingNewRomNotification.length; i++)
+    req.io.to(socketsForSendingNewRomNotification[i]).emit("roomnotification", PrivateRoom)
     // xóa pending request và requestsent trong thông tin chung của 2 user
     const userSentFriendRequest =await UserModel.updateOne({"_id": notification.infoNoti.userSent.toString()},
                                                  {
@@ -185,11 +196,11 @@ router.post('/api/acceptfriendrequest/:notificationID',passport.authenticate("jw
     }
 })
 
-// nextupdate
+
 router.get('/api/isFriend/:id',async (req, res) => {
      
 }) 
-router.get('/api/areFriends',(req, res) => {
+router.get('/api/areFriends',async (req, res) => {
 
 })
 
