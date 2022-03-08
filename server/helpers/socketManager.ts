@@ -1,4 +1,6 @@
-
+/**
+ * Quản lí các socket khi kết nối với server
+ */
 class SocketManager{
     static sockets = {};
     /**
