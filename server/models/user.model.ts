@@ -16,7 +16,22 @@ const UserSchema = new Schema<IUser>({
     email: {
         type: String,
         required: true
-    }, 
+    },
+    friends: {
+        type: [String]
+    },
+    pendingFriendRequest : {
+        type: [{
+            userID: Schema.Types.ObjectId,
+            notificationID: Schema.Types.ObjectId
+        }]
+    },
+    friendRequestSent    : {
+        type: [{
+            userID: Schema.Types.ObjectId,
+            notificationID: Schema.Types.ObjectId
+        }]
+    },
     phone: {
         type: String
     },
@@ -25,5 +40,5 @@ const UserSchema = new Schema<IUser>({
     }
 }, { timestamps: true });
 
-const UserModel = model('users', UserSchema);
+const UserModel = model<IUser>('users', UserSchema);
 export default UserModel;

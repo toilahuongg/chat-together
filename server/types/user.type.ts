@@ -9,5 +9,8 @@ export interface IUser extends IUserData {
     password: string,
     email: string,
     phone: string,
-    refreshToken: string
+    refreshToken: string,
+    friends: Types.Array<string>,
+    pendingFriendRequest: Types.Array<string>,
+    friendRequestSent   : Types.Array<string>
 }

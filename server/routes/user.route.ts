@@ -150,10 +150,14 @@ Router.post('/api/login', async (req, res) => {
                         // lỗi
                         if(!user){
                             res.status(404)
-                            return res.send({message: "Lỗi không xác định"})
+                            return res.send({message: "Tài khoản không tồn tại"})
                         }
                         // kiểm tra mật khẩu đúng hay sai
-                        bcrypt.compare(password, user.password,(err, result) => {
+                        bcrypt.compare(password, user.password,async (err, result) => {
+                            if(err) {
+                                res.status(404)
+                                return res.send({message: "lỗi không xác định"})
+                            }
                             // lỗi
                             if(err) {
                                 res.status(404)
@@ -166,7 +170,8 @@ Router.post('/api/login', async (req, res) => {
                                     username: user.username,
                                     fullname: user.fullname
                                 }
-                                const token = signToken(payload, process.env.TOKEN_SECRET || '', process.env.TOKEN_EXPIRESIN || '');
+                                const token =await signToken(payload, process.env.TOKEN_SECRET || '', process.env.TOKEN_EXPIRESIN || '');
+
                                 res.status(200)
                                 return res.send({accessTocken: token})
                             }
