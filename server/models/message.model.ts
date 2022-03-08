@@ -15,5 +15,5 @@ const MessageSchema = new Schema<IMessage>({
     },
 }, { timestamps: true });
 
-const UserModel = model('messages', MessageSchema);
-export default UserModel;
+const MessageModel = model('messages', MessageSchema);
+export default MessageModel;
