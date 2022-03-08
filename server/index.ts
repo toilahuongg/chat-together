@@ -11,6 +11,7 @@ import passport from 'passport';
 import userRouter from './routes/user.route';
 import roomRouter from './routes/room.route';
 import friendRouter from './routes/friend.route'
+import messageRouter from './routes/message.route'
 import './helpers/passport';
 import chatHandle from './helpers/chatHandle';
 
@@ -44,6 +45,7 @@ const bootstrap = async () => {
   server.use(userRouter);
   server.use(roomRouter);
   server.use(friendRouter)
+  server.use(messageRouter)
   server.all('*', (req, res) => {
     return handle(req, res)
   })
