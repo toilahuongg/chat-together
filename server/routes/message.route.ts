@@ -2,6 +2,7 @@ import express from 'express'
 import passport from 'passport'
 import mongoose from 'mongoose'
 import RoomModel from '../models/room.model'
+import UserModel from '../models/user.model'
 import MessageModel from '../models/message.model'
 import SocketManager from '../helpers/socketManager'
 const router = express.Router()
@@ -64,5 +65,38 @@ router.post("/api/message/sentmessage/:room",passport.authenticate("jwt", {sessi
     res.status(200)
     return res.send({message: "tin nhắn gửi thành công"})
 })
-
+/**
+ * Lấy các tin nhắn đã gửi trong phòng
+ */
+router.get("/api/message/getmessage/:idroom",passport.authenticate("jwt", {session: false}), async (req, res) => {
+    try{
+        if(!req.auth) {
+            res.status(401)
+            return res.send("unauthentication")
+        }
+        const roomID:string = req.params.idroom
+        const userID:string = req.auth._id.toString()
+        // kiểm tra user có tồn tại hay không
+        const user = UserModel.findOne({_id: userID})
+        if(!user) {
+            res.status(404)
+            return res.send({nessage: "Lỗi"})
+        }
+        // Lấy room
+        const room = await RoomModel.findOne({_id: roomID})
+        if(!room) {
+            res.status(404)
+            return res.send({nessage: "Không tồn tại phòng chat"})
+        }
+        // lấy message
+        const message = await MessageModel.find({roomID: roomID}).sort({ createdAt: -1})
+        res.status(200)
+        return res.send(message)
+    } 
+    catch(err) {
+        console.log(err)
+        res.status(404)
+        return res.send({nessage: "Lỗi"})
+    }
+})
 export default router
