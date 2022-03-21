@@ -3,7 +3,6 @@ import passport from 'passport';
 import RoomModel from '../models/room.model';
 
 const Router = express.Router();
-
 Router.post('/api/room/:id', passport.authenticate('jwt', { session: false  }), async (req, res) => {
     const { id } = req.params;
     const { type } = req.body;
@@ -21,6 +20,5 @@ Router.post('/api/room/:id', passport.authenticate('jwt', { session: false  }), 
     }
     return res.json();
 });
-
 
 export default Router;

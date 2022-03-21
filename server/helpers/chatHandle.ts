@@ -18,6 +18,7 @@ const chatHandle = (io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEvents
         const userID = getUserIDFromSocketID(id);
         if (userID) userIDToSocketMap[userID] = userIDToSocketMap[userID].filter(socketID => socketID !== id);
     }
+
     io.on("connection", (socket) => {
         console.log("[SOCKET-IO] client connected with id: " + socket.id);
         socket.on("logged-in", userID => {
@@ -29,7 +30,8 @@ const chatHandle = (io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEvents
                 userIDToSocketMap[userID] = [socket.id];
             }
             io.sockets.emit("users-online", userIDToOnlineMap);
-        })
+        });
+
         socket.on("disconnect", () => {
             const userID = getUserIDFromSocketID(socket.id);
             removeSocketId(socket.id);
@@ -45,8 +47,8 @@ const chatHandle = (io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEvents
         });
 
         socket.on('messages', (data: IMessageData) => {
-            const { roomID, ...dt } = data;
-            socket.to(roomID).emit('messages', dt);
+            const { roomID, ...message } = data;
+            socket.to(roomID).emit('messages', message);
         })
     })
 }
