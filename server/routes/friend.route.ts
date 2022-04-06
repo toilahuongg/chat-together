@@ -5,11 +5,12 @@ import NotificationModel from '../models/notificaiton.model'
 import UserModel from '../models/user.model'
 import ObjectID from 'mongoose'
 import RoomModel from '../models/room.model'
+import mongoose from 'mongoose'
 const router = express.Router()
 /**
  * gửi lời mởi kết bạn
  */
-router.post('/api/friendrequest/:id',passport.authenticate('jwt', {session: false}), async (req, res) => {
+router.post('/api/friend/friendrequest/:id',passport.authenticate('jwt', {session: false}), async (req, res) => {
     try {
         if(!req.auth) {
             res.status(401)
@@ -98,7 +99,7 @@ router.post('/api/friendrequest/:id',passport.authenticate('jwt', {session: fals
 /**
  * Chấp nhận lời mời kết bạn
  */
-router.post('/api/acceptfriendrequest/:notificationID',passport.authenticate("jwt", {session: false}),async (req,res) => {
+router.post('/api/friend/acceptfriendrequest/:notificationID',passport.authenticate("jwt", {session: false}),async (req,res) => {
     try{
     if(!req.auth) {
         res.status(404)
@@ -199,7 +200,7 @@ router.post('/api/acceptfriendrequest/:notificationID',passport.authenticate("jw
 /**
  * Kiểm tra xem user có phải là bạn không
  */
-router.get('/api/isfriend/:id',passport.authenticate("jwt", {session: false}),async (req, res) => {
+router.get('/api/friend/isfriend/:id',passport.authenticate("jwt", {session: false}),async (req, res) => {
     if(!req.auth) {
         res.status(404)
         return res.send({message: "unauthentication"})
@@ -222,10 +223,10 @@ router.get('/api/isfriend/:id',passport.authenticate("jwt", {session: false}),as
 /**
  * Kiểm tra danh sách bạn 
  */
-router.get('/api/arefriends',passport.authenticate("jwt", {session: false}),async (req, res) => {
+router.get('/api/friend/arefriends',passport.authenticate("jwt", {session: false}),async (req, res) => {
     try {
     if(!req.auth) {
-        res.status(404)
+        res.status(401)
         return res.send({message: "unauthentication"})
     }
     const userID = req.auth._id.toString()
@@ -275,7 +276,7 @@ router.get('/api/arefriends',passport.authenticate("jwt", {session: false}),asyn
 
 //----------------------------------------------------------------------
 // gợi ý kết bạn
-router.get('/api/similarname/:name?',async (req, res) => {
+router.get('/api/friend/similarname/:name?',async (req, res) => {
     const name = req.params.name
     const user = await UserModel.find({username: {$regex: `^${name}`}}).limit(10)
     let result:Object[] = []
@@ -290,8 +291,29 @@ router.get('/api/similarname/:name?',async (req, res) => {
     return res.send(result)
 })
 
-router.get('/api/randomuser',async (req, res) => {
-    const user = await UserModel.find({}).sort({ createdAt: -1}).limit(5)
+router.get('/api/friend/randomuser',async (req, res) => {
+    let offsetid;
+    let limit;
+    if(req.query.offsetid) {
+        try {
+        offsetid =  req.query.offsetid
+        limit    = req.query.limit
+        }
+        catch(err) {
+            res.status(404)
+            return res.send({message: "query err"})
+        }
+        console.log(offsetid)
+        console.log(limit)
+        console.log("-------------------------------------------------------")
+        const users = await UserModel.find({'_id': {$gt: new mongoose.Types.ObjectId(offsetid)}}).limit(limit)
+        console.log(users)
+        res.status(200)
+        return res.send(users)
+    }
+    try{
+    limit = req.query.limit ? req.query.limit:5
+    const user = await UserModel.find({}).limit(limit)
     const result:Object[] = []
     for(let i = 0; i < user.length; i++) {
         const temp = new Object({
@@ -302,7 +324,11 @@ router.get('/api/randomuser',async (req, res) => {
         result.push(temp)
     }
     res.status(200)
-    return res.send(user)
+    return res.send(result)
+    } catch(err) {
+        res.status(404)
+        return res.send({message: "Lỗi"})
+    }
 })  
 
 export default router
