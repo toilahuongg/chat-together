@@ -37,8 +37,7 @@ const UserSchema = new Schema<IUser>({
     },
     refreshToken: {
         type: String
-    }
+    },
 }, { timestamps: true });
-
 const UserModel = model<IUser>('users', UserSchema);
 export default UserModel;

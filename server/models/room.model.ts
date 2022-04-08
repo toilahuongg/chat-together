@@ -1,5 +1,9 @@
+
+import mongoose from 'mongoose';
 import { Schema, model } from 'mongoose';
+
 import { IRoom } from '../types/room.type';
+
 const RoomSchema = new Schema<IRoom>({
     name: {
         type: String
@@ -14,8 +18,17 @@ const RoomSchema = new Schema<IRoom>({
         type: Schema.Types.ObjectId,
         transform: (v: any) => v == null ? '' : v
     },
-    settings: {}
+    settings: {},
+    lastChange: {
+        type: Date
+    }
+    
 }, { timestamps: true });
 
-const RoomModel = model('rooms', RoomSchema);
+const updateLastChange = async (room: IRoom) => {
+    room.lastChange = new Date()
+    await room.save()
+}
+const RoomModel = model<IRoom>('rooms', RoomSchema);
 export default RoomModel;
+export {updateLastChange}

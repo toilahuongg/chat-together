@@ -10,7 +10,7 @@ const router = express.Router()
 /**
  * Gửi tin nhắn vào phòng 
  */
-router.post("/api/message/sentmessage/:room",passport.authenticate("jwt", {session: false}),async (req, res) => {
+router.post("/api/message/:room",passport.authenticate("jwt", {session: false}),async (req, res) => {
     // kiểm tra người dùng
     if(!req.auth) {
         res.status(404)
@@ -68,7 +68,7 @@ router.post("/api/message/sentmessage/:room",passport.authenticate("jwt", {sessi
 /**
  * Lấy các tin nhắn đã gửi trong phòng
  */
-router.get("/api/message/getmessage/:idroom",passport.authenticate("jwt", {session: false}), async (req, res) => {
+router.get("/api/message/:idroom",passport.authenticate("jwt", {session: false}), async (req, res) => {
     try{
         if(!req.auth) {
             res.status(401)
