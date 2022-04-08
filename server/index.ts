@@ -10,10 +10,12 @@ import passport from 'passport';
 
 import userRouter from './routes/user.route';
 import roomRouter from './routes/room.route';
+import friendRouter from './routes/friend.route'
+import messageRouter from './routes/message.route'
 import './helpers/passport';
 import chatHandle from './helpers/chatHandle';
 
-dotenv.config();
+
 const { PORT, MONGO_CONNECTSTRING, MONGO_USER, MONGO_PASSWORD } = process.env;
 const port = parseInt(PORT || '3000', 10);
 const dev = process.env.NODE_ENV !== 'production';
@@ -21,6 +23,7 @@ const app = next({ dev });
 const handle = app.getRequestHandler();
 
 const bootstrap = async () => {
+  dotenv.config();
   await app.prepare();
   await mongoose.connect(MONGO_CONNECTSTRING || '', {
     user: MONGO_USER,
@@ -41,7 +44,8 @@ const bootstrap = async () => {
   server.use(bodyParser.urlencoded({ extended: true }));
   server.use(userRouter);
   server.use(roomRouter);
-
+  server.use(friendRouter)
+  server.use(messageRouter)
   server.all('*', (req, res) => {
     return handle(req, res)
   })
