@@ -1,0 +1,17 @@
+.title {
+    font-weight: 500;
+    font-size: 30px;
+    text-align: center;
+    line-height: 100px;
+    text-transform: uppercase;
+}
+.back {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    &:hover {
+        text-decoration: underline;
+    }
+}
