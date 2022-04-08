@@ -99,7 +99,7 @@ router.post('/api/friend/friendrequest/:id',passport.authenticate('jwt', {sessio
 /**
  * Chấp nhận lời mời kết bạn
  */
-router.post('/api/friend/acceptfriendrequest/:notificationID',passport.authenticate("jwt", {session: false}),async (req,res) => {
+router.post('/api/friend/accept_friend_request/:notificationID',passport.authenticate("jwt", {session: false}),async (req,res) => {
     try{
     if(!req.auth) {
         res.status(404)
@@ -303,11 +303,7 @@ router.get('/api/friend/randomuser',async (req, res) => {
             res.status(404)
             return res.send({message: "query err"})
         }
-        console.log(offsetid)
-        console.log(limit)
-        console.log("-------------------------------------------------------")
         const users = await UserModel.find({'_id': {$gt: new mongoose.Types.ObjectId(offsetid)}}).limit(limit)
-        console.log(users)
         res.status(200)
         return res.send(users)
     }
@@ -315,6 +311,7 @@ router.get('/api/friend/randomuser',async (req, res) => {
     limit = req.query.limit ? req.query.limit:5
     const user = await UserModel.find({}).limit(limit)
     const result:Object[] = []
+    
     for(let i = 0; i < user.length; i++) {
         const temp = new Object({
             id:user[i]._id.toString(),
