@@ -1,0 +1,35 @@
+.textField {
+    margin-bottom: 20px;
+    .relative {
+        position: relative;
+    }
+    input {
+        width: 100%;
+        padding: 10px 40px;
+        border-radius: 20px;
+        font-size: 14px;
+        border: 2px solid #AFAFAF;
+        outline: none;
+        color: #6b6b6b;
+        &:focus {
+            border-color: #FF4747;
+        }
+        
+    }
+    .icon {
+        width: 20px;
+        height: 20px;
+        position: absolute;
+        left: 1em;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+}
+
+.error {
+    text-align: right;
+    color:#FF4747;
+    font-size: 12px;
+    margin-top: 3px;
+    margin-right: 10px;
+}

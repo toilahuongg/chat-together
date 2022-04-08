@@ -2,6 +2,8 @@ import { useSocket } from '@src/Components/SocketProvider';
 import type { NextPage } from 'next'
 import { useEffect } from 'react';
 import instance from '@src/helpers/instance';
+import ClientHome from '@src/Components/Client/Home';
+import Slider from '@src/Components/Client/Slider';
 const Home: NextPage = () => {
   const socket = useSocket();
   useEffect(() => {
@@ -17,7 +19,7 @@ const Home: NextPage = () => {
   }, [socket]);
   return (
     <>
-      OKE
+      <ClientHome />
     </>
   )
 }
