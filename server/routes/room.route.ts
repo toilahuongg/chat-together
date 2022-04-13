@@ -11,7 +11,7 @@ const Router = express.Router();
 /**
  * Tạo phòng
  */
-Router.post('/api/room/createroom',passport.authenticate('jwt', { session: false  }), async (req, res) => {
+Router.post('/api/room/create-room',passport.authenticate('jwt', { session: false  }), async (req, res) => {
     // kiem tra login
     if(!req.auth) {
         res.status(401)
