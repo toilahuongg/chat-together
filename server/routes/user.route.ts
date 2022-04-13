@@ -182,7 +182,7 @@ Router.post('/api/login', async (req, res) => {
 })
 //----------------------------------------------------------------------
 // gợi ý kết bạn
-Router.get('/api/friend/similarname/:name',async (req, res) => {
+Router.get('/api/user/similarname/:name',async (req, res) => {
     const name = req.params.name
     const user = await UserModel.find({username: {$regex: `^${name}`}}).limit(10)
     let result:Object[] = []
@@ -196,7 +196,7 @@ Router.get('/api/friend/similarname/:name',async (req, res) => {
     return res.status(200).json(result)
 })
 
-Router.get('/api/friend/randomuser',async (req, res) => {
+Router.get('/api/user/randomuser',async (req, res) => {
     let offsetid;
     let limit;
     if(req.query.offsetid) {
