@@ -176,14 +176,14 @@ Router.get('/api/room/get-room/',passport.authenticate('jwt', { session: false  
 
         let rooms:IRoom[];
         if(!query.offsetid) {
-            rooms = await RoomModel.find({userIDs: {"$in" : userID}}).sort({ lastChange: 1}).limit(query.limit)
+            rooms = await RoomModel.find({userIDs: {"$in" : userID}}).sort({ lastChange: -1}).limit(query.limit)
            
         }
         else {
            rooms = await RoomModel.find(  {userIDs: {"$in": userID},
                                                  _id: {$gt: query.offsetid}
                                                 })
-                                                .sort({lastChange: 1})
+                                                .sort({lastChange: -1})
                                                 .limit(query.limit)
         }
         const result= await Promise.all(rooms.map(async room => {
