@@ -180,4 +180,55 @@ Router.post('/api/login', async (req, res) => {
                         })
                     })  
 })
+//----------------------------------------------------------------------
+// gợi ý kết bạn
+Router.get('/api/friend/similarname/:name',async (req, res) => {
+    const name = req.params.name
+    const user = await UserModel.find({username: {$regex: `^${name}`}}).limit(10)
+    let result:Object[] = []
+    for(let i = 0; i < user.length; i++) {
+        result.push({
+            id:user[i]._id.toString(),
+            username: user[i].username,
+            fullname: user[i].fullname
+        })
+    }
+    return res.status(200).json(result)
+})
+
+Router.get('/api/friend/randomuser',async (req, res) => {
+    let offsetid;
+    let limit;
+    if(req.query.offsetid) {
+        try {
+        offsetid =  req.query.offsetid
+        limit    = req.query.limit
+        }
+        catch(err) {
+            return res.status(403).send({message: "query err"})
+        }
+        const users = await UserModel.find({'_id': {$gt: new mongoose.Types.ObjectId(offsetid)}}).limit(limit)
+        res.status(200)
+        return res.send(users)
+    }
+    try{
+    limit = req.query.limit ? req.query.limit:5
+    const user = await UserModel.find({}).limit(limit)
+    const result:Object[] = []
+    
+    for(let i = 0; i < user.length; i++) {
+        const temp = new Object({
+            id:user[i]._id.toString(),
+            username: user[i].username,
+            fullname: user[i].fullname
+        })
+        result.push(temp)
+    }
+    res.status(200)
+    return res.send(result)
+    } catch(err) {
+        res.status(500)
+        return res.send({message: "Lỗi"})
+    }
+})  
 export default Router;
