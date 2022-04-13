@@ -3,32 +3,15 @@ import passport from 'passport';
 import UserModel from '../models/user.model';
 import RoomModel from '../models/room.model';
 import mongoose from 'mongoose';
-import { updateLastChange } from '../models/room.model';
+import { updateLastChange, lastRoomMessage } from '../models/room.model';
+import { Request, Response } from 'express';
+import { IMessage } from 'server/types/message.type';
+import IRoom from 'server/types/room.type';
 const Router = express.Router();
-/**
- * Tạo room mới
- */
-// Router.post('/api/room/:id', passport.authenticate('jwt', { session: false  }), async (req, res) => {
-//     const { id } = req.params;
-//     const { type } = req.body;
-//     if (!req.auth) return res.status(401).json('Unauthorized');
-//     if (type === 'u') {
-//         const room = await RoomModel.findOne({ userIDs: { $in: [ id, req.auth._id ] }, isGroup: false }).lean();
-//         if (room) return res.json(room);
-//         const newRoom = await RoomModel.create({
-//             isGroup: false,
-//             name: '',
-//             userIDs: [id, req.auth._id],
-//             settings: {}
-//         });
-//         return res.json(newRoom);
-//     }
-//     return res.json();
-// });
 /**
  * Tạo phòng
  */
- Router.post('/api/room/createroom',passport.authenticate('jwt', { session: false  }), async (req, res) => {
+Router.post('/api/room/createroom',passport.authenticate('jwt', { session: false  }), async (req, res) => {
     // kiem tra login
     if(!req.auth) {
         res.status(401)
@@ -172,31 +155,54 @@ Router.post("/api/room/add-member", passport.authenticate('jwt', { session: fals
 })
 /**
  * Lấy về toàn bộ room mà user tham gia
+ * example
+ * /api/room    : lấy về 10 phòng đầu tiên
+ * /api/room/?offsetid=idphongthaydoicuoicungphiaclient&limit=sophonglay
  */
-Router.get('/api/room/',passport.authenticate('jwt', { session: false  }), async (req, res) => {
-    // kiểm tra user
+Router.get('/api/room/get-room/',passport.authenticate('jwt', { session: false  }), async (req: Request, res: Response) => {
+    interface RoomQuery{
+        offsetid?: string,
+        limit?: number
+    };
     try{
-        if(!req.auth) {
-            res.status(401)
-            return res.send("unauthentication")
-        }
-        const userID:string = req.auth._id.toString()
+        let query:RoomQuery = req.query as unknown as RoomQuery
+        query.limit = parseInt(query.limit as unknown as string)
+        const userID:string = req.auth!._id.toString()
         // kiểm tra user có tồn tại hay không
-        const user =await UserModel.findOne({'_id': userID})
-        if(!user) {
-            res.status(404)
-            return res.send({nessage: "Lỗi"})
+        const user  = await UserModel.findOne({'_id': userID})
+        if(!user) 
+            return res.status(403).json({nessage: "user không tồn tại"})
+        if(!query.limit) query.limit = 10
+
+        let rooms:IRoom[];
+        if(!query.offsetid) {
+            rooms = await RoomModel.find({userIDs: {"$in" : userID}}).sort({ lastChange: 1}).limit(query.limit)
+           
         }
-        // lấy phòng
-        const rooms =await RoomModel.find({userIDs: {"$in" : new mongoose.Types.ObjectId(userID)}}).sort({ createdAt: -1})
-        console.log(rooms)
-        res.status(200)
-        return res.send(rooms)
+        else {
+           rooms = await RoomModel.find(  {userIDs: {"$in": userID},
+                                                 _id: {$gt: query.offsetid}
+                                                })
+                                                .sort({lastChange: 1})
+                                                .limit(query.limit)
+        }
+        const result= await Promise.all(rooms.map(async room => {
+            const lastmessage= await lastRoomMessage(room) as any
+            const roomData = {
+                roomInfo    : room,
+                lastMessage:    (lastmessage?{
+                                ...lastmessage["_doc"]}:
+                                null) 
+                
+            }
+            return roomData
+        }))
+        return res.status(200).json(result)
     } catch(err) {
         console.log(err)
-        res.status(404)
-        return res.send({nessage: "Lỗi"})
+        return res.status(500).json({nessage: "Lỗi"})
     }
+    
 })
 
 export default Router;
