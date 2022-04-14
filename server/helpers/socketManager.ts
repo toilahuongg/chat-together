@@ -22,7 +22,7 @@ class SocketManager{
      * @param sockerID 
      * @param userid 
      */
-    static removeSocket(socketID:string, userid:string) {
+    static async removeSocket(socketID:string, userid:string) {
         if(!SocketManager.sockets[userid]) return 
         // tìm index của socket id này
         let indexSocket = SocketManager.sockets[userid].indexOf(socketID)
@@ -36,7 +36,7 @@ class SocketManager{
      * @param userid string
      * @returns string[]
      */
-    static getSockets(userid:string):string[] {
+    static async getSockets(userid:string) {
         if(!SocketManager.sockets[userid]) return []
 
         return SocketManager.sockets[userid]
