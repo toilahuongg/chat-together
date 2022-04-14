@@ -6,11 +6,11 @@ class SocketManager{
     /**
      * Thêm socket vào kho lưu trữ cùng với userID tương ứng
      * 
+     * @async
      * @param socketID 
      * @param userid 
-     * @return void
      */
-    static addSocket(socketID:string, userid:string):void {
+    static async addSocket(socketID:string, userid:string) {
         if(!SocketManager.sockets[userid]) {
             SocketManager.sockets[userid] = []
         }
@@ -18,10 +18,11 @@ class SocketManager{
     }
     /**
      * Xóa socket khỏi kho lưu trữ nếu nó tồn tại
+     * @async
      * @param sockerID 
      * @param userid 
      */
-    static removeSocket(socketID:string, userid:string):void {
+    static removeSocket(socketID:string, userid:string) {
         if(!SocketManager.sockets[userid]) return 
         // tìm index của socket id này
         let indexSocket = SocketManager.sockets[userid].indexOf(socketID)
@@ -31,13 +32,25 @@ class SocketManager{
     /**
      * tìm Socket đang online dựa trên userID 
      * trả về 1 array bao gôm các kết quả
+     * @async
+     * @param userid string
+     * @returns string[]
      */
     static getSockets(userid:string):string[] {
         if(!SocketManager.sockets[userid]) return []
 
         return SocketManager.sockets[userid]
     }
-
+    /**
+     * kiểm tra user có online hay ko
+     * @async
+     * @param userid 
+     * @return boolean
+     */
+    static async isOnline(userid: string) {
+        if(!SocketManager.sockets[userid] || SocketManager.sockets[userid].length === 0) return false
+        return true
+    }
 }
 
 export default SocketManager
