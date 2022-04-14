@@ -4,11 +4,13 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import passport from 'passport';
 import bcrypt from 'bcrypt';
+import ObjectID from 'mongoose'
 
 import { signToken, verifyToken } from '../helpers/jwt';
 import UserModel from '../models/user.model';
-import { IUserData } from '../types/user.type';
+import { IUser, IUserData } from '../types/user.type';
 import randomChars from '../helpers/randomChars';
+import SocketManager from '../helpers/socketManager';
 
 dotenv.config();
 const Router = express.Router();
@@ -63,13 +65,57 @@ Router.post('/api/auth/refresh-token', async (req, res) => {
 
 /**
  * Lấy thông tin người dùng
- * thuộc tính của response: 
- *      'Content-type' : 'application/json'
- * body của request
- * 
  */
-Router.get('/api/user/profile', passport.authenticate('jwt', { session: false  }), async (req, res) => {
-    return res.json(req.auth);
+Router.get('/api/user/profile/', passport.authenticate('jwt', { session: false  }), async (req, res) => {
+    // route có id thì tìm theo id
+    try {
+    let ID = req.auth?._id as unknown as string
+    if(ID === req.query.id) req.query.id = undefined
+    if(req.query.id) {
+        ID = req.query.id as unknown as string
+        const isvalidID = ObjectID.isValidObjectId(ID)
+        if(!isvalidID) 
+            return res.status(403).json({message: "Mã người dùng không hợp lệ"})
+        // Danh sach ban của người gửi request
+        const friendsID = await UserModel.findOne({_id: req.auth?._id})
+                                        .then(data => {
+                                            if(!data) return []
+                                            return data.friends
+                                        })
+        const isFriend = friendsID.includes(ID)
+        const profile  = await UserModel.findOne({_id: ID})
+        if(!profile) return res.status(403).json({message: "User không tồn tại"})
+        // Kiểm tra user online 
+        const isOnline = await SocketManager.isOnline(ID)
+        if(isFriend) {
+            return res.status(200).json({
+                username: profile.username,
+                fullname: profile.fullname,
+                email: profile.email,
+                phone: profile.phone,
+                onlinestatus: isOnline
+            })            
+        }
+        else {
+            return res.status(200).json({
+                sername: profile.username,
+                fullname: profile.fullname,
+            })
+        }
+        
+    }
+    // route không có id không trả về thông tin của người của người gọi
+    else {
+        const  ID = req.auth?._id
+        let  profile = await UserModel.findOne({_id: ID}) as Partial<IUser>
+        if(!profile) return res.status(500).json({message: "Lỗi hệ thống"})
+        delete profile.password
+        return res.status(200).json(profile)
+    }
+    } catch(err) {
+        console.log(err)
+        return res.status(500).json({message: "Lỗi hệ thống"})
+    }
 });
 
 /**
