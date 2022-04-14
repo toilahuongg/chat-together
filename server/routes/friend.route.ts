@@ -71,7 +71,7 @@ router.post('/api/friend/friend-request/:id',passport.authenticate('jwt', {sessi
             }
         })
         // gửi thông báo đến người nhận
-        let sockets: string[] = SocketManager.getSockets(friendID)
+        let sockets: string[] = await SocketManager.getSockets(friendID)
         for(let i = 0 ; i < sockets.length; i++) {
             req.io.to(sockets[i]).emit("notification", friendRequestNotificaiton)
         }

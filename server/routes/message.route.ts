@@ -49,7 +49,7 @@ router.post("/api/message/:room/send-message",passport.authenticate("jwt", {sess
     // lấy socketID của các thành viên trong nhóm
     let sockets:string[] = [];
     for(let i = 0; i < roomMembers.length; i++) {
-        let temp:string[] = SocketManager.getSockets(roomMembers[i].toString())
+        let temp:string[] = await SocketManager.getSockets(roomMembers[i].toString())
         sockets = sockets.concat(temp)
     }
     // gửi thông báo đến các socket rằng có tin nhắn mới
