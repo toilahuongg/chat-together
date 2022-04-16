@@ -1,7 +1,7 @@
 import express from 'express'
 import passport from 'passport'
 import mongoose from 'mongoose'
-import RoomModel from '../models/room.model'
+import RoomModel, { Room } from '../models/room.model'
 import UserModel from '../models/user.model'
 import MessageModel from '../models/message.model'
 import SocketManager from '../helpers/socketManager'
@@ -9,95 +9,98 @@ const router = express.Router()
 
 /**
  * Gửi tin nhắn vào phòng 
+ * vi dụ api/message/:idroom
  */
-router.post("/api/message/:room",passport.authenticate("jwt", {session: false}),async (req, res) => {
-    // kiểm tra người dùng
-    if(!req.auth) {
-        res.status(404)
-        return res.send({message: "Phải đăng nhập để gửi tin nhắn"})
+router.post("/api/message/:room/send-message",passport.authenticate("jwt", {session: false}),async (req, res) => {
+    interface Message {
+        sender: string,
+        msg: string,
+        roomID: string
     }
     if(!req.body || !req.body.message) {
-        res.status(404)
-        return res.send({message: "Tin nhắn trống không thể gửi"})
+        return res.status(403).json({message: "Tin nhắn trống không thể gửi"})
     }
-    const messagebody:string = req.body.message
-    const userID:string = req.auth._id.toString()
-    const roomID:string = req.params.room
-    // kiểm tra id thỏa mãn và phòng có tồn tại hay không
-    if(!mongoose.isValidObjectId(roomID)) {
-        res.status(404)
-        return res.send({message: "Mã này không phải mã phòng"})
-    }
+    let messageInfo:Message = { msg   : req.body.message,
+                                sender :req.auth?._id.toString() as unknown as string,
+                                roomID : req.params.room
+                                };
+    if(!mongoose.isValidObjectId(messageInfo.roomID)) 
+        return res.status(403).json({message: "Mã này không phải mã phòng"})
     // kiểm tra phòng có tồn tại không
-    const room = await RoomModel.findOne({"_id": roomID})
-    if(!room) {
-        res.status(404)
-        return res.send({message: "Phòng không tồn tại"})
-    }
+    const room = await RoomModel.findOne({"_id": messageInfo.roomID})
+    if(!room) 
+        return res.status(403).json({message: "Phòng không tồn tại"})
     // kiểm tra user có phải là thành viên trong phòng không
     const roomMembers = room.userIDs;
-    const indexMember = roomMembers.indexOf(userID)
+    const indexMember = roomMembers.indexOf(messageInfo.sender)
     if(indexMember < 0) {
-        res.status(404)
-        return res.send({message: "Bạn không phải là thành viên trong phòng không thể gửi request"})
+        return res.status(403).json({message: "Bạn không phải là thành viên trong phòng không thể gửi request"})
     }
     // lưu tin nhắn
-    const message = new MessageModel({
-        msg: messagebody,
-        sender: new mongoose.Types.ObjectId(userID),
-        readers: [
-            new mongoose.Types.ObjectId(userID)
-        ],
-        roomID: new mongoose.Types.ObjectId(roomID)
+    let message = new MessageModel({
+        ...messageInfo
     })
-    await message.save()
-    // gửi toàn bộ thành viên trong phòng thông báo có tin mới
+    await message.save( (err ,msg) => {
+        // lấy thông tin cần thiết
+        message = msg
+    } )
+    // cập nhật thông tin của phòng
+    await Room.updateLastChange(room)
+    // lấy socketID của các thành viên trong nhóm
     let sockets:string[] = [];
     for(let i = 0; i < roomMembers.length; i++) {
-        let temp:string[] = SocketManager.getSockets(roomMembers[i].toString())
-
+        let temp:string[] = await SocketManager.getSockets(roomMembers[i].toString())
         sockets = sockets.concat(temp)
     }
     // gửi thông báo đến các socket rằng có tin nhắn mới
     for(let i = 0; i < sockets.length; i++) {
-        req.io.to(sockets[i]).emit("newchatmessage", message)
+        req.io.to(sockets[i]).emit("new-chat-message", {
+            ...message
+        })
     }
-    return res.status(200).json({});
-    res.status(200)
-    return res.send({message: "tin nhắn gửi thành công"})
+    return res.status(200).json({message: "tin nhắn gửi thành công"})
 })
 /**
  * Lấy các tin nhắn đã gửi trong phòng
  */
-router.get("/api/message/:idroom",passport.authenticate("jwt", {session: false}), async (req, res) => {
+router.get("/api/message/:idroom/get-message",passport.authenticate("jwt", {session: false}), async (req, res) => {
     try{
-        if(!req.auth) {
-            res.status(401)
-            return res.send("unauthentication")
-        }
         const roomID:string = req.params.idroom
-        const userID:string = req.auth._id.toString()
-        // kiểm tra user có tồn tại hay không
+        const userID:string|undefined = req.auth?._id.toString() 
+        const offsetid:string|undefined = req.query.offsetid as string|undefined
+        let limit: number             = parseInt(req.query.limit as string)
+        let messages
+        if(!limit) limit = 40
         const user = UserModel.findOne({_id: userID})
-        if(!user) {
-            res.status(404)
-            return res.send({nessage: "Lỗi"})
-        }
+        if(!user) 
+            return res.status(403).json({nessage: "Lỗi"})
         // Lấy room
         const room = await RoomModel.findOne({_id: roomID})
-        if(!room) {
-            res.status(404)
-            return res.send({nessage: "Không tồn tại phòng chat"})
-        }
+        if(!room) 
+            return res.status(403).json({nessage: "Không tồn tại phòng chat"})
         // lấy message
-        const message = await MessageModel.find({roomID: roomID}).sort({ createdAt: -1})
-        res.status(200)
-        return res.send(message)
+        if(!offsetid){
+        messages = await MessageModel.find(
+                                            {
+                                            
+                                                roomID: roomID    
+                                            }
+                                            ).sort({ createdAt: -1}).limit(limit)
+        }
+        else {
+        messages = await MessageModel.find(
+                    {
+                    
+                        roomID: roomID,
+                        _id : {$lt: offsetid}    
+                    }
+                    ).sort({ createdAt: -1}).limit(limit)                                
+        }
+        return res.status(200).json(messages)
     } 
     catch(err) {
         console.log(err)
-        res.status(404)
-        return res.send({nessage: "Lỗi"})
+        return res.status(500).json({message: "Lỗi"})
     }
 })
 export default router

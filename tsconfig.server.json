@@ -1,13 +1,13 @@
 {
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-      "module": "commonjs",
-      "outDir": "dist",
-      "noEmit": false,
-      "typeRoots": [ "server/types" ]
-    },
-    "files": [
-      "@types/express/index.d.ts"
-    ],
-    "include": ["server"],
-  }
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "outDir": "dist",
+    "noEmit": false,
+    "typeRoots": [ "server/types" ]
+  },
+  "files": [
+    "@types/express/index.d.ts"
+  ],
+  "include": ["server"]
+}

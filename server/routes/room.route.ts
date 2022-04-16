@@ -1,42 +1,32 @@
 import express from 'express';
 import passport from 'passport';
-import UserModel from '../models/user.model';
-import RoomModel from '../models/room.model';
+import UserModel, {User} from '../models/user.model';
+import RoomModel, { Room } from '../models/room.model';
 import mongoose from 'mongoose';
-import { updateLastChange } from '../models/room.model';
+import { Request, Response } from 'express';
+import IRoom from 'server/types/room.type';
+import { Notification } from '../models/notification.model';
+import SocketManager from '../helpers/socketManager';
 const Router = express.Router();
-/**
- * Tạo room mới
- */
-// Router.post('/api/room/:id', passport.authenticate('jwt', { session: false  }), async (req, res) => {
-//     const { id } = req.params;
-//     const { type } = req.body;
-//     if (!req.auth) return res.status(401).json('Unauthorized');
-//     if (type === 'u') {
-//         const room = await RoomModel.findOne({ userIDs: { $in: [ id, req.auth._id ] }, isGroup: false }).lean();
-//         if (room) return res.json(room);
-//         const newRoom = await RoomModel.create({
-//             isGroup: false,
-//             name: '',
-//             userIDs: [id, req.auth._id],
-//             settings: {}
-//         });
-//         return res.json(newRoom);
-//     }
-//     return res.json();
-// });
 /**
  * Tạo phòng
  */
- Router.post('/api/room/createroom',passport.authenticate('jwt', { session: false  }), async (req, res) => {
-    // kiem tra login
-    if(!req.auth) {
-        res.status(401)
-        return res.send("unauthentication")
-    }
-    // khoi tao bien cuc bo
-    const userID = req.auth._id.toString()
+Router.post('/api/room/create-room',passport.authenticate('jwt', { session: false  }), async (req, res) => {
+    try {
+    const userID = req.auth?._id.toString()
     const listUserAddToRoom = req.body.users
+    let groupName         = req.body.name
+    if(!groupName) {
+        let NAME = `Nhóm của: ${req.auth?.username}`
+        const userNames = await Promise.all(listUserAddToRoom.map(async (userID)=> {
+            const user = await User.getUserByID(userID)
+            return user?.username
+        }))
+        userNames.forEach((username) => {
+            NAME += `, ${username}` 
+        })
+        groupName = NAME
+    }
     if(typeof(listUserAddToRoom != typeof([])) && listUserAddToRoom.length === 0) {
         res.status(403)
         return res.send({message: "Bạn cần thêm ít nhất một user để tạo group"})
@@ -49,154 +39,148 @@ const Router = express.Router();
         res.status(403)
         return res.send({message: "Bạn không có bạn, hãy kết thêm bạn để tạo group chat"})
     }
-    // kiem tra xem những user có là bạn của user gốc ko
-    for(let i = 0; i< listUserAddToRoom.length; i++) {
-        let isFriend = false // danh dau
-        for(let j = 0; j < userFriendList.length; j++) {
-            if(listUserAddToRoom[i] === userFriendList[j]) {
-                isFriend = true
-                break;
-            }
-        }
-        if(!isFriend) {
-            res.status(403)
-            return res.send({message: "Chỉ được thêm vào group những người đã là bạn của bạn"})
-        }
+
+    let gotErr = false
+    await Room.createRoom(userID, listUserAddToRoom, {name: groupName } )
+              .catch(err => {
+                gotErr = true
+                return res.status(403).json({message: err.message})
+              })
+    if(gotErr) return
+    return res.status(200).json({message: "group đã tạo thành công"})
+    } catch(err) {
+        return res.status(500).json({message: "lỗi hệ thống"})
     }
-    // xác minh các trường cần thiết
-    const groupName = req.body.id
-    if(typeof(groupName) !== typeof("")) {
-        res.status(403)
-        return res.send("Tên nhóm là bắt buộc, tên nhóm phải là 1 chuỗi các kí tự")
-    }
-    // tạo group
-    const session = await RoomModel.startSession();
-    
-    await session.withTransaction(async () => {
-        const date = new Date()
-        const group = await new RoomModel({
-            name: groupName,
-            isGroup: true,
-            userIDs: [...listUserAddToRoom, new mongoose.Types.ObjectId(userID)],
-            ownerID: new mongoose.Types.ObjectId(userID),
-            settings: {},
-            lastChange: date
-        })
-        await group.save()
-        updateLastChange(group)
-    })
-    res.status(200)
-    return res.send({message: "group đã tạo thành công"})
-    
 })
 /**
  * Thêm thành viên vào phòng
  */
-Router.post("/api/room/add-member", passport.authenticate('jwt', { session: false  }), async (req, res) => {
-     // kiem tra login
-     if(!req.auth) {
-        res.status(401)
-        return res.send("unauthentication")
-    }
+Router.post("/api/room/add-member/:roomid/:userid", passport.authenticate('jwt', { session: false  }), async (req, res) => {
     // khoi tao bien cuc bo
-    const userID = req.auth._id.toString()
-    const listUserAddToRoom = req.body.users
-    if(typeof(listUserAddToRoom != typeof([])) && listUserAddToRoom.length === 0) {
-        res.status(403)
-        return res.send({message: "Trong list không có user"})
-    }
-    const userFriendList = await UserModel.findOne({'_id': userID})
-                                          .then(data => {
-                                              return data?.friends
-                                          })
-    if(!userFriendList || userFriendList.length === 0) {
-        res.status(403)
-        return res.send({message: "Bạn không có bạn, hãy kết thêm bạn để tạo group chat"})
-    }
-    // kiem tra xem những user có là bạn của user gốc ko
-    for(let i = 0; i< listUserAddToRoom.length; i++) {
-        let isFriend = false // danh dau
-        for(let j = 0; j < userFriendList.length; j++) {
-            if(listUserAddToRoom[i] === userFriendList[j]) {
-                isFriend = true
-                break;
-            }
-        }
-        if(!isFriend) {
-            res.status(403)
-            return res.send({message: "Chỉ được thêm vào group những người đã là bạn của bạn"})
-        }
-    }
-    // các trường cần thiết
-    const roomID = req.body.roomID
-    if(!roomID) {
-        res.status(403)
-        return res.send({message: "cần roomID để thêm"})
-    }
-    // kiem tra phong co ton tai ko
-    const room = await RoomModel.findOne({'_id': new mongoose.Types.ObjectId(roomID)})
-    if(!room) {
-        res.status(403)
-        return res.send({message: "group không tồn tại"})
-    }
-    // kiểm tra xem các thành viên muốn thêm đã có trong nhóm hay chưa
-    const userAlreadyInGroup = room.userIDs;
-    // kiem tra loi bat ngo
-    if(typeof(userAlreadyInGroup) !== typeof([])) {
-        res.status(403)
-        return res.send({message: "unknow err"})
-    }
-    for(let i = 0; i < listUserAddToRoom.length; i++) {
-        for(let j = 0; j < userAlreadyInGroup.length; j++) {
-            if(listUserAddToRoom[i] === userAlreadyInGroup[j]) {
-                res.status(403)
-                return res.send({message: "cac thanh vien duoc them phai khong nam trong group"})
-            }
-        }
-    }
+    try {
+    const userID = req.auth?._id.toString() as string
+    const userAdd = req.params.userid
+    const roomAdd = req.params.roomid
+    const userFriend = await User.getFriend(userID)
+                                 .catch(err => {
+                                     return res.status(403).json({message: err.message})
+                                 }) as string[]|null
+    if(!userFriend || !userFriend.includes(userAdd))  return res.status(403).json({message: "User ko phải bạn của bạn"})
 
-    // them thanh vien
-    const session = await RoomModel.startSession();
-    
-    await session.withTransaction(async () => {
-        const room = await RoomModel.findOne({'_id': new mongoose.Types.ObjectId(roomID)})
-        if(room !== null) {
-        const userAlreadyInGroup = room.userIDs;
-        room.userIDs = [...userAlreadyInGroup, ...listUserAddToRoom]
-        await room.save()
-        updateLastChange(room)
-        }
+    let addErr = false
+    await Room.addMoreUserToGroup(userAdd,roomAdd, userID)
+              .catch(err => {
+                  addErr = true;
+                  return res.status(403).json({message: err.message})
+              })
+    if(addErr) return
+    // thông báo đến user nếu online
+    const owner = await Room.getRoomOwner(roomAdd)
+    if(owner) {
+    const sockets = await SocketManager.getSockets(owner)
+    sockets.forEach(socket => {
+        req.io.to(socket).emit("new-notification", {
+            type: "request-add-room-member",
+            roomID: roomAdd,
+            userAdd: userAdd,
+            userRequire: userID
+        })
     })
-    res.status(200)
-    return res.send({message: "them thanh vien thanh cong"})
+    }
+    return res.status(200).json({message: "them thanh vien thanh cong"})
+    } catch(err) {
+        console.log(err)
+        return res.status(500).json({message: "Lỗi hệ thống"})
+    }
+})
+/**
+ * Chấp nhận yêu cầu vào phòng
+ */
+Router.post("/api/room/accept-require-add-member/:roomid/:userrequireid/:useraddid", passport.authenticate('jwt', { session: false  }), async (req, res) => {
+    try {
+        const userID        = req.auth?._id.toString() as string
+        const roomID        = req.params.roomid
+        const userrequireid = req.params.userrequireid
+        const useraddid     = req.params.useraddid
+        let gotErr = false
+        await Notification.acceptRequireAddMember(userID,userrequireid, useraddid, roomID)
+                          .catch(err => {
+                            gotErr = true
+                            return res.status(403).json({message: err.message})
+                          })
+                          
+        if(gotErr) return
+        // thông báo đến toàn bộ user là room update thành công
+        const members = await Room.getMemberInRoom(roomID);
+        members.forEach(async (member) => {
+            const sockets = await SocketManager.getSockets(member)
+            sockets.forEach(socket => {
+                req.io.to(socket).emit("add-member", {
+                    roomID: roomID,
+                    memberAdd: useraddid
+                } )
+            })
+        })
+        return res.status(200).json({message: "Chấp nhận yêu cầu thành công"})
+
+    }
+    catch(err) {
+        return res.status(500).json({message: "Lỗi hệ thống"})
+    }
 })
 /**
  * Lấy về toàn bộ room mà user tham gia
+ * example
+ * /api/room    : lấy về 10 phòng đầu tiên
+ * /api/room/?offsetid=idphongthaydoicuoicungphiaclient&limit=sophonglay
  */
-Router.get('/api/room/',passport.authenticate('jwt', { session: false  }), async (req, res) => {
-    // kiểm tra user
+Router.get('/api/room/get-room/',passport.authenticate('jwt', { session: false  }), async (req: Request, res: Response) => {
+    interface RoomQuery{
+        offsetid?: string,
+        limit?: number
+    };
     try{
-        if(!req.auth) {
-            res.status(401)
-            return res.send("unauthentication")
-        }
-        const userID:string = req.auth._id.toString()
+        let query:RoomQuery = req.query as unknown as RoomQuery
+        query.limit = parseInt(query.limit as unknown as string)
+        const userID:string = req.auth!._id.toString()
         // kiểm tra user có tồn tại hay không
-        const user =await UserModel.findOne({'_id': userID})
-        if(!user) {
-            res.status(404)
-            return res.send({nessage: "Lỗi"})
+        const user  = await UserModel.findOne({'_id': userID})
+        if(!user) 
+            return res.status(403).json({nessage: "user không tồn tại"})
+        if(!query.limit) query.limit = 10
+
+        let rooms:IRoom[];
+        if(!query.offsetid) {
+            rooms = await RoomModel.find({userIDs: {"$in" : userID}}).sort({ lastChange: -1}).limit(query.limit)
+           
         }
-        // lấy phòng
-        const rooms =await RoomModel.find({userIDs: {"$in" : new mongoose.Types.ObjectId(userID)}}).sort({ createdAt: -1})
-        console.log(rooms)
-        res.status(200)
-        return res.send(rooms)
+        else {
+            // get room 
+            const room = await Room.getRoomById(query.offsetid)
+            rooms = await RoomModel.find(  
+                {userIDs: {"$in": userID},
+                lastChange: {$lt: room.lastChange}
+                })
+                .sort({lastChange: -1})
+                .limit(query.limit)
+        }
+        const result= await Promise.all(rooms.map(async room => {
+            const lastmessage= await Room.lastRoomMessage(room) as any
+            const roomData = {
+                roomInfo    : room,
+                lastMessage:    (lastmessage?{
+                                ...lastmessage["_doc"]}:
+                                null) 
+                
+            }
+            return roomData
+        }))
+        return res.status(200).json(result)
     } catch(err) {
         console.log(err)
-        res.status(404)
-        return res.send({nessage: "Lỗi"})
+        return res.status(500).json({nessage: "Lỗi"})
     }
+    
 })
 
 export default Router;
