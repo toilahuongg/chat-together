@@ -62,6 +62,7 @@ router.post("/api/message/:room",passport.authenticate("jwt", {session: false}),
     for(let i = 0; i < sockets.length; i++) {
         req.io.to(sockets[i]).emit("newchatmessage", message)
     }
+    return res.status(200).json({});
     res.status(200)
     return res.send({message: "tin nhắn gửi thành công"})
 })

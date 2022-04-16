@@ -1,6 +1,5 @@
-import { Types } from 'mongoose';
 export interface IUserData {
-    _id: Types.ObjectId,
+    _id: string,
     fullname: string,
     username: string
 }
@@ -10,7 +9,7 @@ export interface IUser extends IUserData {
     email: string,
     phone: string,
     refreshToken: string,
-    friends: Types.Array<string>,
-    pendingFriendRequest: Types.Array<string>,
-    friendRequestSent   : Types.Array<string>
+    friends: string[],
+    pendingFriendRequest: string[],
+    friendRequestSent   : string[]
 }

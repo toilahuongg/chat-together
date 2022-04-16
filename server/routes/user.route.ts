@@ -19,7 +19,7 @@ Router.post('/api/auth/sign-in-with-social', async (req, res) => {
     const { displayName, email } = req.body;
     const userData = await UserModel.findOne({ email }, { _id: 1, fullname: 1, username: 1 }).lean();
     let payload: IUserData = {
-        _id: new mongoose.Types.ObjectId(),
+        _id: '',
         fullname: '',
         username: ''
     }

@@ -1,5 +1,5 @@
 import styles from './text-field.module.scss';
-type TProps = React.DetailedHTMLProps<React.InputHTMLAttributes<HTMLInputElement>, HTMLInputElement> & {
+type TProps = React.DetailedHTMLProps<Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'>, HTMLInputElement> & {
     onChange?: (value: string) => void,
     icon: React.ReactNode,
     errorMessage?: string 

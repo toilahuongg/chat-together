@@ -28,13 +28,15 @@ if (typeof window !== undefined) {
             if (err.response.status === 401 && !originalConfig._retry) {
               originalConfig._retry = true;
               try {
-                const rs = await instance.post("/api/auth/refresh-token", {
+                const rs = await axios.post("/api/auth/refresh-token", {
                   refreshToken: window.localStorage.getItem('refreshToken'),
                 });
                 const { token } = rs.data;
                 window.localStorage.setItem('token', token)
                 return instance(originalConfig);
               } catch (_error) {
+                window.localStorage.removeItem('token');
+                window.localStorage.removeItem('refreshToken');
                 return Promise.reject(_error);
               }
             }
