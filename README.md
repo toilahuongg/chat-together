@@ -1,8 +1,18 @@
 ## API document (sẽ có chỉnh sửa)
 https://documenter.getpostman.com/view/14757649/UVsFx7vg
-
-
-
+eventlist
+server:
+    logged-in
+    read-message
+    disconnect
+client:
+    user-status
+    login
+    new-notification
+    room-notification
+    new-chat-message
+    new-notification
+    add-member
 ##-----------------------------------------------------------------------
 
 
