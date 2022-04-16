@@ -1,7 +1,5 @@
 import express from 'express';
 import next from 'next';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import { Server } from 'socket.io';
 import http from 'http';
@@ -14,7 +12,7 @@ import friendRouter from './routes/friend.route'
 import messageRouter from './routes/message.route'
 import './helpers/passport';
 import chatHandle from './helpers/chatHandle';
-
+import config     from './helpers/config'
 
 const { PORT, MONGO_CONNECTSTRING, MONGO_USER, MONGO_PASSWORD } = process.env;
 const port = parseInt(PORT || '3000', 10);
@@ -23,13 +21,8 @@ const app = next({ dev });
 const handle = app.getRequestHandler();
 
 const bootstrap = async () => {
-  dotenv.config();
+  config()
   await app.prepare();
-  await mongoose.connect(MONGO_CONNECTSTRING || '', {
-    user: MONGO_USER,
-    pass: MONGO_PASSWORD,
-  });
-  console.log("Mongodb Connected");
   const server = express()
   const httpServer = new http.Server(server);
   const io = new Server(httpServer, {});

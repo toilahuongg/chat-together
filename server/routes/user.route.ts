@@ -11,7 +11,7 @@ import UserModel from '../models/user.model';
 import { IUser, IUserData } from '../types/user.type';
 import randomChars from '../helpers/randomChars';
 import SocketManager from '../helpers/socketManager';
-
+import {Notification} from '../models/notification.model'
 dotenv.config();
 const Router = express.Router();
 /**
@@ -98,7 +98,7 @@ Router.get('/api/user/profile/', passport.authenticate('jwt', { session: false  
         }
         else {
             return res.status(200).json({
-                sername: profile.username,
+                username: profile.username,
                 fullname: profile.fullname,
             })
         }
@@ -118,6 +118,23 @@ Router.get('/api/user/profile/', passport.authenticate('jwt', { session: false  
     }
 });
 
+Router.get("/api/user/notification", passport.authenticate('jwt', { session: false  }), async (req, res) => {
+    try {
+        const userId   = req.auth?._id
+        const offsetid = (req.query.offsetid ? req.query.offsetid: false) as string|boolean
+        const limit    = req.query.limit
+        await Notification.getNotificationByRange(offsetid, limit, userId)
+                          .then(notifications => {
+                            return res.status(200).json(notifications)
+                          }) 
+                          .catch(err => {
+                              return res.status(403).json({message: err.message})
+                          })
+    } catch(err) {
+        console.log(err)
+        return res.status(200).json({message: "Lỗi hệ thống"})
+    }
+})
 /**
  * Register route
  * cần phải gửi đủ 5 trường 
@@ -177,7 +194,6 @@ Router.post('/api/register',async (req, res) => {
         return res.send({message: "Lỗi không xác định"})
     }
 })
-
 
 /**
  * Login route

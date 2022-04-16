@@ -1,7 +1,7 @@
 import express from 'express'
 import passport from 'passport'
 import mongoose from 'mongoose'
-import RoomModel, { updateLastChange } from '../models/room.model'
+import RoomModel, { Room } from '../models/room.model'
 import UserModel from '../models/user.model'
 import MessageModel from '../models/message.model'
 import SocketManager from '../helpers/socketManager'
@@ -45,7 +45,7 @@ router.post("/api/message/:room/send-message",passport.authenticate("jwt", {sess
         message = msg
     } )
     // cập nhật thông tin của phòng
-    await updateLastChange(room)
+    await Room.updateLastChange(room)
     // lấy socketID của các thành viên trong nhóm
     let sockets:string[] = [];
     for(let i = 0; i < roomMembers.length; i++) {

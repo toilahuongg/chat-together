@@ -1,11 +1,10 @@
 import express from 'express'
 import passport from 'passport'
 import SocketManager from '../helpers/socketManager'
-import NotificationModel from '../models/notificaiton.model'
+import NotificationModel from '../models/notification.model'
 import UserModel from '../models/user.model'
 import ObjectID from 'mongoose'
-import RoomModel, { updateLastChange } from '../models/room.model'
-import mongoose from 'mongoose'
+import RoomModel, { Room } from '../models/room.model'
 const router = express.Router()
 /**
  * gửi lời mởi kết bạn
@@ -73,7 +72,7 @@ router.post('/api/friend/friend-request/:id',passport.authenticate('jwt', {sessi
         // gửi thông báo đến người nhận
         let sockets: string[] = await SocketManager.getSockets(friendID)
         for(let i = 0 ; i < sockets.length; i++) {
-            req.io.to(sockets[i]).emit("notification", friendRequestNotificaiton)
+            req.io.to(sockets[i]).emit("new-notification", friendRequestNotificaiton)
         }
         return res.status(200).send({message: "Gửi lời mời kết bạn thành công"})
     } catch(err) {
@@ -123,23 +122,42 @@ router.post('/api/friend/accept-friend-request/:id',passport.authenticate("jwt",
         } 
     })
     await acceptedNotification.save()
-    // gửi thông báo đến socket của user nết online
-    const sockets:string[] = SocketManager.getSockets(notification.infoNoti.userSent.toString())
+    // gửi thông báo đến socket của user nếu online
+    const sockets = await SocketManager.getSockets(notification.infoNoti.userSent.toString())
     for(let i = 0; i < sockets.length; i++) {
-        req.io.to(sockets[i]).emit("notification", acceptedNotification)
+        req.io.to(sockets[i]).emit("new-notification", acceptedNotification)
     }
+    // Khởi tạo tin nhắn cũ nhất
+    const lastReadMessageByUsers = [
+        {
+            userID: userID,
+            lastMessageID: null
+        },
+        {
+           userID: notification.infoNoti.userSent,
+           lastMessageID: null 
+        }
+    ]
     // tạo phòng chat riêng 
     const PrivateRoom = new RoomModel({
         name: "",
         isGroup : false,
-        userIDs: [new ObjectID.Types.ObjectId(userID), notification.infoNoti.userSent],
+        userIDs: [...lastReadMessageByUsers],
+        settings : {}
     })
+   
+    
     await PrivateRoom.save()
                      .then(room => {
-                        updateLastChange(room)
+                        Room.updateLastChange(room)
                      })
     // thông báo cho cả 2 người dùng rằng có room mới vừa được tạo
-    const socketsForSendingNewRomNotification: string[] = SocketManager.getSockets(userID as string).concat(SocketManager.getSockets(notification.infoNoti.userSent.toString()))
+    const socketsForSendingNewRomNotification: string[] =await SocketManager.getSockets(userID as string)
+                                                                .then(async (user1Socket) => {
+                                                                        const user2Socket = await SocketManager.getSockets(notification.infoNoti.userSent.toString())
+                                                                        user1Socket.concat(user2Socket)
+                                                                        return user1Socket
+                                                                    })
     for(let i = 0; i< socketsForSendingNewRomNotification.length; i++)
     req.io.to(socketsForSendingNewRomNotification[i]).emit("room-notification", PrivateRoom)
     // xóa pending request và requestsent trong thông tin chung của 2 user

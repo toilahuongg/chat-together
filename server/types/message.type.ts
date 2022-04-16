@@ -1,10 +1,11 @@
-import { Types } from 'mongoose';
-export interface IMessage {
+import mongoose from "mongoose"
+export interface IMessage extends mongoose.Document  {
     _id: string,
-    sender: Types.ObjectId,
-    msg: string,
-    readers: Types.ObjectId[],
-    roomID: Types.ObjectId
+    sender: string,
+    msg: string|any,
+    roomID: string,
+    createdAt: Date,
+    modifiedAt: Date,
 }
 
 export interface IMessageData {
