@@ -1,5 +1,4 @@
 import { Schema, model } from 'mongoose';
-import config from '../helpers/config';
 import IRoom  from '../types/room.type';
 import MessageModel from './message.model';
 import { Message } from './message.model';
