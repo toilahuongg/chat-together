@@ -54,6 +54,11 @@ class User {
         if(user === null) throw new Error("User Không tồn tại")
         return user.friends
     }
+    /**
+     * Lấy toàn bộ bạn của user 
+     * @param userID
+     * @returns object
+     */
     static async getUserByID(userID: string) {
         const user = await UserModel.findOne({_id: userID})
         return user

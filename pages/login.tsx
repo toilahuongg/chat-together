@@ -32,7 +32,9 @@ const LoginPage: NextPage = () => {
             setToken(token);
 			setRefreshToken(refreshToken);
             toast.update(id, {render: "Đăng nhập thành công", type: "success", isLoading: false });
-            router.push('/');
+            setTimeout(() => {
+                window.location.href = '/'
+            }, 1000);
         } catch (error) {
             console.log(error);
             // TODO

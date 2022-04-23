@@ -7,11 +7,12 @@ import bcrypt from 'bcrypt';
 import ObjectID from 'mongoose'
 
 import { signToken, verifyToken } from '../helpers/jwt';
-import UserModel from '../models/user.model';
+import UserModel, { User } from '../models/user.model';
 import { IUser, IUserData } from '../types/user.type';
 import randomChars from '../helpers/randomChars';
 import SocketManager from '../helpers/socketManager';
 import {Notification} from '../models/notification.model'
+import { async } from '@firebase/util';
 dotenv.config();
 const Router = express.Router();
 /**
@@ -21,7 +22,7 @@ Router.post('/api/auth/sign-in-with-social', async (req, res) => {
     const { displayName, email } = req.body;
     const userData = await UserModel.findOne({ email }, { _id: 1, fullname: 1, username: 1 }).lean();
     let payload: IUserData = {
-        _id: new mongoose.Types.ObjectId(),
+        _id: '',
         fullname: '',
         username: ''
     }
@@ -117,6 +118,20 @@ Router.get('/api/user/profile/', passport.authenticate('jwt', { session: false  
         return res.status(500).json({message: "Lỗi hệ thống"})
     }
 });
+Router.get("/api/user/profile/:id", passport.authenticate('jwt', { session: false  }), async (req, res) => {
+    try {
+    if(!req.params.id) return res.status(403).json({message: "ParamID ko dc de trống"})
+    const user = await User.getUserByID(req.params.id)
+    return res.status(200).json(user)
+    }
+    catch(err) {
+        console.log(err)
+        return res.status(500).json({message: "Lỗi hệ thống"})
+    }
+})
+Router.get("/api/user/profile/:id", passport.authenticate('jwt', { session: false  }), async (req, res) => {
+    
+})
 Router.get("/api/user/notification", passport.authenticate('jwt', { session: false  }), async (req, res) => {
     try {
         const userId   = req.auth?._id
