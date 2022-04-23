@@ -14,6 +14,7 @@ import SocketManager from '../helpers/socketManager';
 import { Notification } from '../models/notification.model'
 import { async } from '@firebase/util';
 import { userInfo } from 'os';
+import RoomModel from 'server/models/room.model';
 dotenv.config();
 const Router = express.Router();
 /**
@@ -145,7 +146,7 @@ Router.get("/api/user/profile-list", passport.authenticate('jwt', { session: fal
             const isFriend = friendsID.includes(id)
             const isOnline = await SocketManager.isOnline(id)
             const user = await User.getUserByID(id) as any
-            if(!user) return null
+            if (!user) return null
             let userData;
             userData = {
                 ...user["_doc"],
@@ -162,9 +163,9 @@ Router.get("/api/user/profile-list", passport.authenticate('jwt', { session: fal
 
         }))
         return res.status(200).json(listUser)
-    } catch(err) {
+    } catch (err) {
         console.log(err)
-        return res.status(500).json({message:"Lỗi hệ thống"})
+        return res.status(500).json({ message: "Lỗi hệ thống" })
     }
 })
 Router.get("/api/user/notification", passport.authenticate('jwt', { session: false }), async (req, res) => {
@@ -295,6 +296,60 @@ Router.post('/api/login', async (req, res) => {
 })
 //----------------------------------------------------------------------
 // gợi ý kết bạn
+Router.get('/api/user/search', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const removeUnesseseryData = (data) => {
+        if (data instanceof Array) {
+            const result = data.map(user => {
+                return {
+                    id: user.id.toString(),
+                    username: user.username,
+                    fullname: user.fullname
+                }
+            })
+            return result
+        }
+        return []
+    }
+    try {
+        const userID = req.auth?._id.toString() as string
+        const fullname = req.query.fullname
+        const lastid = req.query.lastid
+        const limit = 10
+        const random = req.query.random
+        if (random) {
+            return await new Promise(async (rs, rj) => {
+                if (lastid) {
+                    const users = await UserModel.find({ '_id': { $gt: lastid, $ne: userID } }).limit(limit)
+                    const result = removeUnesseseryData(users)
+                    return res.status(200).json(result)
+                }
+                let users = await UserModel.find({ '_id': { $ne: userID } }).limit(limit)
+                const result = removeUnesseseryData(users)
+                return res.status(200).json(result)
+            })
+                .catch(err => {
+                    return res.status(403).json({ message: "Lỗi param" })
+                })
+        }
+        return new Promise(async (rs, rej) => {
+            if (!lastid) {
+                const user = await UserModel.find({ '_id': { $ne: userID }, fullname: { $regex: `^${fullname}` } }).limit(limit)
+                let result = removeUnesseseryData(user)
+                return res.status(200).json(result)
+            }
+            const user = await UserModel.find({  '_id': { $gt: lastid, $ne: userID }, fullname: { $regex: `^${fullname}` } }).limit(limit)
+            let result = removeUnesseseryData(user)
+            return res.status(200).json(result)
+        })
+            .catch(err => {
+                return res.status(403).json({ message: "Lỗi param" })
+            })
+
+    } catch (err) {
+        return res.status(500).json({ message: "Lỗi Hệ thống" })
+    }
+
+})
 Router.get('/api/user/similarname/:name', async (req, res) => {
     const name = req.params.name
     const user = await UserModel.find({ username: { $regex: `^${name}` } }).limit(10)
