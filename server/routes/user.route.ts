@@ -70,7 +70,7 @@ Router.post('/api/auth/refresh-token', async (req, res) => {
 /**
  * Lấy thông tin người dùng
  */
-Router.get('/api/user/profile/', passport.authenticate('jwt', { session: false }), async (req, res) => {
+Router.get('/api/user/profile', passport.authenticate('jwt', { session: false }), async (req, res) => {
 	// route có id thì tìm theo id
 	try {
 		// TODO

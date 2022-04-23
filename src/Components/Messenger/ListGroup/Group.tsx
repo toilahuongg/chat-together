@@ -1,4 +1,5 @@
 import IconMore from '@src/styles/svg/more.svg';
+import Link from 'next/link';
 import styles from './list-group.module.scss';
 
 const Group = () => {
@@ -12,7 +13,7 @@ const Group = () => {
 				/>
 			</div>
 			<div className={styles.infoGroup}>
-				<div className={styles.title}>Đây là tên Group</div>
+				<div className={styles.title}><Link href={`/messages/u/1`}> Đây là tên Group </Link></div>
 				<div className={styles.message}>Vũ Bá Hướng: Oke nhé nhé nhé nhé nhé nhé</div>
 			</div>
 			<div className={styles.moreInfo}>

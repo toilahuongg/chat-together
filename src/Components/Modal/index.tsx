@@ -24,7 +24,7 @@ const Modal: React.FC<TProps> = ({ isShow, size, children, onClose }) => {
     <div className={`${styles.modal} ${isShow ? `${styles.show}` : ''}`} onMouseDown={() => onClose()}>
       <div className={`${styles.content}  ${styles[size || 'sm']}`} onMouseDown={(e) => e.stopPropagation()}>
         <button type="button" className={styles.btnClose} onClick={() => onClose()}>
-          <IconClose />
+          <IconClose width="14" height="14" viewBox="0 0 30 30" />
         </button>
         {children}
       </div>

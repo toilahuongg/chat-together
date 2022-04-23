@@ -23,11 +23,14 @@ import Telephone from '@src/styles/svg/telephone.svg';
 import Key from '@src/styles/svg/key.svg';
 import Back from '@src/styles/svg/arrow-left.svg';
 import styles from './style.module.scss';
+import useAuth from "@src/hooks/useAuth";
 
 const RegisterPage = () => {
     const router = useRouter();
     const user = useUser();
     const loadingState = useState(false);
+    const { isAuth } = useAuth();
+    if (isAuth) router.push('/');
     const errorState = useState({ ...defaultUser(), confirmPassword: ''});
     const confirmPassword = useState('');
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {

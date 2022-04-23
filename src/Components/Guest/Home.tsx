@@ -11,10 +11,12 @@ import Facebook from '@src/styles/svg/facebook.svg';
 import Github from '@src/styles/svg/github.svg';
 import GuestLayout from './GuestLayout';
 import { toast } from 'react-toastify';
+import useAuth from '@src/hooks/useAuth';
 
 type TProviderID = 'google' | 'facebook' | 'github';
 const ClientHome = () => {
 	const router = useRouter();
+	const { setToken, setRefreshToken } = useAuth();
 	const [loading, setLoading] = useState('');
 	const [errorMessage, setErrorMessage] = useState('');
 
@@ -42,14 +44,12 @@ const ClientHome = () => {
 			if (providerId === 'github') fullname = user.reloadUserInfo.screenName;
 			const response = await axios.post('/api/auth/sign-in-with-social', { displayName: fullname, email, avatar: photoURL });
 			const { token, refreshToken } = response.data;
-			window.localStorage.setItem('token', token);
-			window.localStorage.setItem('refreshToken', refreshToken);
+			setToken(token);
+			setRefreshToken(refreshToken);
 			await signOut(auth);
 			setErrorMessage('');
 			toast.success("Đăng nhập thành công");
-			setTimeout(() => {
-				window.location.href = '/';
-			}, 1000);
+			// router.push('/');
 
 		} catch (error: any) {
 			if (error?.customData?.email && error.code === 'auth/account-exists-with-different-credential') {

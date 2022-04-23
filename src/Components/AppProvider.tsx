@@ -1,35 +1,63 @@
-import { useState } from "@hookstate/core";
-import useAuth from "@src/hooks/useAuth";
-import useUser from "@src/hooks/useUser";
-import { createContext, useCallback, useEffect } from "react"
-import Loading from "./Loading";
+import React, { useContext, createContext, useEffect, useCallback } from 'react';
+import socketIOClient, { Socket } from 'socket.io-client';
 
-const AppContext = createContext<null>(null);
+import useAuth from '@src/hooks/useAuth';
+import useUser from '@src/hooks/useUser';
+import { DefaultEventsMap } from 'socket.io/dist/typed-events';
+import { useState } from '@hookstate/core';
+import Loading from './Loading';
+import ModalRecommendFriends from './Messenger/ModalRecommendFriends';
+import Messenger from './Messenger';
+
+const SocketContext = createContext<Socket<DefaultEventsMap, DefaultEventsMap> | undefined>(undefined)
+
+export const useSocket = () => {
+    return useContext(SocketContext)
+}
+
+
 const AppProvider = ({ children }) => {
-    const isAuth = useAuth();
+    const { isAuth, setToken, setRefreshToken } = useAuth();
     const user = useUser();
     const loadingState = useState(true);
+    const [socket, setSocket] = React.useState<Socket<DefaultEventsMap, DefaultEventsMap> | undefined>(undefined)
     const getUser = useCallback(async () => {
         try {
             loadingState.set(true);
-            await user.getCurrentUser();
+            const data = await user.getCurrentUser();
+            socket?.emit("logged-in", data._id);
+        } catch (error) {
+            console.log(error);
+            setToken('');
+            setRefreshToken('');
         } finally {
             loadingState.set(false);
         }
-    }, []);
-    useEffect(() => {
-        if (isAuth) getUser();
-        else loadingState.set(false);
-    }, [isAuth]);
-    return loadingState.get() ? <Loading /> : (
-        <AppContext.Provider value={null}>
-            { children }
-            {/* { isAuth && !loadingState.get() && user.friends.length === 0 && (
-                
-            )} */}
-        </AppContext.Provider>
-    )
+    }, [socket]);
 
+    useEffect(() => {
+        setSocket(socketIOClient(process.env.NEXT_PUBLIC_APP_URL || ''));
+    }, [])
+
+    useEffect(() => {
+        if (socket && isAuth) {
+            socket.on("users-online", (data) => console.log(data));
+            getUser();
+        } else loadingState.set(false);
+    }, [socket, isAuth]);
+
+    return loadingState.get() ? <Loading /> : (
+        <SocketContext.Provider value={socket}>
+            { isAuth ? (
+                <Messenger>
+                    {children}
+                </Messenger>
+            ) : children }
+            { isAuth && !loadingState.get() && user.friends.length < 5 && (
+              <ModalRecommendFriends />
+            )}
+        </SocketContext.Provider>
+    );
 }
 
 export default AppProvider;

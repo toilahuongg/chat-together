@@ -5,11 +5,10 @@ import { ToastContainer } from 'react-toastify';
 import TopBarProgress from 'react-topbar-progress-indicator';
 
 
-import SocketProvider from '@src/Components/SocketProvider';
+import AppProvider from '@src/Components/AppProvider';
 
 import 'react-toastify/dist/ReactToastify.css';
 import '@src/styles/main.scss';
-import AppProvider from '@src/Components/AppProvider';
 
 TopBarProgress.config({
   barColors: {
@@ -43,11 +42,9 @@ function MyApp({ Component, pageProps }: AppProps) {
         draggable
         pauseOnHover
       />
-      <SocketProvider>
-        <AppProvider>
-          <Component {...pageProps} />
-        </AppProvider>
-      </SocketProvider>
+      <AppProvider>
+        <Component {...pageProps} />
+      </AppProvider>
     </>
   )
 }

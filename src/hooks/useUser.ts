@@ -15,9 +15,9 @@ const wrapState = (s: State<IUser>) => ({
         (resolve, reject) => axios.post('/api/register', s.get()).then(res => resolve(res.data))
         .catch(err => reject(err))
     ),
-    getCurrentUser: () => new Promise(
+    getCurrentUser: (): Promise<IUser> => new Promise(
         (resolve, reject) => instance.get('/api/user/profile/').then(res => {
-            s.set(res.data);
+            s.set({ ...defaultUser(), ...res.data});
             resolve(res.data);
         })
         .catch(err => reject(err))

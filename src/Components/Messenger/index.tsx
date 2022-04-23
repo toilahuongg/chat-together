@@ -4,14 +4,19 @@ import styles from './messenger.module.scss';
 import ListGroup from "./ListGroup";
 import BoxMessage from "./BoxMessage";
 
-const Messenger = () => {
+type TProps = {
+    children: React.ReactNode
+}
+const Messenger: React.FC<TProps> = ({ children }) => {
 
     return (
         <>
             <Nav />
             <div className={styles.container}>
                 <ListGroup />
-                <BoxMessage />
+                <div className={styles.group}>
+                    { children }
+                </div>
             </div>
         </>
     )

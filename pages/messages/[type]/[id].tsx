@@ -1,72 +1,44 @@
-import { useRouter } from "next/router";
-import { useCallback, useEffect, useState } from "react";
-import instance from "@src/helpers/instance";
-import { useSocket } from "@src/Components/SocketProvider";
+import InputBox from '@src/Components/Messenger/BoxMessage/InputBox';
+import ListMessage from '@src/Components/Messenger/BoxMessage/ListMessage';
+import IconSettings from '@src/styles/svg/settings.svg';
+import IconUser3 from '@src/styles/svg/user3.svg';
+import styles from './message.module.scss';
 
 const Message = () => {
-    const router = useRouter();
-    const { type, id } = router.query;
-    const socket = useSocket();
-    const [messages, setMessages] = useState<any>([]);
-    const [msg, setMsg] = useState('');
-    const [dataRoom, setDataRoom] = useState<any>();
-    const [dataUser, setDataUser] = useState<any>();
+	const isGroup = true;
 
-    useEffect(() => {
-      if (socket && type && id) {
-        const fetchData = async() => {
-            const response = await instance.post('/api/room/'+id, { type });
-            setDataRoom(response.data);
-            const { _id } = response.data;
-            socket.emit('join-room', _id);
-        }
-        socket.on('messages',({ msg, sender}) => {
-            setMessages((current) => [
-                {
-                    msg,
-                    sender
-                },
-                ...current
-            ]);
-        });
-        fetchData();
-      }
-    }, [socket, type, id]);
-
-    useEffect(() => {
-        (async () => {
-            const response = await instance.get('/api/user/profile');
-            setDataUser(response.data);
-        })()
-    }, []);
-
-    const sendMessage = useCallback(() => {
-        setMessages((current) => [
-            {
-                msg: msg,
-                sender: dataUser._id
-            },
-            ...current
-        ]);
-        if (socket && dataRoom && dataUser) {
-            socket.emit('messages', {
-                roomID: dataRoom._id,
-                msg: msg,
-                sender: dataUser._id
-            });
-        }
-    }, [socket, msg, dataRoom?._id, dataUser?._id]);
-    return (
-        <>
-            <div> 
-                <input value={msg} onChange={(e) => setMsg(e.target.value)} />
-                <button onClick={sendMessage}> Send </button>
-                <ul>
-                    {messages.map(({ sender, msg }, index) => <li key={index}>{sender}: {msg} </li>)}
-                </ul>
-            </div>  
-        </>
-    );
+  return (
+    <>
+      <div className={styles.nav}>
+        <div className={styles.navLeft}>
+          <div className={styles.avatar}>
+            <img
+              src={`https://ui-avatars.com/api/?name=${String.fromCharCode(Math.floor(Math.random() * 25 + 65))}&background=random`}
+              alt="avatar"
+            />
+          </div>
+          <div className={styles.infoGroup}>
+            <div className={styles.title}>Đây là tên Grouppppppppppppppppppppppppppppppppppppppppppppppppppppppp</div>
+            <div className={styles.onlineStatus}>
+              {isGroup ? (
+                <>
+                  <span><IconUser3 /> </span>
+                  <span> 1000 thành viên </span>
+                </>
+              ) : 'Đang hoạt động'}
+            </div>
+          </div>
+        </div>
+        <div className={styles.navRight}>
+          <button>
+            <IconSettings />
+          </button>
+        </div>
+      </div>
+      <ListMessage />
+      <InputBox />
+    </>
+  );
 }
 
 export default Message;

@@ -1,5 +1,6 @@
 import { FormEvent } from "react";
 import { useRouter } from "next/router";
+import { NextPage } from "next";
 import { StateMethods, useState } from "@hookstate/core";
 
 import GuestLayout from "@src/Components/Guest/GuestLayout"
@@ -12,9 +13,12 @@ import Key from '@src/styles/svg/key.svg';
 import Back from '@src/styles/svg/arrow-left.svg';
 import styles from './style.module.scss';
 import { toast } from "react-toastify";
-const LoginPage = () => {
+import useAuth from "@src/hooks/useAuth";
+const LoginPage: NextPage = () => {
     const router = useRouter();
     const user = useUser();
+    const { isAuth, setToken, setRefreshToken } = useAuth();
+    if (isAuth) router.push('/');
     const loadingState = useState(false);
     const errorState = useState({ username: '', password: '' });
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -25,12 +29,10 @@ const LoginPage = () => {
             loadingState.set(true);
             id = toast.loading('Đang đăng nhập!');
             const { token, refreshToken } = await user.loginUser() as { token: string, refreshToken: string };
-            window.localStorage.setItem('token', token);
-            window.localStorage.setItem('refreshToken', refreshToken);
+            setToken(token);
+			setRefreshToken(refreshToken);
             toast.update(id, {render: "Đăng nhập thành công", type: "success", isLoading: false });
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 1000);
+            router.push('/');
         } catch (error) {
             console.log(error);
             // TODO

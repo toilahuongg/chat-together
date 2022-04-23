@@ -7,7 +7,8 @@ const instance = axios.create({
 if (typeof window !== undefined) {
     instance.interceptors.request.use(
         (config) => {
-          const token = window.localStorage.getItem('token');
+          const auth = window.localStorage.getItem('auth');
+          const { token, refreshToken } = auth ? JSON.parse(auth) : null;
           if (token && config.headers) {
             config.headers['Authorization'] = 'Bearer '+ token;
           }
@@ -28,15 +29,15 @@ if (typeof window !== undefined) {
             if (err.response.status === 401 && !originalConfig._retry) {
               originalConfig._retry = true;
               try {
+                const auth = window.localStorage.getItem('auth');
+                const { refreshToken } = auth ? JSON.parse(auth) : null;
                 const rs = await axios.post("/api/auth/refresh-token", {
-                  refreshToken: window.localStorage.getItem('refreshToken'),
+                  refreshToken: refreshToken,
                 });
                 const { token } = rs.data;
-                window.localStorage.setItem('token', token)
+                window.localStorage.setItem('auth', JSON.stringify({ token, refreshToken}))
                 return instance(originalConfig);
               } catch (_error) {
-                window.localStorage.removeItem('token');
-                window.localStorage.removeItem('refreshToken');
                 return Promise.reject(_error);
               }
             }
