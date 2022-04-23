@@ -9,6 +9,7 @@ import SocketProvider from '@src/Components/SocketProvider';
 
 import 'react-toastify/dist/ReactToastify.css';
 import '@src/styles/main.scss';
+import AppProvider from '@src/Components/AppProvider';
 
 TopBarProgress.config({
   barColors: {
@@ -43,7 +44,9 @@ function MyApp({ Component, pageProps }: AppProps) {
         pauseOnHover
       />
       <SocketProvider>
-        <Component {...pageProps} />
+        <AppProvider>
+          <Component {...pageProps} />
+        </AppProvider>
       </SocketProvider>
     </>
   )

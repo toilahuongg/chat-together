@@ -2,9 +2,9 @@ import { FormEvent } from "react";
 import { useRouter } from "next/router";
 import { StateMethods, useState } from "@hookstate/core";
 
-import ClientLayout from "@src/Components/Client/ClientLayout"
-import TextField from "@src/Components/Client/TextField";
-import Button from "@src/Components/Client/Button";
+import GuestLayout from "@src/Components/Guest/GuestLayout"
+import TextField from "@src/Components/Guest/TextField";
+import Button from "@src/Components/Guest/Button";
 import { useUser } from "@src/hooks/useUser";
 
 import User from '@src/styles/svg/user2.svg';
@@ -46,7 +46,7 @@ const LoginPage = () => {
     }
 
     return (
-        <ClientLayout>
+        <GuestLayout>
             <div className={styles.back} onClick={() => router.push('/')}> <Back /> <span>  Quay lại </span></div>
             <h1 className={styles.title}> Đăng Nhập</h1>
             <form onSubmit={handleSubmit}>
@@ -74,7 +74,7 @@ const LoginPage = () => {
                 > Đăng nhập </Button>
             </form>
             
-        </ClientLayout>
+        </GuestLayout>
     );
 }
 

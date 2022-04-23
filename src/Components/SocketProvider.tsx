@@ -1,4 +1,5 @@
 import instance from '@src/helpers/instance';
+import useAuth from '@src/hooks/useAuth';
 import React, { useContext, createContext, useState, useEffect } from 'react';
 import socketIOClient, { Socket } from 'socket.io-client'
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
@@ -11,6 +12,7 @@ export const useSocket = () => {
 
 
 const SocketProvider = ({ children }) => {
+    const isAuth = useAuth();
     const [socket, setSocket] = useState<Socket<DefaultEventsMap, DefaultEventsMap> | undefined>(undefined)
 
     useEffect(() => {
@@ -18,7 +20,7 @@ const SocketProvider = ({ children }) => {
     }, [])
 
     useEffect(() => {
-        if (socket) {
+        if (socket && isAuth) {
           socket.on("users-online", (data) => console.log(data));
           (async () => {
             const response = await instance.get('/api/user/profile');
@@ -26,7 +28,7 @@ const SocketProvider = ({ children }) => {
             socket.emit("logged-in", _id);
           })()
         }
-    }, [socket]);
+    }, [socket, isAuth]);
 
     return (
         <SocketContext.Provider value={socket}>

@@ -1,0 +1,13 @@
+# Backend 
+Upload ảnh 
+Chỉnh sửa thông tin người dùng
+Lấy ra toàn bộ thông tin người dùng trong 1 group
+Cập nhật thông tin user, có phải gửi socket hay không?
+Dasboard
+Cập nhật tên group => gửi socket
+Reply tin nhắn
+Gỡ tin nhắn hay xoá? Gỡ sẽ phải gửi socket để cập nhật tin nhắn reply tin nhắn bị gỡ (giống messenger)
+# Frontend
+Dasboard
+Khi lấy tin list tin nhắn về, chạy lại 1 hàm getGroupMessage để nhóm message gần nhau có cùng user thành 1 group, xử lý giao diện đó 
+Tất cả thông tin người dùng lưu vào 1 state, khi lấy thông tin về, kiểm tra sự tồn tại của user và cập nhật lại

@@ -3,9 +3,9 @@ import { useState } from "@hookstate/core";
 import { FormEvent } from "react";
 import { toast } from "react-toastify";
 
-import ClientLayout from "@src/Components/Client/ClientLayout"
-import TextField from "@src/Components/Client/TextField";
-import Button from "@src/Components/Client/Button";
+import GuestLayout from "@src/Components/Guest/GuestLayout"
+import TextField from "@src/Components/Guest/TextField";
+import Button from "@src/Components/Guest/Button";
 import useUser from "@src/hooks/useUser";
 import { defaultUser } from "@src/contants/user.contant";
 import {
@@ -45,9 +45,7 @@ const RegisterPage = () => {
             id = toast.loading('Đang đăng ký!');
             await user.registerUser();
             toast.update(id, {render: "Đăng ký thành công", type: "success", isLoading: false });
-            setTimeout(() => {
-                window.location.href = '/login';
-            }, 1000);
+            router.push('/login');
         } catch (error) {
             console.log(error);
             // TODO
@@ -57,7 +55,7 @@ const RegisterPage = () => {
         }
     }
     return (
-        <ClientLayout isRegister>
+        <GuestLayout isRegister>
             <div className={styles.back} onClick={() => router.push('/')}> <Back /> <span>  Quay lại </span></div>
             <h1 className={styles.title}> Đăng ký</h1>
             <form onSubmit={handleSubmit}>
@@ -118,7 +116,7 @@ const RegisterPage = () => {
                     loading={loadingState.get()}
                 > Đăng ký </Button>
             </form>
-        </ClientLayout>
+        </GuestLayout>
     );
 }
 

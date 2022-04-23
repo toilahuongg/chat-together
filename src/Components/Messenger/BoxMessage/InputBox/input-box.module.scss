@@ -1,0 +1,46 @@
+.inputBox {
+  height: 56px;
+  background-color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2em;
+  gap: 20px;
+  button {
+    background: none;
+    outline: none;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    &:hover {
+      background-color: #efefef;
+    }
+  }
+  .inputMessage {
+    flex: 1;
+    input {
+      width: 100%;
+      border-radius: 20px;
+      padding: 0.75em 1em;
+      border: none;
+      background-color: #efefef;
+      outline: none;
+    }
+  }
+  .advancedMessage {
+    width: 80px;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+  }
+  .btnSend {
+    width: 40px;
+    display: flex;
+    justify-content: center;
+  }
+}
