@@ -1,4 +1,4 @@
-import { FormEvent } from "react";
+import React, { FormEvent } from "react";
 import { useRouter } from "next/router";
 import { NextPage } from "next";
 import { StateMethods, useState } from "@hookstate/core";
@@ -14,19 +14,19 @@ import Back from '@src/styles/svg/arrow-left.svg';
 import styles from './style.module.scss';
 import { toast } from "react-toastify";
 import useAuth from "@src/hooks/useAuth";
+import withGuest from "@src/Components/withGuest";
 const LoginPage: NextPage = () => {
     const router = useRouter();
     const user = useUser();
-    const { isAuth, setToken, setRefreshToken } = useAuth();
-    if (isAuth) router.push('/');
-    const loadingState = useState(false);
+    const { setToken, setRefreshToken } = useAuth();
+    const [loading, setLoading] = React.useState(false);
     const errorState = useState({ username: '', password: '' });
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (errorState.password.get() || errorState.username.get()) return;
         let id;
         try {
-            loadingState.set(true);
+            setLoading(true);
             id = toast.loading('Đang đăng nhập!');
             const { token, refreshToken } = await user.loginUser() as { token: string, refreshToken: string };
             setToken(token);
@@ -40,7 +40,7 @@ const LoginPage: NextPage = () => {
             // TODO
             toast.update(id, {render: "Đã xảy ra lỗi", type: "error", isLoading: false, autoClose: 3000 });
         } finally {
-            loadingState.set(false);
+            setLoading(false);
         }
     }
 
@@ -74,7 +74,7 @@ const LoginPage: NextPage = () => {
                 <Button
                     type="submit"
                     variable="submit-login"
-                    loading={loadingState.get()}
+                    loading={loading}
                 > Đăng nhập </Button>
             </form>
             
@@ -82,4 +82,4 @@ const LoginPage: NextPage = () => {
     );
 }
 
-export default LoginPage;
+export default withGuest(LoginPage);
