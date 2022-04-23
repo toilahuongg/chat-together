@@ -1,5 +1,6 @@
 import InputBox from '@src/Components/Messenger/BoxMessage/InputBox';
 import ListMessage from '@src/Components/Messenger/BoxMessage/ListMessage';
+import withAuth from '@src/Components/withAuth';
 import IconSettings from '@src/styles/svg/settings.svg';
 import IconUser3 from '@src/styles/svg/user3.svg';
 import styles from './message.module.scss';
@@ -41,4 +42,4 @@ const Message = () => {
   );
 }
 
-export default Message;
+export default withAuth(Message);

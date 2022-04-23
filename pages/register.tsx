@@ -23,14 +23,12 @@ import Telephone from '@src/styles/svg/telephone.svg';
 import Key from '@src/styles/svg/key.svg';
 import Back from '@src/styles/svg/arrow-left.svg';
 import styles from './style.module.scss';
-import useAuth from "@src/hooks/useAuth";
+import withGuest from "@src/Components/withGuest";
 
 const RegisterPage = () => {
     const router = useRouter();
     const user = useUser();
     const loadingState = useState(false);
-    const { isAuth } = useAuth();
-    if (isAuth) router.push('/');
     const errorState = useState({ ...defaultUser(), confirmPassword: ''});
     const confirmPassword = useState('');
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -48,13 +46,14 @@ const RegisterPage = () => {
             id = toast.loading('Đang đăng ký!');
             await user.registerUser();
             toast.update(id, {render: "Đăng ký thành công", type: "success", isLoading: false });
+            loadingState.set(false);
             router.push('/login');
         } catch (error) {
+            loadingState.set(false);
+
             console.log(error);
             // TODO
             toast.update(id, {render: "Đã xảy ra lỗi", type: "error", isLoading: false, autoClose: 3000 });
-        } finally {
-            loadingState.set(false);
         }
     }
     return (
@@ -123,4 +122,4 @@ const RegisterPage = () => {
     );
 }
 
-export default RegisterPage;
+export default withGuest(RegisterPage);

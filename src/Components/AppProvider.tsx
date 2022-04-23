@@ -26,12 +26,12 @@ const AppProvider = ({ children }) => {
             loadingState.set(true);
             const data = await user.getCurrentUser();
             socket?.emit("logged-in", data._id);
+            loadingState.set(false);
         } catch (error) {
             console.log(error);
+            loadingState.set(false);
             setToken('');
             setRefreshToken('');
-        } finally {
-            loadingState.set(false);
         }
     }, [socket]);
 
