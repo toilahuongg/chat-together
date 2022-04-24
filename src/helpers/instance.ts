@@ -8,9 +8,9 @@ if (typeof window !== undefined) {
     instance.interceptors.request.use(
         (config) => {
           const auth = window.localStorage.getItem('auth');
-          const { token, refreshToken } = auth ? JSON.parse(auth) : null;
-          if (token && config.headers) {
-            config.headers['Authorization'] = 'Bearer '+ token;
+          const { accessToken } = auth ? JSON.parse(auth) : null;
+          if (accessToken && config.headers) {
+            config.headers['Authorization'] = 'Bearer '+ accessToken;
           }
           return config;
         },
@@ -34,8 +34,8 @@ if (typeof window !== undefined) {
                 const rs = await axios.post("/api/auth/refresh-token", {
                   refreshToken: refreshToken,
                 });
-                const { token } = rs.data;
-                window.localStorage.setItem('auth', JSON.stringify({ token, refreshToken}))
+                const { accessToken } = rs.data;
+                window.localStorage.setItem('auth', JSON.stringify({ accessToken, refreshToken}))
                 return instance(originalConfig);
               } catch (_error) {
                 return Promise.reject(_error);

@@ -42,7 +42,7 @@ Router.post('/api/auth/sign-in-with-social', async (req, res) => {
             username: newUser.username
         }
     }
-    const token = signToken(payload, process.env.TOKEN_SECRET || '', process.env.TOKEN_EXPIRESIN || '');
+    const accessToken = signToken(payload, process.env.TOKEN_SECRET || '', process.env.TOKEN_EXPIRESIN || '');
     let refreshToken = '';
     // kiem tra xem refreshToken trong db co hop le hay khong, neu khong tao cai moi va luu vao db
     try {
@@ -54,7 +54,7 @@ Router.post('/api/auth/sign-in-with-social', async (req, res) => {
         refreshToken = signToken(payload, process.env.REFRESH_TOKEN_SECRET || '', process.env.REFRESH_TOKEN_EXPIRESIN || '');
         await UserModel.updateOne({ _id: payload._id }, { refreshToken });
     }
-    return res.json({ token, refreshToken });
+    return res.json({ accessToken, refreshToken });
 });
 
 Router.post('/api/auth/refresh-token', async (req, res) => {
@@ -62,8 +62,8 @@ Router.post('/api/auth/refresh-token', async (req, res) => {
     const { _id, fullname, username } = await verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET || '') as IUserData;
     const user = await UserModel.findOne({ _id, refreshToken });
     if (!user) return res.status(401).json('Unauthorized');
-    const token = signToken({ _id, fullname, username }, process.env.TOKEN_SECRET || '', process.env.TOKEN_EXPIRESIN || '');
-    return res.json({ token });
+    const accessToken = signToken({ _id, fullname, username }, process.env.TOKEN_SECRET || '', process.env.TOKEN_EXPIRESIN || '');
+    return res.json({ accessToken });
 })
 
 /**
@@ -284,10 +284,19 @@ Router.post('/api/login', async (req, res) => {
                         username: user.username,
                         fullname: user.fullname
                     }
-                    const token = await signToken(payload, process.env.TOKEN_SECRET || '', process.env.TOKEN_EXPIRESIN || '');
-
-                    res.status(200)
-                    return res.send({ accessTocken: token })
+                    const accessToken = signToken(payload, process.env.TOKEN_SECRET || '', process.env.TOKEN_EXPIRESIN || '');
+                    let refreshToken = '';
+                    // kiem tra xem refreshToken trong db co hop le hay khong, neu khong tao cai moi va luu vao db
+                    try {
+                        const user = await UserModel.findOne({ _id: payload._id }, { refreshToken: 1 });
+                        if (!user) return res.status(401).json('Unauthorized');
+                        await verifyToken(user.refreshToken, process.env.REFRESH_TOKEN_SECRET || '');
+                        refreshToken = user.refreshToken;
+                    } catch (error) {
+                        refreshToken = signToken(payload, process.env.REFRESH_TOKEN_SECRET || '', process.env.REFRESH_TOKEN_EXPIRESIN || '');
+                        await UserModel.updateOne({ _id: payload._id }, { refreshToken });
+                    }
+                    return res.status(200).json({ accessToken, refreshToken })
                 }
                 res.status(404)
                 return res.json({ message: "Tài khoản hoặc mật khẩu không đúng" })
@@ -337,7 +346,7 @@ Router.get('/api/user/search', passport.authenticate('jwt', { session: false }),
                 let result = removeUnesseseryData(user)
                 return res.status(200).json(result)
             }
-            const user = await UserModel.find({  '_id': { $gt: lastid, $ne: userID }, fullname: { $regex: `^${fullname}` } }).limit(limit)
+            const user = await UserModel.find({ '_id': { $gt: lastid, $ne: userID }, fullname: { $regex: `^${fullname}` } }).limit(limit)
             let result = removeUnesseseryData(user)
             return res.status(200).json(result)
         })

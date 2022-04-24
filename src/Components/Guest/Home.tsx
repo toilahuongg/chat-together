@@ -16,7 +16,7 @@ import useAuth from '@src/hooks/useAuth';
 type TProviderID = 'google' | 'facebook' | 'github';
 const ClientHome = () => {
 	const router = useRouter();
-	const { setToken, setRefreshToken } = useAuth();
+	const { setAccessToken, setRefreshToken } = useAuth();
 	const [loading, setLoading] = useState('');
 	const [errorMessage, setErrorMessage] = useState('');
 
@@ -43,8 +43,8 @@ const ClientHome = () => {
 			// @ts-ignore
 			if (providerId === 'github') fullname = user.reloadUserInfo.screenName;
 			const response = await axios.post('/api/auth/sign-in-with-social', { displayName: fullname, email, avatar: photoURL });
-			const { token, refreshToken } = response.data;
-			setToken(token);
+			const { accessTocken, refreshToken } = response.data;
+			setAccessToken(accessTocken);
 			setRefreshToken(refreshToken);
 			await signOut(auth);
 			setErrorMessage('');

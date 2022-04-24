@@ -17,7 +17,7 @@ export const useSocket = () => {
 
 
 const AppProvider = ({ children }) => {
-    const { isAuth, setToken, setRefreshToken } = useAuth();
+    const { isAuth, setAccessToken, setRefreshToken } = useAuth();
     const user = useUser();
     const loadingState = useState(true);
     const [socket, setSocket] = React.useState<Socket<DefaultEventsMap, DefaultEventsMap> | undefined>(undefined)
@@ -30,7 +30,7 @@ const AppProvider = ({ children }) => {
         } catch (error) {
             console.log(error);
             loadingState.set(false);
-            setToken('');
+            setAccessToken('');
             setRefreshToken('');
         }
     }, [socket]);
