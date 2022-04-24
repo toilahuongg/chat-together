@@ -7,7 +7,6 @@
 
 # testing
 /coverage
-/server/public/file/avatar
 
 # next.js
 /.next/
