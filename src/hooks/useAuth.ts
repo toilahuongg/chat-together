@@ -1,6 +1,6 @@
 import { createState, useState } from "@hookstate/core";
 import { Persistence } from "@hookstate/persistence";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 const authState = createState({ accessToken: "", refreshToken: "" });
 export const useAuth = () => {

@@ -12,9 +12,11 @@ import { IUser, IUserData } from '../types/user.type';
 import randomChars from '../helpers/randomChars';
 import SocketManager from '../helpers/socketManager';
 import { Notification } from '../models/notification.model'
-import { async } from '@firebase/util';
-import { userInfo } from 'os';
-import RoomModel from 'server/models/room.model';
+import multer from 'multer'
+import fs from 'fs'
+import uploadavartar from '../helpers/avartarUploadHandle'
+import MulterRequest from 'server/types/multerrequest';
+import { AnyContext } from '@hookstate/core';
 dotenv.config();
 const Router = express.Router();
 /**
@@ -166,6 +168,23 @@ Router.get("/api/user/profile-list", passport.authenticate('jwt', { session: fal
     } catch (err) {
         console.log(err)
         return res.status(500).json({ message: "Lỗi hệ thống" })
+    }
+})
+
+Router.put("/api/user/update-profile",passport.authenticate('jwt', { session: false }), uploadavartar.single("avartar") , async ( req, res) => {
+    try {
+    const {username, email, phone, fullname} = req.body
+    const id = req.auth?._id as string
+    try{
+    (req as any).body.avatar = (req as MulterRequest).file.filename
+    } catch(err) {
+        (req as any).body.avatar = undefined
+    }
+    await User.changeUserInFo(id, req.body as any)
+    return res.status(200).send()
+    } catch(err) {
+        console.log(err)
+        return res.status(500).json({message: "Lỗi hệ thống"})
     }
 })
 Router.get("/api/user/notification", passport.authenticate('jwt', { session: false }), async (req, res) => {
@@ -321,10 +340,8 @@ Router.get('/api/user/search', passport.authenticate('jwt', { session: false }),
     }
     try {
         const userID = req.auth?._id.toString() as string
-        const fullname = req.query.fullname
-        const lastid = req.query.lastid
+        const { fullname, lastid, random } = req.query
         const limit = 10
-        const random = req.query.random
         if (random) {
             return await new Promise(async (rs, rj) => {
                 if (lastid) {

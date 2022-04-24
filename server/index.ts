@@ -13,6 +13,7 @@ import messageRouter from './routes/message.route'
 import './helpers/passport';
 import chatHandle from './helpers/chatHandle';
 import config     from './helpers/config'
+import SocketIO from './helpers/socketIO';
 
 const { PORT, MONGO_CONNECTSTRING, MONGO_USER, MONGO_PASSWORD } = process.env;
 const port = parseInt(PORT || '3000', 10);
@@ -33,12 +34,14 @@ const bootstrap = async () => {
     req.io = io;
     next()
   })
+  SocketIO.Init(io)
   server.use(bodyParser.json())
   server.use(bodyParser.urlencoded({ extended: true }));
   server.use(userRouter);
   server.use(roomRouter);
   server.use(friendRouter)
   server.use(messageRouter)
+  server.use(express.static('public'))
   server.all('*', (req, res) => {
     return handle(req, res)
   })

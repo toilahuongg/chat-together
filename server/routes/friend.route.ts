@@ -41,10 +41,10 @@ router.post('/api/friend/friend-request/:id', passport.authenticate('jwt', { ses
             'infoNoti.nt': 'friend-request',
             'infoNoti.userSent': new ObjectID.Types.ObjectId(userSendRequest)
         })
-            .then(notifications => {
-                if (notifications.length >= 1) return true
-                return false
-            })
+        .then(notifications => {
+            if (notifications.length >= 1) return true
+            return false
+        })
         if (checkExistFriendRequest)
             return res.status(403).json({ type: 3, message: "Bạn đã gửi lời mởi kết bạn rồi" })
         // gửi friend request
@@ -148,8 +148,6 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
             userIDs: [...lastReadMessageByUsers],
             settings: {}
         })
-
-
         await PrivateRoom
             .save()
             .then(room => {
