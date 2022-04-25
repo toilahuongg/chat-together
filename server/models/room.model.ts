@@ -20,6 +20,12 @@ const RoomSchema = new Schema<IRoom>({
         type: String,
         transform: (v: any) => v == null ? '' : v
     },
+    avatar: {
+        type: String
+    },
+    background: {
+        type: String
+    },
     settings: {},
     lastChange: {
         type: Date

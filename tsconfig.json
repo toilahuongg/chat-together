@@ -30,7 +30,7 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "server/routes/user.route.ts"  ],
   "type": "module",
   "exclude": [
     "node_modules"

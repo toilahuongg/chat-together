@@ -36,7 +36,7 @@ class SocketManager{
      * @param userid string
      * @returns string[]
      */
-    static async getSockets(userid:string) {
+    static async getSockets(userid:string) : Promise<String[] | any>  {
         if(!SocketManager.sockets[userid]) return []
 
         return SocketManager.sockets[userid]

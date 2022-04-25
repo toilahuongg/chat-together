@@ -11,5 +11,6 @@ export interface IUser extends IUserData {
     refreshToken: string,
     friends: string[],
     pendingFriendRequest: string[],
-    friendRequestSent   : string[]
+    friendRequestSent   : string[],
+    avatar?: string|null|undefined,
 }

@@ -7,6 +7,8 @@ export default interface IRoom extends mongoose.Document {
     ownerID?: string,
     settings: any,
     lastChange: Date,
+    avatar?: string|null|undefined,
+    background?: string|null|undefined
     lastMessageRead?: string[]|null,
     lastReadMessageByUsers?: any 
 };
