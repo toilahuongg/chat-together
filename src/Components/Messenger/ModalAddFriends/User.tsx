@@ -1,6 +1,6 @@
 import Avatar from '@src/Components/Layout/Avatar';
 import Button from '@src/Components/Layout/Button';
-import styles from './modal-friends.module.scss'
+import styles from './modal-add-friends.module.scss'
 
 const User = () => {
   return (
