@@ -326,9 +326,6 @@ Router.post('/api/login', async (req, res) => {
 //----------------------------------------------------------------------
 // gợi ý kết bạn
 
-// TODO: bỏ removeUnesseseryData, random
-// TODO: thêm query: isNotFriend, nếu isNotFriend === "true" nếu user là friend thì không đổ về (dùng  $nin )
-// TODO: search làm sai rồi
 Router.get('/api/user/search', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const userID = req.auth?._id.toString() as string;
@@ -368,40 +365,40 @@ Router.get('/api/user/similarname/:name', async (req, res) => {
     return res.status(200).json(result)
 })
 
-// TODO: bỏ
-Router.get('/api/user/randomuser', async (req, res) => {
-    let offsetid;
-    let limit;
-    if (req.query.offsetid) {
-        try {
-            offsetid = req.query.offsetid
-            limit = req.query.limit
-        }
-        catch (err) {
-            return res.status(403).send({ message: "query err" })
-        }
-        const users = await UserModel.find({ '_id': { $gt: new mongoose.Types.ObjectId(offsetid) } }).limit(limit)
-        res.status(200)
-        return res.send(users)
-    }
-    try {
-        limit = req.query.limit ? req.query.limit : 5
-        const user = await UserModel.find({}).limit(limit)
-        const result: Object[] = []
+// // TODO: bỏ
+// Router.get('/api/user/randomuser', async (req, res) => {
+//     let offsetid;
+//     let limit;
+//     if (req.query.offsetid) {
+//         try {
+//             offsetid = req.query.offsetid
+//             limit = req.query.limit
+//         }
+//         catch (err) {
+//             return res.status(403).send({ message: "query err" })
+//         }
+//         const users = await UserModel.find({ '_id': { $gt: new mongoose.Types.ObjectId(offsetid) } }).limit(limit)
+//         res.status(200)
+//         return res.send(users)
+//     }
+//     try {
+//         limit = req.query.limit ? req.query.limit : 5
+//         const user = await UserModel.find({}).limit(limit)
+//         const result: Object[] = []
 
-        for (let i = 0; i < user.length; i++) {
-            const temp = new Object({
-                id: user[i]._id.toString(),
-                username: user[i].username,
-                fullname: user[i].fullname
-            })
-            result.push(temp)
-        }
-        res.status(200)
-        return res.send(result)
-    } catch (err) {
-        res.status(500)
-        return res.send({ message: "Lỗi" })
-    }
-})
+//         for (let i = 0; i < user.length; i++) {
+//             const temp = new Object({
+//                 id: user[i]._id.toString(),
+//                 username: user[i].username,
+//                 fullname: user[i].fullname
+//             })
+//             result.push(temp)
+//         }
+//         res.status(200)
+//         return res.send(result)
+//     } catch (err) {
+//         res.status(500)
+//         return res.send({ message: "Lỗi" })
+//     }
+// })
 export default Router;
