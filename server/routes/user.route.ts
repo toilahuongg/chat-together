@@ -327,6 +327,7 @@ Router.post('/api/login', async (req, res) => {
 // gợi ý kết bạn
 
 // TODO: bỏ removeUnesseseryData, random
+// TODO: thêm query: isNotFriend, nếu isNotFriend === "true" nếu user là friend thì không đổ về (dùng  $nin )
 Router.get('/api/user/search', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const removeUnesseseryData = (data) => {
         if (data instanceof Array) {
