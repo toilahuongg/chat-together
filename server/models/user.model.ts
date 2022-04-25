@@ -67,6 +67,7 @@ class User {
      * @param userID
      * @returns object
      */
+    // TODO: thêm 1 object nữa để get ra những thông tin cần thiết
     static async getUserByID(userID: string) {
         const user = await UserModel.findOne({_id: userID})
         return user

@@ -1,8 +1,12 @@
 import Avatar from '@src/Components/Layout/Avatar';
 import Button from '@src/Components/Layout/Button';
+import { IUser } from 'server/types/user.type';
 import styles from './modal-add-friends.module.scss'
 
-const User = () => {
+type TProps = {
+  data: IUser
+}
+const User: React.FC<TProps> = ({ data }) => {
   return (
     <div className={styles.item}>
       <Avatar
@@ -12,7 +16,7 @@ const User = () => {
         alt="Avatar"
       />
       <div className={styles.user}>
-        <div className={styles.name}>Vũ Bá Hướng</div>
+        <div className={styles.name}>{ data.fullname }</div>
         <div className={styles.status}>Tôi rất vui khi chúng ta trở thành bạn bè</div>
       </div>
       <div className={styles.action}>

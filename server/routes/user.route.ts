@@ -172,20 +172,20 @@ Router.get("/api/user/profile-list", passport.authenticate('jwt', { session: fal
     }
 })
 
-Router.put("/api/user/update-profile",passport.authenticate('jwt', { session: false }), uploadavartar.single("avartar") , async ( req, res) => {
+Router.put("/api/user/update-profile", passport.authenticate('jwt', { session: false }), uploadavartar.single("avartar"), async (req, res) => {
     try {
-    const {username, email, phone, fullname} = req.body
-    const id = req.auth?._id as string
-    try{
-    (req as any).body.avatar = (req as MulterRequest).file.filename
-    } catch(err) {
-        (req as any).body.avatar = undefined
-    }
-    await User.changeUserInFo(id, req.body as any)
-    return res.status(200).send()
-    } catch(err) {
+        const { username, email, phone, fullname } = req.body
+        const id = req.auth?._id as string
+        try {
+            (req as any).body.avatar = (req as MulterRequest).file.filename
+        } catch (err) {
+            (req as any).body.avatar = undefined
+        }
+        await User.changeUserInFo(id, req.body as any)
+        return res.status(200).send()
+    } catch (err) {
         console.log(err)
-        return res.status(500).json({message: "Lỗi hệ thống"})
+        return res.status(500).json({ message: "Lỗi hệ thống" })
     }
 })
 Router.get("/api/user/notification", passport.authenticate('jwt', { session: false }), async (req, res) => {
@@ -328,57 +328,30 @@ Router.post('/api/login', async (req, res) => {
 
 // TODO: bỏ removeUnesseseryData, random
 // TODO: thêm query: isNotFriend, nếu isNotFriend === "true" nếu user là friend thì không đổ về (dùng  $nin )
+// TODO: search làm sai rồi
 Router.get('/api/user/search', passport.authenticate('jwt', { session: false }), async (req, res) => {
-    const removeUnesseseryData = (data) => {
-        if (data instanceof Array) {
-            const result = data.map(user => {
-                return {
-                    id: user.id.toString(),
-                    username: user.username,
-                    fullname: user.fullname
-                }
-            })
-            return result
-        }
-        return []
-    }
     try {
-        const userID = req.auth?._id.toString() as string
-        const { fullname, lastid, random } = req.query
-        const limit = 10
-        if (random) {
-            return await new Promise(async (rs, rj) => {
-                if (lastid) {
-                    const users = await UserModel.find({ '_id': { $gt: lastid, $ne: userID } }).limit(limit)
-                    const result = removeUnesseseryData(users)
-                    return res.status(200).json(result)
-                }
-                let users = await UserModel.find({ '_id': { $ne: userID } }).limit(limit)
-                const result = removeUnesseseryData(users)
-                return res.status(200).json(result)
-            })
-                .catch(err => {
-                    return res.status(403).json({ message: "Lỗi param" })
-                })
-        }
-        return new Promise(async (rs, rej) => {
-            if (!lastid) {
-                const user = await UserModel.find({ '_id': { $ne: userID }, fullname: { $regex: `^${fullname}` } }).limit(limit)
-                let result = removeUnesseseryData(user)
-                return res.status(200).json(result)
+        const userID = req.auth?._id.toString() as string;
+        const { fullname, lastId, isNotFriend } = req.query;
+        const fn = fullname;
+        const limit = 10;
+        let match = {};
+        if (fn) match['fullname'] = { $regex: `.*${fullname}.*` };
+        if (lastId) match['_id'] = { $gt: lastId };
+        if (isNotFriend === "true") {
+            const user = await UserModel.findById(userID, { friends: 1 }).lean();
+            if (user) {
+                const { friends } = user;
+                friends.push(userID);
+                match['_id'] = { ...match['_id'], $nin: friends }
             }
-            const user = await UserModel.find({ '_id': { $gt: lastid, $ne: userID }, fullname: { $regex: `^${fullname}` } }).limit(limit)
-            let result = removeUnesseseryData(user)
-            return res.status(200).json(result)
-        })
-            .catch(err => {
-                return res.status(403).json({ message: "Lỗi param" })
-            })
-
-    } catch (err) {
-        return res.status(500).json({ message: "Lỗi Hệ thống" })
+        }
+        const users = await UserModel.find(match, { _id: 1, username: 1, fullname: 1 }).sort({ createdAt: -1 }).limit(10).lean();
+        return res.status(200).json(users);
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Lỗi hệ thống!" });
     }
-
 })
 // TODO: bỏ
 Router.get('/api/user/similarname/:name', async (req, res) => {

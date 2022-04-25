@@ -53,7 +53,7 @@ const AppProvider = ({ children }) => {
                     {children}
                 </Messenger>
             ) : children }
-            { isAuth && !loadingState.get() && user.friends.length < 5 && (
+            { isAuth && user.friends.length < 5 && (
               <ModalAddFriends isRecommend/>
             )}
         </SocketContext.Provider>
