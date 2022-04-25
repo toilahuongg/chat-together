@@ -1,3 +1,4 @@
+import Avatar from '@src/Components/Layout/Avatar';
 import { classNames } from '@src/helpers/classNames';
 import useUser from '@src/hooks/useUser';
 import styles from './list-message.module.scss';
@@ -12,12 +13,13 @@ const Message: React.FC<TProps> = ({ data }) => {
   if (isCurrentUser) className.push('current');
   return (
     <div className={classNames(styles, className)}>
-      <div className={styles.avatar}>
-        <img
-					src={`https://ui-avatars.com/api/?name=${String.fromCharCode(Math.floor(Math.random()*25 + 65))}&background=random`}
-					alt="avatar"
-				/>
-      </div>
+      <Avatar
+        width={40}
+        height={40}
+        src={`https://ui-avatars.com/api/?name=${String.fromCharCode(Math.floor(Math.random()*25 + 65))}&background=random`}
+        alt="Avatar"
+        hidden={isCurrentUser}
+      />
       <div className={styles.content}>
         {data.message}
       </div>

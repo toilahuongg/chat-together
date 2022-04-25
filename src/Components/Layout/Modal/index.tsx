@@ -15,7 +15,7 @@ const Header: React.FC<TProps['children']> = ({ children }) => {
 const Body: React.FC<TProps['children']> = ({ children }) => {
   return <div className={styles.body}> {children} </div>;
 };
-const Footer: React.FC<TProps['children'] & { align: 'left' | 'center' | 'right' }> = ({ align, children }) => {
+const Footer: React.FC<TProps['children'] & { align: 'left' | 'center' | 'right' | 'between' }> = ({ align, children }) => {
   return <div className={`${styles.footer} ${styles[align]}`}> {children} </div>;
 };
 

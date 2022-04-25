@@ -57,11 +57,15 @@
     .footer {
       padding: 20px;
       display: flex;
+      align-items: center;
       &.center {
         justify-content: center;
       }
       &.right {
         justify-content: flex-end;
+      }
+      &.between {
+        justify-content: space-between;
       }
     }
   }

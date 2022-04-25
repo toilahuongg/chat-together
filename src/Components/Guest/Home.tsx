@@ -3,7 +3,7 @@ import { FacebookAuthProvider, getAuth, GithubAuthProvider, GoogleAuthProvider, 
 import axios from 'axios';
 import { useCallback, useState } from 'react';
 
-import Button from './Button';
+import Button from '../Layout/Button';
 import '@src/config/config-firebase';
 import User from '@src/styles/svg/user.svg';
 import Google from '@src/styles/svg/google.svg';
@@ -62,7 +62,7 @@ const ClientHome = () => {
 	}
 	return (
 		<GuestLayout errorMessage={errorMessage}>
-			<Button variable="default" onClick={() => router.push('/login')} icon={<User />}> Đăng nhập </Button>
+			<Button variable="default-guest" onClick={() => router.push('/login')} icon={<User />}> Đăng nhập </Button>
 			<Button variable="login-google" icon={<Google />} onClick={() => oauthLogin('google')} loading={loading === 'google'}> Tiếp tục với Google </Button>
 			<Button variable="login-facebook" icon={<Facebook />} onClick={() => oauthLogin('facebook')} loading={loading === 'facebook'}> Tiếp tục với Facebook </Button>
 			<Button variable="login-github" icon={<Github />} onClick={() => oauthLogin('github')} loading={loading === 'github'}> Tiếp tục với Github </Button>

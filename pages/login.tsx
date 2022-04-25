@@ -4,8 +4,8 @@ import { NextPage } from "next";
 import { StateMethods, useState } from "@hookstate/core";
 
 import GuestLayout from "@src/Components/Guest/GuestLayout"
-import TextField from "@src/Components/Guest/TextField";
-import Button from "@src/Components/Guest/Button";
+import TextField from "@src/Components/Layout/TextField";
+import Button from "@src/Components/Layout/Button";
 import { useUser } from "@src/hooks/useUser";
 
 import User from '@src/styles/svg/user2.svg';
@@ -14,7 +14,7 @@ import Back from '@src/styles/svg/arrow-left.svg';
 import styles from './style.module.scss';
 import { toast } from "react-toastify";
 import useAuth from "@src/hooks/useAuth";
-import withGuest from "@src/Components/withGuest";
+import withGuest from "@src/Components/Guest/withGuest";
 const LoginPage: NextPage = () => {
     const router = useRouter();
     const user = useUser();

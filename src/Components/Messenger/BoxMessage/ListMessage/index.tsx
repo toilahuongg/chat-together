@@ -87,7 +87,7 @@ const ListMessage = () => {
     {
       _id: '49',
       userID: '123',
-      message: 'Làm đi bạn'
+      message: 'Làm đi bạn'.repeat(50)
     },
     {
       _id: '25',

@@ -20,20 +20,6 @@
     display: flex;
     gap: 1em;
     flex: 1;
-    .avatar {
-        flex-basis: 56px;
-        width: 56px;
-        min-width: 56px;
-        height: 56px;
-        min-height: 56px;
-        border-radius: 50%;
-        overflow: hidden;
-        img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-    }
 
     .title {
         font-size: 18px;

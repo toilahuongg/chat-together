@@ -4,8 +4,8 @@ import { FormEvent } from "react";
 import { toast } from "react-toastify";
 
 import GuestLayout from "@src/Components/Guest/GuestLayout"
-import TextField from "@src/Components/Guest/TextField";
-import Button from "@src/Components/Guest/Button";
+import TextField from "@src/Components/Layout/TextField";
+import Button from "@src/Components/Layout/Button";
 import useUser from "@src/hooks/useUser";
 import { defaultUser } from "@src/contants/user.contant";
 import {
@@ -23,7 +23,7 @@ import Telephone from '@src/styles/svg/telephone.svg';
 import Key from '@src/styles/svg/key.svg';
 import Back from '@src/styles/svg/arrow-left.svg';
 import styles from './style.module.scss';
-import withGuest from "@src/Components/withGuest";
+import withGuest from "@src/Components/Guest/withGuest";
 
 const RegisterPage = () => {
     const router = useRouter();

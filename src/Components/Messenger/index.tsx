@@ -2,7 +2,6 @@ import Nav from "./Nav";
 
 import styles from './messenger.module.scss';
 import ListGroup from "./ListGroup";
-import BoxMessage from "./BoxMessage";
 
 type TProps = {
     children: React.ReactNode

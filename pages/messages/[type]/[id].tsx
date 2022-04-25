@@ -1,3 +1,4 @@
+import Avatar from '@src/Components/Layout/Avatar';
 import InputBox from '@src/Components/Messenger/BoxMessage/InputBox';
 import ListMessage from '@src/Components/Messenger/BoxMessage/ListMessage';
 import withAuth from '@src/Components/withAuth';
@@ -12,12 +13,12 @@ const Message = () => {
     <>
       <div className={styles.nav}>
         <div className={styles.navLeft}>
-          <div className={styles.avatar}>
-            <img
-              src={`https://ui-avatars.com/api/?name=${String.fromCharCode(Math.floor(Math.random() * 25 + 65))}&background=random`}
-              alt="avatar"
-            />
-          </div>
+          <Avatar
+            src={`https://ui-avatars.com/api/?name=${String.fromCharCode(Math.floor(Math.random() * 25 + 65))}&background=random`}
+            alt="avatar"
+            width={58}          
+            height={58}          
+          />
           <div className={styles.infoGroup}>
             <div className={styles.title}>Đây là tên Grouppppppppppppppppppppppppppppppppppppppppppppppppppppppp</div>
             <div className={styles.onlineStatus}>

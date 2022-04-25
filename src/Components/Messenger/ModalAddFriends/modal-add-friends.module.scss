@@ -1,0 +1,27 @@
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  .user {
+    flex: 1;
+  }
+  .name {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+  .status {
+    color: rgb(130 127 127);
+    word-break: break-all;
+  }
+  &:hover {
+    background-color: #eee;
+  }
+}
+
+.item:last-child {
+  margin-bottom: 0;
+}
