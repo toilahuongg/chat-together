@@ -75,6 +75,7 @@ Router.get('/api/user/profile/', passport.authenticate('jwt', { session: false }
     // route có id thì tìm theo id
     try {
         let ID = req.auth?._id as unknown as string
+        // TODO bỏ query
         if (ID === req.query.id) req.query.id = undefined
         if (req.query.id) {
             ID = req.query.id as unknown as string
@@ -324,6 +325,8 @@ Router.post('/api/login', async (req, res) => {
 })
 //----------------------------------------------------------------------
 // gợi ý kết bạn
+
+// TODO: bỏ removeUnesseseryData, random
 Router.get('/api/user/search', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const removeUnesseseryData = (data) => {
         if (data instanceof Array) {
@@ -376,6 +379,7 @@ Router.get('/api/user/search', passport.authenticate('jwt', { session: false }),
     }
 
 })
+// TODO: bỏ
 Router.get('/api/user/similarname/:name', async (req, res) => {
     const name = req.params.name
     const user = await UserModel.find({ username: { $regex: `^${name}` } }).limit(10)
@@ -390,6 +394,7 @@ Router.get('/api/user/similarname/:name', async (req, res) => {
     return res.status(200).json(result)
 })
 
+// TODO: bỏ
 Router.get('/api/user/randomuser', async (req, res) => {
     let offsetid;
     let limit;
