@@ -55,7 +55,7 @@ const Message = () => {
                 sender: dataUser._id
             });
         }
-    }, [socket, msg, dataRoom?._id, dataUser?._id]);
+    }, [socket, msg, dataRoom, dataUser]);
     return (
         <>
             <div> 

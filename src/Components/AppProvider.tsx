@@ -6,7 +6,7 @@ import useUser from '@src/hooks/useUser';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import { useState } from '@hookstate/core';
 import Loading from './Layout/Loading';
-import ModalAddFFriends from './Messenger/ModalAddFriends';
+import ModalAddFriends from './Messenger/ModalAddFriends';
 import Messenger from './Messenger';
 
 const SocketContext = createContext<Socket<DefaultEventsMap, DefaultEventsMap> | undefined>(undefined)
@@ -54,7 +54,7 @@ const AppProvider = ({ children }) => {
                 </Messenger>
             ) : children }
             { isAuth && !loadingState.get() && user.friends.length < 5 && (
-              <ModalAddFFriends isRecommend/>
+              <ModalAddFriends isRecommend/>
             )}
         </SocketContext.Provider>
     );

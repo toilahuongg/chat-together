@@ -6,8 +6,5 @@
     "noEmit": false,
     "typeRoots": [ "server/types" ]
   },
-  "files": [
-    "@types/express/index.d.ts"
-  ],
   "include": ["server"]
 }

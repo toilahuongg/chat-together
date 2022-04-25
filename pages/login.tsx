@@ -18,7 +18,7 @@ import withGuest from "@src/Components/Guest/withGuest";
 const LoginPage: NextPage = () => {
     const router = useRouter();
     const user = useUser();
-    const { setToken, setRefreshToken } = useAuth();
+    const { setAccessToken, setRefreshToken } = useAuth();
     const [loading, setLoading] = React.useState(false);
     const errorState = useState({ username: '', password: '' });
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -30,7 +30,7 @@ const LoginPage: NextPage = () => {
             id = toast.loading('Đang đăng nhập!');
             const { token, refreshToken } = await user.loginUser() as { token: string, refreshToken: string };
             console.log(token);
-            setToken(token);
+            setAccessToken(token);
 			setRefreshToken(refreshToken);
             toast.update(id, {render: "Đăng nhập thành công", type: "success", isLoading: false });
         } catch (error) {
