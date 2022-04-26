@@ -7,8 +7,6 @@ type TProps = {
     children: React.ReactNode
 }
 const Messenger: React.FC<TProps> = ({ children }) => {
-    console.log("Messenger");
-
     return (
         <>
             <Nav />

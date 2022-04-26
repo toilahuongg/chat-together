@@ -1,7 +1,6 @@
 import express from 'express';
 import slug from 'slug';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
 import passport from 'passport';
 import bcrypt from 'bcrypt';
 import ObjectID from 'mongoose'
@@ -12,11 +11,9 @@ import { IUser, IUserData } from '../types/user.type';
 import randomChars from '../helpers/randomChars';
 import SocketManager from '../helpers/socketManager';
 import { Notification } from '../models/notification.model'
-import multer from 'multer'
-import fs from 'fs'
 import uploadavartar from '../helpers/avartarUploadHandle'
 import MulterRequest from 'server/types/multerrequest';
-import { AnyContext } from '@hookstate/core';
+
 dotenv.config();
 const Router = express.Router();
 /**
