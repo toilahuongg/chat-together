@@ -15,6 +15,8 @@ router.post('/api/friend/friend-request/:id', passport.authenticate('jwt', { ses
         const userSendRequest: string | undefined = req.auth?._id.toString()
         // người nhận lời mời kết bạn
         const isvalidID = ObjectID.isValidObjectId(req.params.id)
+        if(userSendRequest === req.params.id) 
+            return res.status(403).json({message: "Khôn thể gửi lời mời kết bạn đến chính mình"})
         if (!isvalidID)
             return res.status(403).json({ message: "Mã người dùng trong lời mời kết bạn không hợp lệ" })
         const friendID: string = req.params.id
@@ -145,8 +147,9 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
         const PrivateRoom = new RoomModel({
             name: "",
             isGroup: false,
-            userIDs: [...lastReadMessageByUsers],
-            settings: {}
+            userIDs: [userID, notification.infoNoti.userSent],
+            settings: {},
+            lastReadMessageByUsers: lastReadMessageByUsers
         })
         await PrivateRoom
             .save()
@@ -158,8 +161,7 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
             await SocketManager.getSockets(userID as string)
                 .then(async (user1Socket) => {
                     const user2Socket = await SocketManager.getSockets(notification.infoNoti.userSent.toString())
-                    user1Socket.concat(user2Socket)
-                    return user1Socket
+                    return user1Socket.concat(user2Socket)
                 })
         for (let i = 0; i < socketsForSendingNewRomNotification.length; i++)
             req.io.to(socketsForSendingNewRomNotification[i]).emit("room-notification", PrivateRoom)
@@ -171,7 +173,7 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
                 },
                 $pull: {
                     friendRequestSent: {
-                        userID: new ObjectID.Types.ObjectId(userID),
+                        userID: userID,
                         notificationID: notification._id
                     }
                 }
@@ -184,7 +186,7 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
                 },
                 $pull: {
                     pendingFriendRequest: {
-                        userID: new ObjectID.Types.ObjectId(notification.infoNoti.userSent.toString()),
+                        userID: notification.infoNoti.userSent.toString(),
                         notificationID: notification._id
                     }
                 }
