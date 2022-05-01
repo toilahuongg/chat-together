@@ -10,7 +10,13 @@ export interface IUser extends IUserData {
     phone: string,
     refreshToken: string,
     friends: string[],
-    pendingFriendRequest: string[],
-    friendRequestSent   : string[],
-    avatar?: string|null|undefined,
+    pendingFriendRequest: {
+        userID: string,
+        notificationID: string
+    }[],
+    friendRequestSent: {
+        userID: string,
+        notificationID: string
+    }[],
+    avatar?: string | null | undefined,
 }

@@ -20,6 +20,10 @@
   &:hover {
     background-color: #eee;
   }
+  .action {
+    display: flex;
+    gap: 10px;
+  }
 }
 
 .item:last-child {

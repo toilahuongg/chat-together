@@ -79,7 +79,7 @@ router.post('/api/friend/friend-request/:id', passport.authenticate('jwt', { ses
         for (let i = 0; i < sockets.length; i++) {
             req.io.to(sockets[i]).emit("new-notification", friendRequestNotificaiton)
         }
-        return res.status(200).send({ message: "Gửi lời mời kết bạn thành công" })
+        return res.status(200).send(friendRequestNotificaiton)
     } catch (err) {
         console.log(err)
         res.status(500)
@@ -166,7 +166,7 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
         const socketsForSendingNewRomNotification =
             await SocketManager.getSockets(userID as string)
                 .then(async (user1Socket) => {
-                    const user2Socket = await SocketManager.getSockets(notification.infoNoti.userSent.toString())
+                    const user2Socket = await SocketManager.getSockets(notification?.infoNoti.userSent.toString()!)
                     return user1Socket.concat(user2Socket)
                 })
         for (let i = 0; i < socketsForSendingNewRomNotification.length; i++)
@@ -198,10 +198,10 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
                 }
             })
         // thêm bạn bè vào thông tin chung của 2 user
-        return res.status(200).json({ message: "Bạn đã chấp nhận lời kết bạn, bây h các bạn có thể kiểm tra thông tin của nhau" })
+        return res.status(200).json(acceptedNotification)
     } catch (err) {
         console.log(err)
-        return res.status(500).json({ message: "err" })
+        return res.status(500).json({ message: "Lỗi hệ thống! Vui lòng thử lại" })
     }
 })
 /**

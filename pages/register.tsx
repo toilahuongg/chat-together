@@ -45,7 +45,7 @@ const RegisterPage = () => {
             loadingState.set(true);
             id = toast.loading('Đang đăng ký!');
             await user.registerUser();
-            toast.update(id, {render: "Đăng ký thành công", type: "success", isLoading: false });
+            toast.update(id, {render: "Đăng ký thành công", type: "success", isLoading: false, autoClose: 3000 });
             loadingState.set(false);
             router.push('/login');
         } catch (error) {

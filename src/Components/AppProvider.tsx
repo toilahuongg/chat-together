@@ -8,6 +8,9 @@ import { useState } from '@hookstate/core';
 import Loading from './Layout/Loading';
 import ModalAddFriends from './Messenger/ModalAddFriends';
 import Messenger from './Messenger';
+import INotification from 'server/types/notification.type';
+import { updatePendingFriendsState } from '@src/hooks/useFriends';
+import randomChars from 'server/helpers/randomChars';
 
 const SocketContext = createContext<Socket<DefaultEventsMap, DefaultEventsMap> | undefined>(undefined)
 
@@ -17,15 +20,16 @@ export const useSocket = () => {
 
 
 const AppProvider = ({ children }) => {
-    const { isAuth, setAccessToken, setRefreshToken } = useAuth();
+    const { accessToken, isAuth, setAccessToken, setRefreshToken } = useAuth();
     const user = useUser();
+    const updatePendingFriends = useState(updatePendingFriendsState);
     const loadingState = useState(true);
     const [socket, setSocket] = React.useState<Socket<DefaultEventsMap, DefaultEventsMap> | undefined>(undefined)
     const getUser = useCallback(async () => {
         try {
             loadingState.set(true);
-            const data = await user.getCurrentUser();
-            socket?.emit("logged-in", data._id);
+            await user.getCurrentUser();
+            socket?.emit("logged-in", accessToken);
             loadingState.set(false);
         } catch (error) {
             console.log(error);
@@ -40,11 +44,17 @@ const AppProvider = ({ children }) => {
     }, [])
 
     useEffect(() => {
-        if (socket && isAuth) {
-            socket.on("users-online", (data) => console.log(data));
-            getUser();
-        } else loadingState.set(false);
-    }, [socket, isAuth]);
+        if (socket) {
+            socket.on('new-notification', (noti: INotification) => {
+                if (noti.infoNoti.nt === 'friend-request') {
+                    user.pendingFriendRequest.merge([{ userID: noti.infoNoti.userSent, notificationID: noti._id }]);
+                    updatePendingFriends.set(randomChars(8));
+                }
+            });
+            if (isAuth) getUser();
+        }
+        else loadingState.set(false);
+    }, [socket, isAuth, getUser]);
 
     return loadingState.get() ? <Loading fullScreen/> : (
         <SocketContext.Provider value={socket}>

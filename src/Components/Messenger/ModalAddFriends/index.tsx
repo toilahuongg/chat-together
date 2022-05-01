@@ -1,3 +1,4 @@
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useState } from '@hookstate/core';
 import { Persistence } from '@hookstate/persistence';
 
@@ -5,28 +6,29 @@ import TextField from '@src/Components/Layout/TextField';
 import Button from '@src/Components/Layout/Button';
 import Modal from '@src/Components/Layout/Modal';
 import Checkbox from '@src/Components/Layout/Checkbox';
-import User from './User';
 import instance from '@src/helpers/instance';
 import { IUser } from 'server/types/user.type';
-
-import IconSearch from '@src/styles/svg/search.svg';
-import React, { useEffect, useMemo, useRef } from 'react';
 import InfiniteScroll from '@src/Components/Layout/InfiniteScroll';
 import randomChars from 'server/helpers/randomChars';
 import Loading from '@src/Components/Layout/Loading';
+import useUser from '@src/hooks/useUser';
+import User from '../User';
+
+import IconSearch from '@src/styles/svg/search.svg';
 
 type TProps = {
   isRecommend?: boolean,
   isShow?: boolean,
   onClose?: () => void
 }
-const ModalFriends: React.FC<TProps> = ({
+const ModalAddFriends: React.FC<TProps> = ({
   isRecommend = false,
   isShow = false,
   onClose = () => { }
 }) => {
   const unmount = useRef(false);
   const divRef = useRef<HTMLDivElement>(null);
+  const { checkUserInFriendRequestSent, updateFriendRequestSent } = useUser();
   const hiddenRecommendFriends = useState(false);
   const checkboxState = useState(false);
   if (typeof window !== 'undefined') hiddenRecommendFriends.attach(Persistence('hidden-recommend-friends'));
@@ -96,7 +98,15 @@ const ModalFriends: React.FC<TProps> = ({
             isLoading={loadingUsers}
             loading={<Loading />}
           >
-            {listUserState.map(user => <User key={user._id.get() + randomChars(8)} data={user.get()} />)}
+            {listUserState.map(user => (
+              <User
+                key={user._id.get() + randomChars(8)}
+                data={user.get()}
+                type="friends-request-sent"
+                isFriendRequestSent={checkUserInFriendRequestSent(user._id.get())}
+                onUpdate={updateFriendRequestSent}
+              />
+            ))}
           </InfiniteScroll>
         </div>
 
@@ -118,4 +128,4 @@ const ModalFriends: React.FC<TProps> = ({
   )
 }
 
-export default ModalFriends;
+export default ModalAddFriends;

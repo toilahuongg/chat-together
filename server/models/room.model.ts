@@ -1,12 +1,12 @@
 import { Schema, model } from 'mongoose';
-import IRoom  from '../types/room.type';
+import { IRoomModel }  from '../types/room.type';
 import MessageModel from './message.model';
 import { Message } from './message.model';
 import { Notification } from './notification.model';
 import { User } from './user.model';
 
 
-const RoomSchema = new Schema<IRoom>({
+const RoomSchema = new Schema<IRoomModel>({
     name: {
         type: String
     },
@@ -40,7 +40,7 @@ const RoomSchema = new Schema<IRoom>({
     }
     
 }, { timestamps: true });
-const RoomModel = model<IRoom>('rooms', RoomSchema);
+const RoomModel = model<IRoomModel>('rooms', RoomSchema);
 export default RoomModel;
 /**
  * Suport tương tác với Room model
@@ -50,7 +50,7 @@ class Room {
      * update thuộc tính lastChange của room mỗi khi có người nhắn tin 
      * @param room 
      */
-    static async updateLastChange(room: IRoom) {
+    static async updateLastChange(room: IRoomModel) {
         room.lastChange = new Date()
         await room.save()
     }
@@ -59,7 +59,7 @@ class Room {
      * -- có thể gây lỗi chờ nhau không ????
      * @param room 
      */
-    static async lastRoomMessage(room: IRoom){
+    static async lastRoomMessage(room: IRoomModel){
         const message = await MessageModel.findOne({roomID: room._id}).sort({createdAt: -1})
         return message;
     }

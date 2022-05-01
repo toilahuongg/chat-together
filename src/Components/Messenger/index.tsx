@@ -3,9 +3,11 @@ import { useState } from "@hookstate/core";
 import Nav from "./Nav";
 import ListGroup from "./ListGroup";
 import { showGroupSettingState } from "@src/hooks/useGroupSetting";
+import { showListGroupState } from "@src/hooks/useListGroup";
+import ModalFriends from "./ModalFriends";
+import { showFriendsState } from "@src/hooks/useFriends";
 
 import styles from './messenger.module.scss';
-import { showListGroupState } from "@src/hooks/useListGroup";
 
 type TProps = {
 	children: React.ReactNode
@@ -13,6 +15,7 @@ type TProps = {
 const Messenger: React.FC<TProps> = ({ children }) => {
 	const showGroupSetting = useState(showGroupSettingState);
 	const showListGroup = useState(showListGroupState);
+	const showModalFriends = useState(showFriendsState);
 	return (
 		<>
 			<Nav />
@@ -31,6 +34,8 @@ const Messenger: React.FC<TProps> = ({ children }) => {
 					)
 				}
 			</div>
+			{ showModalFriends.get() && <ModalFriends isShow={showModalFriends.get()} onClose={() => showModalFriends.set(false)} />}
+			
 		</>
 	)
 }

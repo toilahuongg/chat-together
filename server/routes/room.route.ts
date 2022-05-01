@@ -2,9 +2,8 @@ import express from 'express';
 import passport from 'passport';
 import UserModel, { User } from '../models/user.model';
 import RoomModel, { Room } from '../models/room.model';
-import mongoose from 'mongoose';
 import { Request, Response } from 'express';
-import IRoom from 'server/types/room.type';
+import IRoom, { IRoomModel } from 'server/types/room.type';
 import { Notification } from '../models/notification.model';
 import SocketManager from '../helpers/socketManager';
 const Router = express.Router();
@@ -150,7 +149,7 @@ Router.get('/api/room/get-room/', passport.authenticate('jwt', { session: false 
             return res.status(403).json({ nessage: "user không tồn tại" })
         if (!query.limit) query.limit = 10
 
-        let rooms: IRoom[];
+        let rooms: IRoomModel[];
         if (!query.offsetid) {
             rooms = await RoomModel.find({ userIDs: { "$in": userID } }).sort({ lastChange: -1 }).limit(query.limit)
 

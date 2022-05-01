@@ -1,0 +1,16 @@
+.tabs {
+  display: flex;
+  gap: 20px;
+  border-bottom: 1px solid #efefef;
+  margin-bottom: 10px;
+  .item {
+    padding: 10px 5px;
+    cursor: pointer;
+    color: rgb(119, 119, 119);
+    &.selected {
+      font-weight: 500;
+      color: #000;
+      border-bottom: 3px solid rgb(0, 168, 0);
+    }
+  }
+}

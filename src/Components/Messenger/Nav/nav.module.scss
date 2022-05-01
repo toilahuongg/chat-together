@@ -9,17 +9,28 @@
     color: #fff;
     display: flex;
     align-items: center;
+    button {
+        @extend .flexCenter;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: none;
+        cursor: pointer;
+        &:hover {
+            background-color: #038b42;
+        }
+    }
     .navBar {
         width: 80px;
         @extend .flexCenter;
-        button {
-            @extend .flexCenter;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: none;
-            background: none;
-            cursor: pointer;
-        }
+
+    }
+    .logo {
+        flex: 1;
+    }
+    .multiFeature {
+        width: 200px;
+        display: flex;
     }
 }

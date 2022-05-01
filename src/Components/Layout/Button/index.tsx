@@ -1,3 +1,4 @@
+import { classNames } from '@src/helpers/classNames';
 import Loading from '@src/styles/svg/loading.svg';
 import styles from './button.module.scss';
 type TProps = React.DetailedHTMLProps<React.ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement> & {
@@ -17,7 +18,7 @@ type TProps = React.DetailedHTMLProps<React.ButtonHTMLAttributes<HTMLButtonEleme
 }
 const Button: React.FC<TProps> = ({ variable = 'default', icon, loading, children, ...props }) => {
     return (
-        <button {...props} className={loading ? styles.btnLoading : styles[variable]} disabled={!!loading}>
+        <button {...props} className={loading ? classNames(styles, ['btnLoading', variable]) : styles[variable]} disabled={!!loading}>
             {loading ? <span className={styles.loading}> <Loading  /> </span> : (<>
                 { icon && <span className={styles.icon}> {icon} </span>}
                 <span className={styles.content}> { children } </span>

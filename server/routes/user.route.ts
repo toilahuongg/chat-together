@@ -137,36 +137,16 @@ Router.get("/api/user/profile/:id", passport.authenticate('jwt', { session: fals
         return res.status(500).json({ message: "Lỗi hệ thống" })
     }
 })
-Router.get("/api/user/profile-list", passport.authenticate('jwt', { session: false }), async (req, res) => {
+Router.post("/api/user/profile-list", passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
-        if (!req.body || !req.body.ids || req.body.ids === 0 || !req.body.ids)
-            return res.status(403).json({ message: "Lỗi body request ko tồn tại ids hoặc độ dài của ids = 0" })
-        const friendsID = await UserModel.findOne({ _id: req.auth?._id })
-            .then(data => {
-                if (!data) return []
-                return data.friends
-            })
-        const ids = req.body.ids
-        const listUser = await Promise.all(ids.map(async (id) => {
-            const isFriend = friendsID.includes(id)
-            const isOnline = await SocketManager.isOnline(id)
-            const user = await User.getUserByID(id) as any
-            if (!user) return null
-            let userData;
-            userData = {
-                ...user["_doc"],
-                phone: undefined,
-                password: undefined,
-                "pendingFriendRequest": undefined,
-                "friendRequestSent": undefined,
-                isOnline: isOnline
-            }
-            if (isFriend) {
-                userData.isOnline = isOnline
-            }
-            return userData
-
-        }))
+        if (!req.body || !req.body.ids || !req.body.ids)
+            return res.status(403).json({ message: "Lỗi body request ko tồn tại ids" })
+        const ids = req.body.ids;
+        const listUser = await UserModel.find({ _id: { $in: ids } }, {
+            _id: 1,
+            username: 1,
+            fullname: 1,
+        });
         return res.status(200).json(listUser)
     } catch (err) {
         console.log(err)
@@ -336,7 +316,7 @@ Router.get('/api/user/search', passport.authenticate('jwt', { session: false }),
         const limit = 10;
         let match = {};
         let friends: string[] = [];
-        if (fn) match['fullname'] = { $regex: `.*${fullname}.*` };
+        if (fn) match['fullname'] = { $regex: `.*${fullname}.*`, $options: 'i' };
         if (lastId) match['_id'] = { $lt: lastId };
         if (isNotFriend === "true") {
             const user = await UserModel.findById(userID, { friends: 1 }).lean();
@@ -348,7 +328,7 @@ Router.get('/api/user/search', passport.authenticate('jwt', { session: false }),
         }
         const users = await UserModel.find(match, { _id: 1, username: 1, fullname: 1 }).sort({ createdAt: -1 }).limit(10).lean();
         const count = await UserModel.count({ _id: { $nin: friends }, fullname: { $regex: `.*${fullname}.*` } });
-        return res.status(200).json({ users, count});
+        return res.status(200).json({ users, count });
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: "Lỗi hệ thống!" });
@@ -358,10 +338,10 @@ Router.get('/api/user/search', passport.authenticate('jwt', { session: false }),
 Router.get('/api/user/create-user', async (req, res) => {
     for (let i = 0; i < 50; i++) {
         await UserModel.create({
-            username: i,
-            fullname: `${i}@gmail.com`,
-            email: `${i}@gmail.com`,
-            password: '123456'
+            username: 'test'+i,
+            fullname: `test${i}@gmail.com`,
+            email: `test${i}@gmail.com`,
+            password: '$2b$10$CYoxUBmfaApniOkuJc7Kvu.3xDu.YvCbVFOUHkjXEg236lNJBsbIK'
         });
     }
     return res.status(200).json('oke')
