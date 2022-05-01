@@ -119,7 +119,7 @@
 }
 
 .btnLoading {
-    @extend .btn;
+    @extend .btn, .btn-guest;
     background-color: #F6F5F5;
     cursor: unset;
 }

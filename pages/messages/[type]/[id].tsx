@@ -1,14 +1,20 @@
+import { useState } from '@hookstate/core';
 import Avatar from '@src/Components/Layout/Avatar';
 import InputBox from '@src/Components/Messenger/BoxMessage/InputBox';
 import ListMessage from '@src/Components/Messenger/BoxMessage/ListMessage';
 import withAuth from '@src/Components/withAuth';
+import { showGroupSettingState } from '@src/hooks/useGroupSetting';
 import IconSettings from '@src/styles/svg/settings.svg';
 import IconUser3 from '@src/styles/svg/user3.svg';
+import { useEffect } from 'react';
 import styles from './message.module.scss';
 
 const Message = () => {
 	const isGroup = true;
-
+  const showGroupSetting = useState(showGroupSettingState);
+  useEffect(() => {
+    showGroupSetting.set(true);
+  }, []);
   return (
     <>
       <div className={styles.nav}>
@@ -32,7 +38,7 @@ const Message = () => {
           </div>
         </div>
         <div className={styles.navRight}>
-          <button>
+          <button className={showGroupSetting.get() ? styles.active : ""} onClick={() => showGroupSetting.set(!showGroupSetting.get())}>
             <IconSettings />
           </button>
         </div>

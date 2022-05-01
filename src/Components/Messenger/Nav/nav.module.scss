@@ -1,5 +1,25 @@
+.flexCenter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 .nav {
     height: 64px;
     background-color: #00AC4F;
     color: #fff;
+    display: flex;
+    align-items: center;
+    .navBar {
+        width: 80px;
+        @extend .flexCenter;
+        button {
+            @extend .flexCenter;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+    }
 }

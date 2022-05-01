@@ -18,7 +18,7 @@ type TProps = React.DetailedHTMLProps<React.ButtonHTMLAttributes<HTMLButtonEleme
 const Button: React.FC<TProps> = ({ variable = 'default', icon, loading, children, ...props }) => {
     return (
         <button {...props} className={loading ? styles.btnLoading : styles[variable]} disabled={!!loading}>
-            {loading ? <span className={styles.loading}> <Loading /> </span> : (<>
+            {loading ? <span className={styles.loading}> <Loading  /> </span> : (<>
                 { icon && <span className={styles.icon}> {icon} </span>}
                 <span className={styles.content}> { children } </span>
             </>)}

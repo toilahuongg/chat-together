@@ -57,12 +57,17 @@ Router.post('/api/auth/sign-in-with-social', async (req, res) => {
 });
 
 Router.post('/api/auth/refresh-token', async (req, res) => {
-    const { refreshToken } = req.body;
-    const { _id, fullname, username } = await verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET || '') as IUserData;
-    const user = await UserModel.findOne({ _id, refreshToken });
-    if (!user) return res.status(401).json('Unauthorized');
-    const accessToken = signToken({ _id, fullname, username }, process.env.TOKEN_SECRET || '', process.env.TOKEN_EXPIRESIN || '');
-    return res.json({ accessToken });
+    try {
+        const { refreshToken } = req.body;
+        const { _id, fullname, username } = await verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET || '') as IUserData;
+        const user = await UserModel.findOne({ _id, refreshToken });
+        if (!user) return res.status(401).json('Unauthorized');
+        const accessToken = signToken({ _id, fullname, username }, process.env.TOKEN_SECRET || '', process.env.TOKEN_EXPIRESIN || '');
+        return res.json({ accessToken });
+    } catch (error) {
+        return res.status(401).json('Unauthorized')
+    }
+
 })
 
 /**
@@ -330,36 +335,36 @@ Router.get('/api/user/search', passport.authenticate('jwt', { session: false }),
         const fn = fullname;
         const limit = 10;
         let match = {};
+        let friends: string[] = [];
         if (fn) match['fullname'] = { $regex: `.*${fullname}.*` };
-        if (lastId) match['_id'] = { $gt: lastId };
+        if (lastId) match['_id'] = { $lt: lastId };
         if (isNotFriend === "true") {
             const user = await UserModel.findById(userID, { friends: 1 }).lean();
             if (user) {
-                const { friends } = user;
+                friends = user.friends;
                 friends.push(userID);
                 match['_id'] = { ...match['_id'], $nin: friends }
             }
         }
         const users = await UserModel.find(match, { _id: 1, username: 1, fullname: 1 }).sort({ createdAt: -1 }).limit(10).lean();
-        return res.status(200).json(users);
+        const count = await UserModel.count({ _id: { $nin: friends }, fullname: { $regex: `.*${fullname}.*` } });
+        return res.status(200).json({ users, count});
     } catch (error) {
         console.log(error);
         return res.status(500).json({ message: "Lỗi hệ thống!" });
     }
 })
 // TODO: bỏ
-Router.get('/api/user/similarname/:name', async (req, res) => {
-    const name = req.params.name
-    const user = await UserModel.find({ username: { $regex: `^${name}` } }).limit(10)
-    let result: Object[] = []
-    for (let i = 0; i < user.length; i++) {
-        result.push({
-            id: user[i]._id.toString(),
-            username: user[i].username,
-            fullname: user[i].fullname
-        })
+Router.get('/api/user/create-user', async (req, res) => {
+    for (let i = 0; i < 50; i++) {
+        await UserModel.create({
+            username: i,
+            fullname: `${i}@gmail.com`,
+            email: `${i}@gmail.com`,
+            password: '123456'
+        });
     }
-    return res.status(200).json(result)
+    return res.status(200).json('oke')
 })
 
 // // TODO: bỏ

@@ -46,7 +46,7 @@ const AppProvider = ({ children }) => {
         } else loadingState.set(false);
     }, [socket, isAuth]);
 
-    return loadingState.get() ? <Loading /> : (
+    return loadingState.get() ? <Loading fullScreen/> : (
         <SocketContext.Provider value={socket}>
             { isAuth ? (
                 <Messenger>

@@ -28,9 +28,8 @@ const LoginPage: NextPage = () => {
         try {
             setLoading(true);
             id = toast.loading('Đang đăng nhập!');
-            const { token, refreshToken } = await user.loginUser() as { token: string, refreshToken: string };
-            console.log(token);
-            setAccessToken(token);
+            const { accessToken, refreshToken } = await user.loginUser() as { accessToken: string, refreshToken: string };
+            setAccessToken(accessToken);
 			setRefreshToken(refreshToken);
             toast.update(id, {render: "Đăng nhập thành công", type: "success", isLoading: false });
         } catch (error) {
