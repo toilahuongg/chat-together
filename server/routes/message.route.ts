@@ -20,9 +20,10 @@ router.post("/api/message/:room/send-message", passport.authenticate("jwt", { se
     if (!req.body || !req.body.message) {
         return res.status(403).json({ message: "Tin nhắn trống không thể gửi" })
     }
+    const userID : string = req.auth?._id.toString() as unknown as string
     let messageInfo: Message = {
         msg: req.body.message,
-        sender: req.auth?._id.toString() as unknown as string,
+        sender: userID,
         roomID: req.params.room
     };
     if (!mongoose.isValidObjectId(messageInfo.roomID))
@@ -61,7 +62,15 @@ router.post("/api/message/:room/send-message", passport.authenticate("jwt", { se
             ...message["_doc"]
         })
     }
-    return res.status(200).json({ message: "tin nhắn gửi thành công" })
+    res.status(200).json({ "status": "tin nhắn gửi thành công", "messageID": message.id })
+    const socketsCurrentUser = await SocketManager.getSockets(userID)
+    for (let i = 0; i < socketsCurrentUser.length; i++) {
+        req.io.to(socketsCurrentUser[i]).emit("new-chat-message", {
+            ...message["_doc"]
+        })
+    }
+    return
+
 })
 /**
  * Lấy các tin nhắn đã gửi trong phòng
