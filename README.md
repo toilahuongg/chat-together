@@ -13,6 +13,7 @@ client:
     new-chat-message
     new-notification
     add-member
+    update-notification-satus
 ##-----------------------------------------------------------------------
 
 
