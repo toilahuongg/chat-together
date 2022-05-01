@@ -93,7 +93,7 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
     try {
         // --------------- KIỂM TRA THÔNG TIN --------------------------
         // id người truy cập
-        const userID: string | undefined = req.auth?._id.toString()
+        const userID: string  = req.auth?._id.toString() as string
         // lấy id thông báo xác nhận lời mời kết bạn từ param
         const notificationID: string = req.params.id
         // kiểm tra xem lời mời này có xác thực không
@@ -131,6 +131,12 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
         const sockets = await SocketManager.getSockets(notification.infoNoti.userSent.toString())
         for (let i = 0; i < sockets.length; i++) {
             req.io.to(sockets[i]).emit("new-notification", acceptedNotification)
+        }
+        // gửi thông báo đến người gửi rằng đã chấp nhận lời mời kết bạn
+        // socket của user hiện tại
+        const socketsOfCurrentUser = await SocketManager.getSockets(userID)
+        for(let i = 0; i < socketsOfCurrentUser.length; i++) {
+            req.io.to(socketsOfCurrentUser[i]).emit("update-notification-satus", notification["infoNoti"])
         }
         // Khởi tạo tin nhắn cũ nhất
         const lastReadMessageByUsers = [
