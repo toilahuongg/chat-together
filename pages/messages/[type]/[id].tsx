@@ -14,7 +14,7 @@ const Message = () => {
   const showGroupSetting = useState(showGroupSettingState);
   useEffect(() => {
     showGroupSetting.set(true);
-  }, []);
+  }, []); 
   return (
     <>
       <div className={styles.nav}>
