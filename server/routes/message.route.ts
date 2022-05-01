@@ -50,13 +50,15 @@ router.post("/api/message/:room/send-message", passport.authenticate("jwt", { se
     // lấy socketID của các thành viên trong nhóm
     let sockets: string[] = [];
     for (let i = 0; i < roomMembers.length; i++) {
+        if(roomMembers[i] === messageInfo.sender ) 
+            continue
         let temp: string[] = await SocketManager.getSockets(roomMembers[i].toString())
         sockets = sockets.concat(temp)
     }
     // gửi thông báo đến các socket rằng có tin nhắn mới
     for (let i = 0; i < sockets.length; i++) {
         req.io.to(sockets[i]).emit("new-chat-message", {
-            ...message
+            ...message["_doc"]
         })
     }
     return res.status(200).json({ message: "tin nhắn gửi thành công" })

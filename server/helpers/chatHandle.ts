@@ -28,7 +28,7 @@ const chatHandle = (io) => {
             socket.emit("login", {type: "sucess"}) 
             return 
             }catch(err) {
-                socket.emit("error", {type: "error-login"})
+                socket.emit("login", {type: "error-login"})
             }
         })
         socket.on("read-message", async ({roomID, messageID}) => {
