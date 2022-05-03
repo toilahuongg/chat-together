@@ -100,16 +100,16 @@ router.post("/api/friend/retake-friend-request/:retakeUserID", passport.authenti
             .then(async () => {
                 res.status(200).json({ message: "Rút lời mời kết bạn thành công" })
                 // thông báo
-                await User.EventToUser(userID, "anothertab-retake-friend-request", {userID: retakeUserID})
-                await User.EventToUser(retakeUserID, "auser-retake-friend-request", {userID: userID})
+                await User.EventToUser(userID, "anothertab-retake-friend-request", { userID: retakeUserID })
+                await User.EventToUser(retakeUserID, "auser-retake-friend-request", { userID: userID })
             })
             .catch(err => {
                 if (err instanceof RequestNotExist) {
-                    res.status(403).json({message: "Chưa từng gửi lời mời kết bạn đến user này"})
+                    res.status(403).json({ message: "Chưa từng gửi lời mời kết bạn đến user này" })
                     return
                 }
                 if (err instanceof UserNotExist) {
-                    return res.status(403).json({message: "User không tồn tại"})
+                    return res.status(403).json({ message: "User không tồn tại" })
                 }
                 throw new Error()
             })
@@ -117,7 +117,7 @@ router.post("/api/friend/retake-friend-request/:retakeUserID", passport.authenti
     }
     catch (err) {
         console.error("ERR: Lỗi hệ thống")
-        return res.status(500).json({message: "Lỗi hệ thống"})
+        return res.status(500).json({ message: "Lỗi hệ thống" })
     }
 })
 /**
@@ -128,28 +128,54 @@ router.post('/api/friend/denie-friend-request/:userDenieID', passport.authentica
         const userID = req.auth?._id
         const userDenieID = req.params.userDenieID
         await User.DenieFriendRequest(userID, userDenieID)
-                  .then(async () => {
-                    res.status(200).json({ message: "Từ chối lời mời kết bạn thành công" })
-                    await User.EventToUser(userID, "anothertab-denie-friend-request", {userID: userDenieID})
-                    await User.EventToUser(userDenieID, "friend-request-be-denied", {userID: userID})
-                  })
-                  .catch(err => {
-                      if(err instanceof UserNotExist) {
-                        return res.status(403).json({message: "User không tồn tại"})
-                      }
-                      if(err instanceof RequestNotExist) {
-                        return res.status(403).json({message: "Chưa từng được user này gửi lời mời kết bạn"})
-                      }
-                    throw err
-                  })
+            .then(async () => {
+                res.status(200).json({ message: "Từ chối lời mời kết bạn thành công" })
+                await User.EventToUser(userID, "anothertab-denie-friend-request", { userID: userDenieID })
+                await User.EventToUser(userDenieID, "friend-request-be-denied", { userID: userID })
+            })
+            .catch(err => {
+                if (err instanceof UserNotExist) {
+                    return res.status(403).json({ message: "User không tồn tại" })
+                }
+                if (err instanceof RequestNotExist) {
+                    return res.status(403).json({ message: "Chưa từng được user này gửi lời mời kết bạn" })
+                }
+                throw err
+            })
     }
-    catch(err) {
+    catch (err) {
         console.log("ERR: Lỗi hệ thống")
         console.log(err)
-        return res.status(500).json({message: "Lỗi hệ thống"})
+        return res.status(500).json({ message: "Lỗi hệ thống" })
     }
 })
-
+router.post('/api/friend/unfriend/:id', passport.authenticate("jwt", { session: false }), async (req, res) => {
+    try {
+        const userID = req.auth?._id
+        const idUnfriend = req.params.id
+        await User.RemoveFriend(userID, idUnfriend)
+            .then(async () => {
+                res.status(200).send({ message: "unfriend thành công" })
+                await User.EventToUser(userID, "unfriend", { userID: idUnfriend })
+                await User.EventToUser(idUnfriend, "unfriend", { userID: userID })
+                return
+            })
+            .catch(err => {
+                if (err instanceof UserNotExist) {
+                    return res.status(403).json({ message: "User không tồn tại" })
+                }
+                if (err instanceof UnknownFriendRelation) {
+                    return res.status(403).json({ message: "Không phải là quan hệ bạn bè" })
+                }
+                throw err
+            })
+    }
+    catch (err) {
+        console.log("ERR: Lỗi hệ thống")
+        console.log(err)
+        return res.status(500).json({ message: "Lỗi hệ thống" })
+    }
+})
 /**
  * Chấp nhận lời mời kết bạn bằng id của notification hoặc của user
  */
@@ -214,27 +240,37 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
             }
         ]
         // tạo phòng chat riêng 
-        const PrivateRoom = new RoomModel({
-            name: "",
-            isGroup: false,
-            userIDs: [userID, notification.infoNoti.userSent],
-            settings: {},
-            lastReadMessageByUsers: lastReadMessageByUsers
+        const room = await RoomModel.findOne({
+            userIDs: { $all: [userID, notification.infoNoti.userSent] },
+            isGroup: false
         })
-        await PrivateRoom
-            .save()
-            .then(room => {
-                Room.updateLastChange(room)
-            });
-        // thông báo cho cả 2 người dùng rằng có room mới vừa được tạo
-        const socketsForSendingNewRomNotification =
-            await SocketManager.getSockets(userID as string)
-                .then(async (user1Socket) => {
-                    const user2Socket = await SocketManager.getSockets(notification?.infoNoti.userSent.toString()!)
-                    return user1Socket.concat(user2Socket)
-                })
-        for (let i = 0; i < socketsForSendingNewRomNotification.length; i++)
-            req.io.to(socketsForSendingNewRomNotification[i]).emit("room-notification", PrivateRoom)
+        let PrivateRoom
+        if (!room) {
+            PrivateRoom = new RoomModel({
+                name: "",
+                isGroup: false,
+                userIDs: [userID, notification.infoNoti.userSent],
+                settings: {},
+                lastReadMessageByUsers: lastReadMessageByUsers
+            })
+            await PrivateRoom
+                .save()
+                .then(room => {
+                    Room.updateLastChange(room)
+                });
+        }
+
+        if (!room) {
+            // thông báo cho cả 2 người dùng rằng có room mới vừa được tạo
+            const socketsForSendingNewRomNotification =
+                await SocketManager.getSockets(userID as string)
+                    .then(async (user1Socket) => {
+                        const user2Socket = await SocketManager.getSockets(notification?.infoNoti.userSent.toString()!)
+                        return user1Socket.concat(user2Socket)
+                    })
+            for (let i = 0; i < socketsForSendingNewRomNotification.length; i++)
+                req.io.to(socketsForSendingNewRomNotification[i]).emit("room-notification", PrivateRoom)
+        }
         // xóa pending request và requestsent trong thông tin chung của 2 user
         await UserModel.updateOne({ "_id": notification.infoNoti.userSent.toString() },
             {
