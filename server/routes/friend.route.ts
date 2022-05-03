@@ -2,9 +2,12 @@ import express from 'express'
 import passport from 'passport'
 import SocketManager from '../helpers/socketManager'
 import NotificationModel from '../models/notification.model'
-import UserModel from '../models/user.model'
+import UserModel, { User } from '../models/user.model'
 import ObjectID from 'mongoose'
 import RoomModel, { Room } from '../models/room.model'
+import RequestNotExist from '../helpers/exception/RequestNotExist'
+import UnknownFriendRelation from '../helpers/exception/UnknownFriendRelation'
+import UserNotExist from '../helpers/exception/UserNotExist'
 const router = express.Router()
 /**
  * gửi lời mởi kết bạn
@@ -15,8 +18,8 @@ router.post('/api/friend/friend-request/:id', passport.authenticate('jwt', { ses
         const userSendRequest: string | undefined = req.auth?._id.toString()
         // người nhận lời mời kết bạn
         const isvalidID = ObjectID.isValidObjectId(req.params.id)
-        if(userSendRequest === req.params.id) 
-            return res.status(403).json({message: "Khôn thể gửi lời mời kết bạn đến chính mình"})
+        if (userSendRequest === req.params.id)
+            return res.status(403).json({ message: "Khôn thể gửi lời mời kết bạn đến chính mình" })
         if (!isvalidID)
             return res.status(403).json({ message: "Mã người dùng trong lời mời kết bạn không hợp lệ" })
         const friendID: string = req.params.id
@@ -41,12 +44,12 @@ router.post('/api/friend/friend-request/:id', passport.authenticate('jwt', { ses
         const checkExistFriendRequest = await NotificationModel.find({
             'userID': friendID,
             'infoNoti.nt': 'friend-request',
-            'infoNoti.userSent': new ObjectID.Types.ObjectId(userSendRequest)
+            'infoNoti.userSent': userSendRequest
         })
-        .then(notifications => {
-            if (notifications.length >= 1) return true
-            return false
-        })
+            .then(notifications => {
+                if (notifications.length >= 1) return true
+                return false
+            })
         if (checkExistFriendRequest)
             return res.status(403).json({ type: 3, message: "Bạn đã gửi lời mởi kết bạn rồi" })
         // gửi friend request
@@ -87,13 +90,74 @@ router.post('/api/friend/friend-request/:id', passport.authenticate('jwt', { ses
     }
 })
 /**
+ * Rút lại lời mời kết bạn
+ */
+router.post("/api/friend/retake-friend-request/:retakeUserID", passport.authenticate("jwt", { session: false }), async (req, res) => {
+    try {
+        const userID = req.auth?._id
+        const retakeUserID = req.params.retakeUserID
+        await User.RemoveFriendRequest(userID, retakeUserID)
+            .then(async () => {
+                res.status(200).json({ message: "Rút lời mời kết bạn thành công" })
+                // thông báo
+                await User.EventToUser(userID, "anothertab-retake-friend-request", {userID: retakeUserID})
+                await User.EventToUser(retakeUserID, "auser-retake-friend-request", {userID: userID})
+            })
+            .catch(err => {
+                if (err instanceof RequestNotExist) {
+                    res.status(403).json({message: "Chưa từng gửi lời mời kết bạn đến user này"})
+                    return
+                }
+                if (err instanceof UserNotExist) {
+                    return res.status(403).json({message: "User không tồn tại"})
+                }
+                throw new Error()
+            })
+        return
+    }
+    catch (err) {
+        console.error("ERR: Lỗi hệ thống")
+        return res.status(500).json({message: "Lỗi hệ thống"})
+    }
+})
+/**
+ * Từ chối lời mời kết bạn
+ */
+router.post('/api/friend/denie-friend-request/:userDenieID', passport.authenticate("jwt", { session: false }), async (req, res) => {
+    try {
+        const userID = req.auth?._id
+        const userDenieID = req.params.userDenieID
+        await User.DenieFriendRequest(userID, userDenieID)
+                  .then(async () => {
+                    res.status(200).json({ message: "Từ chối lời mời kết bạn thành công" })
+                    await User.EventToUser(userID, "anothertab-denie-friend-request", {userID: userDenieID})
+                    await User.EventToUser(userDenieID, "friend-request-be-denied", {userID: userID})
+                  })
+                  .catch(err => {
+                      if(err instanceof UserNotExist) {
+                        return res.status(403).json({message: "User không tồn tại"})
+                      }
+                      if(err instanceof RequestNotExist) {
+                        return res.status(403).json({message: "Chưa từng được user này gửi lời mời kết bạn"})
+                      }
+                    throw err
+                  })
+    }
+    catch(err) {
+        console.log("ERR: Lỗi hệ thống")
+        console.log(err)
+        return res.status(500).json({message: "Lỗi hệ thống"})
+    }
+})
+
+/**
  * Chấp nhận lời mời kết bạn bằng id của notification hoặc của user
  */
 router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
         // --------------- KIỂM TRA THÔNG TIN --------------------------
         // id người truy cập
-        const userID: string  = req.auth?._id.toString() as string
+        const userID: string = req.auth?._id.toString() as string
         // lấy id thông báo xác nhận lời mời kết bạn từ param
         const notificationID: string = req.params.id
         // kiểm tra xem lời mời này có xác thực không
@@ -135,7 +199,7 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
         // gửi thông báo đến người gửi rằng đã chấp nhận lời mời kết bạn
         // socket của user hiện tại
         const socketsOfCurrentUser = await SocketManager.getSockets(userID)
-        for(let i = 0; i < socketsOfCurrentUser.length; i++) {
+        for (let i = 0; i < socketsOfCurrentUser.length; i++) {
             req.io.to(socketsOfCurrentUser[i]).emit("update-notification-satus", notification["infoNoti"])
         }
         // Khởi tạo tin nhắn cũ nhất

@@ -6,6 +6,12 @@ import { Socket } from 'socket.io';
 import { IUser } from '../types/user.type';
 import RoomModel, { Room } from './room.model';
 import console from 'console';
+import config from '../helpers/config';
+import UserNotExist from '../helpers/exception/UserNotExist';
+import RequestNotExist from '../helpers/exception/RequestNotExist';
+import NotificationModel from './notification.model';
+import TransactionErr from '../helpers/exception/TransactionErr';
+import UnknownFriendRelation from '../helpers/exception/UnknownFriendRelation';
 const UserSchema = new Schema<IUser>({
     username: {
         type: String,
@@ -48,6 +54,7 @@ const UserSchema = new Schema<IUser>({
         type: String
     },
 }, { timestamps: true });
+const UserModel = model<IUser>('users', UserSchema);
 /**
  * Hỗ trợ truy xuất dữ liệu
  */
@@ -156,9 +163,198 @@ class User {
             console.log(err)
             return
         }
-
+    }
+    /**
+     * hủy lời mời kết bạn
+     * @param userID  
+     * @param userTakeRequest
+     * 
+     * @err UserNotExist, TransactionErr, RequestNotExist
+     */
+    static async RemoveFriendRequest(userID, userTakeRequestID) {
+        // kiểm tra tính xác thực input
+        const user = await UserModel.findById(userID)
+        if(!user) {
+            console.error("Err: User không tồn tại")
+            throw new UserNotExist()
+        }
+        const userTakeRequest = await UserModel.findById(userTakeRequestID)
+        if(!userTakeRequest) {
+            console.error("Err: User bạn muốn hủy lời mời kết bạn không tồn tại")
+            throw new UserNotExist()
+        }
+        // kiểm tra xem đã gửi lời kết bạn chưa
+        let isSend = false
+        const friendRequestSent = user.friendRequestSent
+        for(let i = 0; i < friendRequestSent.length; i++) {
+            if(friendRequestSent[i].userID === userTakeRequestID) {
+                isSend = true;
+                break;
+            }
+        }
+        if(!isSend) throw new RequestNotExist()
+        const session = await mongoose.startSession()
+        // xóa friendrequest
+        try {
+        session.withTransaction(async () => {
+            // xóa friend request phía người gửi
+            await UserModel.findOneAndUpdate({_id: userID}, {
+                $pull: {
+                    friendRequestSent: {
+                        userID: userTakeRequestID
+                    }
+                }
+            })
+            // xóa friend request phía người nhận
+            await UserModel.updateOne({_id: userTakeRequestID}, {
+                $pull: {
+                    pendingFriendRequest: {
+                        userID: userID
+                    }
+                }
+            })
+            // xóa notification
+            await NotificationModel.deleteOne({
+                userID: userTakeRequestID,
+                "infoNoti.nt": "friend-request",
+                "infoNoti.userSent": userID
+            })
+        })
+        } catch(err) {
+            console.log("Err: Transaction ERR")
+            throw new TransactionErr()
+        } finally {
+            await session.endSession()
+        } 
+        return
+    }
+    /**
+     * Không chấp nhận lời mời kết bạn
+     * @param userID
+     * @param userSentRequestID
+     * @err UserNotExist, TransactionErr, RequestNotExist
+     */
+    static async DenieFriendRequest(userID, userSentRequestID) {
+        // kiểm tra tính xác thực input
+        const user = await UserModel.findOne({_id: userID})
+        if(!user) {
+            console.log("ERR: User không tồn tại")
+            throw new UserNotExist()
+        }
+        const userSentRequest = await UserModel.findOne({_id: userSentRequestID})
+        if(!userSentRequest) {
+            console.log("ERR: User gửi friend-request không tồn tại")
+            throw new UserNotExist()
+        }
+        // kiểm tra lời mời kết bạn có tồn tại không
+        let isSend = false
+        const pendingFriendRequest = user.pendingFriendRequest;
+        for(let i = 0; i < pendingFriendRequest.length; i++) {
+            if(pendingFriendRequest[i].userID === userSentRequestID) {
+                isSend = true
+                break
+            }
+        }
+        if(!isSend) throw new RequestNotExist()
+        const session = await mongoose.startSession()
+        try {
+            session.withTransaction(async () => {
+                await UserModel.updateOne({_id: userID}, {
+                    $pull: {
+                        pendingFriendRequest: {
+                            userID: userSentRequestID
+                        }
+                    }
+                })
+                await UserModel.updateOne({_id: userSentRequestID}, {
+                    $pull: {
+                        friendRequestSent: {
+                            userID: userID
+                        }
+                    }
+                })
+                await NotificationModel.deleteOne({
+                    userID: userID,
+                    "infoNoti.nt": "friend-request",
+                    "infoNoti.userSent": userSentRequestID
+                })
+            })
+        }
+        catch(err) {
+            console.log("ERR: transaction err")
+            throw new TransactionErr()
+        }
+        finally {
+            await session.endSession()
+        }
+        return
+    }
+    /**
+     * Loại bỏ user ra khỏi danh sách bạn bè
+     * @param userID
+     * @param removeID
+     * @err UserNotExist, UnknownFriendRelation, TransactionErr
+     */
+    static async RemoveFriend(userID, removeID) {
+        // xác thực thông tin
+        const user = await UserModel.findOne({_id: userID})
+        if(!user) {
+            console.log("ERR: User không tồn tại")
+            throw new UserNotExist()
+        }
+        const removeUser = await UserModel.findOne({_id: removeID})
+        if(!removeUser) {
+            console.log("ERR: Userremove không tồn tại")
+            throw new UserNotExist()
+        }
+        // xác minh xem đã là bạn bè chưa
+        const friends = user.friends
+        if(!friends.includes(removeID)) throw new UnknownFriendRelation()
+        // xóa
+        const session = await mongoose.startSession()
+        try{
+            session.withTransaction(async () => {
+                await UserModel.updateOne({_id: userID}, {
+                    $pull: {
+                        friends: removeID
+                    }
+                })
+                await UserModel.updateOne({_id: removeID}, {
+                    $pull: {
+                        friends: userID
+                    }
+                })
+                await NotificationModel.deleteOne({
+                    userID: userID,
+                    "infoNoti.nt": "friend-request",
+                    "infoNoti.userSent": removeID
+                })
+                await NotificationModel.deleteOne({
+                    userID: removeID,
+                    "infoNoti.nt": "friend-request",
+                    "infoNoti.userSent": userID
+                })
+                await NotificationModel.deleteOne({
+                    userID: userID,
+                    "infoNoti.nt": "accepted-friend-request",
+                    "infoNoti.userSent": removeID
+                })
+                await NotificationModel.deleteOne({
+                    userID: removeID,
+                    "infoNoti.nt": "accepted-friend-request",
+                    "infoNoti.userSent": userID
+                })
+            })
+        }
+        catch(err) {
+            console.log("ERR: Transaction ERR")
+            throw new TransactionErr()
+        }
+        finally {
+            session.endSession()
+        }
+        return
     }
 }
-const UserModel = model<IUser>('users', UserSchema);
 export default UserModel;
 export {User}

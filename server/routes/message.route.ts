@@ -63,6 +63,7 @@ router.post("/api/message/:room/send-message", passport.authenticate("jwt", { se
         })
     }
     res.status(200).json({ "status": "tin nhắn gửi thành công", "messageID": message.id })
+    // gửi thông báo đến chính bản thân
     const socketsCurrentUser = await SocketManager.getSockets(userID)
     for (let i = 0; i < socketsCurrentUser.length; i++) {
         req.io.to(socketsCurrentUser[i]).emit("new-chat-message", {
