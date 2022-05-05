@@ -1,30 +1,28 @@
 import React, { useEffect } from 'react';
-import socketIOClient, { Socket } from 'socket.io-client';
 
 import useAuth from '@src/hooks/useAuth';
 import useUser, { friendsSentState, friendsState, pendingFriendsState } from '@src/hooks/useUser';
-import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import { useState } from '@hookstate/core';
 import Loading from './Layout/Loading';
 import ModalAddFriends from './Messenger/ModalAddFriends';
 import Messenger from './Messenger';
-import { SocketContext } from '@src/hooks/useSocket';
+import useSocket, { SocketContext } from '@src/hooks/useSocket';
 import { IUser } from 'server/types/user.type';
 
 const AppProvider = ({ children }) => {
     const { accessToken, isAuth, setAccessToken, setRefreshToken } = useAuth();
+    const socket = useSocket();
     const user = useUser();
     const friends = useState(friendsState);
     const friendsSent = useState(friendsSentState);
     const pendingFriends = useState(pendingFriendsState);
 
     const loadingState = useState(true);
-    const [socket, setSocket] = React.useState<Socket<DefaultEventsMap, DefaultEventsMap> | undefined>(undefined)
     const getUser = async () => {
         try {
             loadingState.set(true);
             await user.getCurrentUser();
-            socket!.emit("logged-in", accessToken);
+            socket.emit("logged-in", accessToken);
             loadingState.set(false);
         } catch (error) {
             console.log(error);
@@ -35,12 +33,8 @@ const AppProvider = ({ children }) => {
     }
 
     useEffect(() => {
-        setSocket(socketIOClient(process.env.NEXT_PUBLIC_APP_URL || ''));
-    }, [])
-
-    useEffect(() => {
-        if (socket) {
-            if (isAuth) getUser();
+        if (isAuth && socket.connected) {
+            getUser();
             //* Start: Gửi lời mời kết bạn (A gửi lời mời kết bạn đến B)*//
             // 1. Người gửi đi
             socket.on('friend-request-sent', (userData: IUser) => {
@@ -99,7 +93,7 @@ const AppProvider = ({ children }) => {
             //* End: Không chấp nhận *//
         }
         else loadingState.set(false);
-    }, [socket, isAuth]);
+    }, [isAuth, socket]);
 
     return loadingState.get() ? <Loading fullScreen /> : (
         <SocketContext.Provider value={socket}>

@@ -1,6 +1,5 @@
 import { Schema, model } from "mongoose";
 import RoomModel, {Room} from "./room.model";
-import config from '../helpers/config';
 import { INotificationModel } from "server/types/notification.type";
 const NotificationSchema = new Schema<INotificationModel>({
     userID: {

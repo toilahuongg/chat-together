@@ -13,6 +13,7 @@ import SocketManager from '../helpers/socketManager';
 import { Notification } from '../models/notification.model'
 import uploadavartar from '../helpers/avartarUploadHandle'
 import MulterRequest from 'server/types/multerrequest';
+import { authRequest } from '../helpers/authRequest';
 
 dotenv.config();
 const Router = express.Router();
@@ -70,6 +71,9 @@ Router.post('/api/auth/refresh-token', async (req, res) => {
 
 })
 
+Router.get('/api/user/auth', authRequest, (req, res) => {
+    return res.json("oke");
+})
 /**
  * Lấy thông tin người dùng
  */
