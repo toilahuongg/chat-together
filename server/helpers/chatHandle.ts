@@ -2,6 +2,10 @@ import { verifyToken } from "./jwt";
 import SocketManager from "./socketManager";
 import { User } from "../models/user.model";
 import { Room } from "../models/room.model";
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 const chatHandle = (io) => {
     io.on("connection", (socket) => {
         console.log("[SOCKET-IO] client connected with id: " + socket.id);
@@ -28,6 +32,7 @@ const chatHandle = (io) => {
             socket.emit("login", {type: "sucess"}) 
             return 
             }catch(err) {
+                console.log(err);
                 socket.emit("login", {type: "error-login"})
             }
         })
@@ -57,6 +62,7 @@ const chatHandle = (io) => {
                 })
         })
         socket.on("disconnect", async () => {
+            console.log("[SOCKET-IO] client disconnected with id: "+ socket.id);
             if(!socket.userID) return
             await SocketManager.removeSocket(socket.id, socket.userID)
             

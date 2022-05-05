@@ -2,7 +2,6 @@ import { createState, State, useState } from "@hookstate/core";
 import { defaultUser } from "@src/contants/user.contant";
 import instance from "@src/helpers/instance";
 import axios from "axios";
-import INotification from "server/types/notification.type";
 import { IUser } from "server/types/user.type";
 
 export const pendingFriendsState = createState<IUser[]>([]);
@@ -27,33 +26,37 @@ const wrapState = (s: State<IUser>) => ({
         })
         .catch(err => reject(err))
     ),
-    updateFriendRequestSent: (noti: INotification) => {
+    addFriendRequestSent: (id: string) => {
         s.friendRequestSent.set(f => {
-            const idx = f.findIndex(({ userID }) => userID === noti.userID);
-            if (idx >= 0) f.splice(idx, 1);
-            else f.push({ userID: noti.userID, notificationID: noti._id });
+            const idx = f.findIndex(userID => userID === id);
+            if (idx < 0) f.push(id);
             return f;
         })
     },
-    updatePendingFriendRequest: (noti: INotification) => {
-        s.pendingFriendRequest.set(f => {
-            const idx = f.findIndex(({ userID }) => userID === noti.userID);
+    removeFriendRequestSent: (id: string) => {
+        s.friendRequestSent.set(f => {
+            const idx = f.findIndex(userID => userID === id);
             if (idx >= 0) f.splice(idx, 1);
-            else f.push({ userID: noti.userID, notificationID: noti._id });
             return f;
         })
     },
-    checkUserInFriendRequestSent: (userID: string) => {
-        const friendRequestSent = s.friendRequestSent.get();
-        return friendRequestSent.some(user => user.userID === userID);
+    addPendingFriendRequest: (id: string) => {
+        s.pendingFriendRequest.set(p => {
+            const idx = p.findIndex(userID => userID === id);
+            if (idx < 0) p.push(id);
+            return p;
+        })
     },
-    getNotiIdInSent: (userID: string) => {
-        const friendRequestSent = s.friendRequestSent.get();
-        return friendRequestSent.find(user => user.userID === userID)?.notificationID;
+    removePendingFriendRequest: (id: string) => {
+        s.pendingFriendRequest.set(p => {
+            const idx = p.findIndex(userID => userID === id);
+            if (idx >= 0) p.splice(idx, 1);
+            return p;
+        })
     },
-    getNotiIdInPending: (userID: string) => {
-        const pendingFriendRequest = s.pendingFriendRequest.get();
-        return pendingFriendRequest.find(user => user.userID === userID)?.notificationID;
+    checkUserInFriendRequestSent: (id: string) => {
+        const friendRequestSent = s.friendRequestSent.get();
+        return friendRequestSent.some(userID => userID === id);
     }
 });
 

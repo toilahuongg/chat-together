@@ -28,7 +28,7 @@ const ModalAddFriends: React.FC<TProps> = ({
 }) => {
   const unmount = useRef(false);
   const divRef = useRef<HTMLDivElement>(null);
-  const { checkUserInFriendRequestSent, updateFriendRequestSent } = useUser();
+  const { checkUserInFriendRequestSent, addFriendRequestSent, removeFriendRequestSent } = useUser();
   const hiddenRecommendFriends = useState(false);
   const checkboxState = useState(false);
   if (typeof window !== 'undefined') hiddenRecommendFriends.attach(Persistence('hidden-recommend-friends'));
@@ -98,15 +98,18 @@ const ModalAddFriends: React.FC<TProps> = ({
             isLoading={loadingUsers}
             loading={<Loading />}
           >
-            {listUserState.map(user => (
-              <User
-                key={user._id.get() + randomChars(8)}
-                data={user.get()}
-                type="friends-request-sent"
-                isFriendRequestSent={checkUserInFriendRequestSent(user._id.get())}
-                onUpdate={updateFriendRequestSent}
-              />
-            ))}
+            {listUserState.map(user => {
+              const checked = checkUserInFriendRequestSent(user._id.get());
+              return (
+                <User
+                  key={user._id.get() + randomChars(8)}
+                  data={user.get()}
+                  type="friends-request-sent"
+                  isFriendRequestSent={checked}
+                  onUpdate={checked ? removeFriendRequestSent : addFriendRequestSent}
+                />
+              )
+            })}
           </InfiniteScroll>
         </div>
 

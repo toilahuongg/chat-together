@@ -319,6 +319,7 @@ Router.get('/api/user/search', passport.authenticate('jwt', { session: false }),
         if (fn) match['fullname'] = { $regex: `.*${fullname}.*`, $options: 'i' };
         if (lastId) match['_id'] = { $lt: lastId };
         if (isNotFriend === "true") {
+            // TODO bỏ trong phần pending
             const user = await UserModel.findById(userID, { friends: 1 }).lean();
             if (user) {
                 friends = user.friends;

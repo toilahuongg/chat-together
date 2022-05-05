@@ -1,35 +1,30 @@
-import React, { useContext, createContext, useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import socketIOClient, { Socket } from 'socket.io-client';
 
 import useAuth from '@src/hooks/useAuth';
-import useUser from '@src/hooks/useUser';
+import useUser, { friendsSentState, friendsState, pendingFriendsState } from '@src/hooks/useUser';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import { useState } from '@hookstate/core';
 import Loading from './Layout/Loading';
 import ModalAddFriends from './Messenger/ModalAddFriends';
 import Messenger from './Messenger';
-import INotification from 'server/types/notification.type';
-import { updatePendingFriendsState } from '@src/hooks/useFriends';
-import randomChars from 'server/helpers/randomChars';
-
-const SocketContext = createContext<Socket<DefaultEventsMap, DefaultEventsMap> | undefined>(undefined)
-
-export const useSocket = () => {
-    return useContext(SocketContext)
-}
-
+import { SocketContext } from '@src/hooks/useSocket';
+import { IUser } from 'server/types/user.type';
 
 const AppProvider = ({ children }) => {
     const { accessToken, isAuth, setAccessToken, setRefreshToken } = useAuth();
     const user = useUser();
-    const updatePendingFriends = useState(updatePendingFriendsState);
+    const friends = useState(friendsState);
+    const friendsSent = useState(friendsSentState);
+    const pendingFriends = useState(pendingFriendsState);
+
     const loadingState = useState(true);
     const [socket, setSocket] = React.useState<Socket<DefaultEventsMap, DefaultEventsMap> | undefined>(undefined)
-    const getUser = useCallback(async () => {
+    const getUser = async () => {
         try {
             loadingState.set(true);
             await user.getCurrentUser();
-            socket?.emit("logged-in", accessToken);
+            socket!.emit("logged-in", accessToken);
             loadingState.set(false);
         } catch (error) {
             console.log(error);
@@ -37,7 +32,7 @@ const AppProvider = ({ children }) => {
             setAccessToken('');
             setRefreshToken('');
         }
-    }, [socket]);
+    }
 
     useEffect(() => {
         setSocket(socketIOClient(process.env.NEXT_PUBLIC_APP_URL || ''));
@@ -45,26 +40,76 @@ const AppProvider = ({ children }) => {
 
     useEffect(() => {
         if (socket) {
-            socket.on('new-notification', (noti: INotification) => {
-                if (noti.infoNoti.nt === 'friend-request') {
-                    user.pendingFriendRequest.merge([{ userID: noti.infoNoti.userSent, notificationID: noti._id }]);
-                    updatePendingFriends.set(randomChars(8));
-                }
-            });
             if (isAuth) getUser();
+            //* Start: Gửi lời mời kết bạn (A gửi lời mời kết bạn đến B)*//
+            // 1. Người gửi đi
+            socket.on('friend-request-sent', (userData: IUser) => {
+                user.addFriendRequestSent(userData._id);
+                friendsSent.merge([userData]);
+            });
+            // 2. Người nhận
+            socket.on('pending-friend-request', (userData: IUser) => {
+                user.addPendingFriendRequest(userData._id);
+                pendingFriends.merge([userData]);
+            });
+            //* End: Gửi lời mời kết bạn *//
+
+            //* Start: Huỷ lời mời kết bạn đã gửi đi (A gửi lời mời kết bạn đến B, A huỷ lời mời) *//
+            // 1. Các socket của A cập nhật
+            socket.on('retake-friend-request-sent', ({ userID }) => {
+                user.removeFriendRequestSent(userID);
+                friendsSent.set(current => current.filter(({ _id }) => _id !== userID));
+            });
+            // 2. Các socket của B cập nhật
+            socket.on('retake-pending-friend-request', ({ userID }) => {
+                user.removePendingFriendRequest(userID);
+                pendingFriends.set(current => current.filter(({ _id }) => _id !== userID));
+            });
+            //* End: Huỷ lời mời kết bạn đã gửi đi *//
+
+            //* Start: Chấp nhận lời mời kết bạn (B gửi lời mời kết bạn đến A, A đồng ý)*//
+            // 1. Các socket của A cập nhật
+            socket.on('accept-pending-friend-request', (userData: IUser) => {
+                user.removePendingFriendRequest(userData._id);
+                pendingFriends.set(current => current.filter(({ _id }) => _id !== userData._id));
+                user.friends.merge([userData._id]);
+                friends.merge([userData]);
+            });
+            // 2. Các socket của B cập nhật
+            socket.on('accept-friend-request-sent', (userData: IUser) => {
+                user.removeFriendRequestSent(userData._id);
+                friendsSent.set(current => current.filter(({ _id }) => _id !== userData._id));
+                user.friends.
+                    merge([userData._id]);
+                friends.merge([userData]);
+            });
+            //* End: Chấp nhận lời mời kết bạn *//
+
+            //* Start: Không chấp nhận (B gửi lời mời kết bạn đến A, A không chấp nhận) *//
+            // 1. Các socket của A cập nhật
+            socket.on('denie-pending-friend-request', ({ userID }) => {
+                user.removePendingFriendRequest(userID);
+                pendingFriends.set(current => current.filter(({ _id }) => _id !== userID));
+            });
+            // 2. Các socket của B cập nhật
+            socket.on('denie-friend-request-sent', ({ userID }) => {
+                user.removeFriendRequestSent(userID);
+                friendsSent.set(current => current.filter(({ _id }) => _id !== userID));
+            });
+            //* End: Không chấp nhận *//
         }
         else loadingState.set(false);
-    }, [socket, isAuth, getUser]);
+    }, [socket, isAuth]);
 
-    return loadingState.get() ? <Loading fullScreen/> : (
+    return loadingState.get() ? <Loading fullScreen /> : (
         <SocketContext.Provider value={socket}>
-            { isAuth ? (
+            {isAuth ? (
                 <Messenger>
                     {children}
                 </Messenger>
-            ) : children }
-            { isAuth && user.friends.length < 5 && (
-              <ModalAddFriends isRecommend/>
+            ) : children}
+            {isAuth && user.friends.length < 5 && (
+                <ModalAddFriends isRecommend />
             )}
         </SocketContext.Provider>
     );

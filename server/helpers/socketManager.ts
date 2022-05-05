@@ -14,7 +14,8 @@ class SocketManager{
         if(!SocketManager.sockets[userid]) {
             SocketManager.sockets[userid] = []
         }
-        SocketManager.sockets[userid].push(socketID)
+        // Loại bỏ socketId trùng lặp
+        SocketManager.sockets[userid] = [...new Set([...SocketManager.sockets[userid], socketID])];
     }
     /**
      * Xóa socket khỏi kho lưu trữ nếu nó tồn tại
@@ -36,7 +37,7 @@ class SocketManager{
      * @param userid string
      * @returns string[]
      */
-    static async getSockets(userid:string) : Promise<String[] | any>  {
+    static async getSockets(userid:string) : Promise<string[]>  {
         if(!SocketManager.sockets[userid]) return []
 
         return SocketManager.sockets[userid]

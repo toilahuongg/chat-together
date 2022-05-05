@@ -2,7 +2,7 @@ import { useState } from '@hookstate/core';
 
 import Button from '@src/Components/Layout/Button';
 import Modal from '@src/Components/Layout/Modal';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Tabs from '@src/Components/Layout/Tabs';
 import TextField from '@src/Components/Layout/TextField';
 import useUser, { friendsSentState, friendsState, pendingFriendsState } from '@src/hooks/useUser';
@@ -12,8 +12,6 @@ import randomChars from 'server/helpers/randomChars';
 import Loading from '@src/Components/Layout/Loading';
 
 import IconSearch from '@src/styles/svg/search.svg';
-import INotification from 'server/types/notification.type';
-import { updatePendingFriendsState } from '@src/hooks/useFriends';
 
 type TProps = {
   isShow?: boolean,
@@ -26,7 +24,6 @@ const ModalFriends: React.FC<TProps> = ({
   const userState = useUser();
 
   const pendingFriends = useState(pendingFriendsState);
-  const updatePendingFriends = useState(updatePendingFriendsState);
   const friendsSent = useState(friendsSentState);
   const friends = useState(friendsState);
 
@@ -73,7 +70,7 @@ const ModalFriends: React.FC<TProps> = ({
 
   useEffect(() => {
     unmount.current = false;
-    const list = userState.pendingFriendRequest.map(({ userID }) => userID.get());
+    const list = userState.pendingFriendRequest.map(userID => userID.get());
     (async () => {
       setLoadingPending(true);
       const response = await instance.post('/api/user/profile-list', { ids: list });
@@ -84,11 +81,11 @@ const ModalFriends: React.FC<TProps> = ({
     return () => {
       unmount.current = true;
     }
-  }, [updatePendingFriends.get()]);
+  }, []);
 
   useEffect(() => {
     unmount.current = false;
-    const list = userState.friendRequestSent.map(({ userID }) => userID.get());
+    const list = userState.friendRequestSent.map(userID => userID.get());
     (async () => {
       setLoadingSent(true);
       const response = await instance.post('/api/user/profile-list', { ids: list });
@@ -116,16 +113,20 @@ const ModalFriends: React.FC<TProps> = ({
     }
   }, []);
 
-  const handleUpdatePendingRequest = (noti: INotification, unaccept?: boolean) => {
-    userState.updatePendingFriendRequest(noti);
-    const user = pendingFriends.find(({ _id }) => _id.get() === noti.userID);
+  const handleUpdatePendingRequest = (userID: string, unaccept?: boolean) => {
+    userState.removePendingFriendRequest(userID);
+    const user = pendingFriends.find(({ _id }) => _id.get() === userID);
     if (!unaccept && user) {
-      userState.friends.merge([noti.userID]);
+      userState.friends.merge([userID]);
       friends.set(f => [...f, {...user.get()}])
     }
-    pendingFriends.set(current => current.filter(({ _id }) => _id !== noti.userID));
+    pendingFriends.set(current => current.filter(({ _id }) => _id !== userID));
   }
-  console.log(friends.get());
+
+  const handleUpdateFriendRequestSent = (userID: string) => {
+    userState.removeFriendRequestSent(userID);
+    friendsSent.set(current => current.filter(({ _id }) => _id !== userID));
+  }
   return (
     <Modal isShow={isShow} onClose={onClose} size="lg">
       <Modal.Header>
@@ -148,7 +149,6 @@ const ModalFriends: React.FC<TProps> = ({
                 key={user._id.get() + randomChars(8)}
                 type="pending-friends-request"
                 data={user.get()}
-                notiId={userState.getNotiIdInPending(user._id.get())}
                 onUpdate={handleUpdatePendingRequest}
               />
             ))
@@ -160,7 +160,7 @@ const ModalFriends: React.FC<TProps> = ({
                 type="friends-request-sent"
                 data={user.get()}
                 isFriendRequestSent={true}
-                onUpdate={() => { }}
+                onUpdate={handleUpdateFriendRequestSent}
               />
             ))
           )}

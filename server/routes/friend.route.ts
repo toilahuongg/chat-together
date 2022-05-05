@@ -14,17 +14,18 @@ const router = express.Router()
  */
 router.post('/api/friend/friend-request/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
+        const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
         // người gửi lời mởi kết bạn
-        const userSendRequest: string | undefined = req.auth?._id.toString()
+        const userSendRequest = req.auth?._id.toString()!;
         // người nhận lời mời kết bạn
         const isvalidID = ObjectID.isValidObjectId(req.params.id)
         if (userSendRequest === req.params.id)
-            return res.status(403).json({ message: "Khôn thể gửi lời mời kết bạn đến chính mình" })
+            return res.status(403).json({ message: "Không thể gửi lời mời kết bạn đến chính mình" })
         if (!isvalidID)
             return res.status(403).json({ message: "Mã người dùng trong lời mời kết bạn không hợp lệ" })
         const friendID: string = req.params.id
         // kiểm tra xem 2 người đã phải là bạn hay chưa
-        const user = await UserModel.findOne({ '_id': userSendRequest })
+        const user = await UserModel.findById(userSendRequest, { _id: 1, username: 1, fullname: 1, friends: 1 }).lean();
         if (!user)
             return res.status(403).json({ message: "Err" })
 
@@ -33,56 +34,20 @@ router.post('/api/friend/friend-request/:id', passport.authenticate('jwt', { ses
         if (indexF >= 0)
             return res.status(403).json({ type: 1, message: "Đã là bạn từ trước" })
         // kiêm tra xem người dùng có tồn tại hay không
-        const existUser = await UserModel.where('_id').equals(friendID)
-            .then(users => {
-                if (users.length >= 1) return true
-                return false
-            })
-        if (!existUser)
-            return res.status(403).json({ type: 2, message: "User không tồn tại" })
-        // kiểm tra xem bạn đã gửi request này đến user trước đó chưa
-        const checkExistFriendRequest = await NotificationModel.find({
-            'userID': friendID,
-            'infoNoti.nt': 'friend-request',
-            'infoNoti.userSent': userSendRequest
-        })
-            .then(notifications => {
-                if (notifications.length >= 1) return true
-                return false
-            })
-        if (checkExistFriendRequest)
-            return res.status(403).json({ type: 3, message: "Bạn đã gửi lời mởi kết bạn rồi" })
-        // gửi friend request
-        //-------------------------
-        // lưu notificaiton
-        const friendRequestNotificaiton = await new NotificationModel({
-            userID: friendID,
-            infoNoti: {
-                nt: "friend-request",
-                userSent: userSendRequest,
-                accepted: false
-            }
-        }).save()
-        // lưu gửi thông báo vào mục pending request của người gửi kết bạn
-        await UserModel.updateOne({ "_id": friendID }, {
-            $push:
-            {
-                pendingFriendRequest: { userID: new ObjectID.Types.ObjectId(userSendRequest), notificationID: new ObjectID.Types.ObjectId(friendRequestNotificaiton._id) }
-            }
-        })
-        // lưu lời mời mà người dùng đã gửi vào friendRequestSent của người gửi
+        const fUser = await UserModel.findById(friendID, { _id: 1, username: 1, fullname: 1 }).lean();
+        if (!fUser) return res.status(403).json({ type: 2, message: "User không tồn tại" })
+
+        // Người được gửi
+        await UserModel.updateOne({ "_id": friendID }, { $addToSet: { pendingFriendRequest: userSendRequest } });
+        await User.EventToUser(friendID, "pending-friend-request", user)
+
+        // Người gửi
         await UserModel.updateOne({ "_id": userSendRequest }, {
-            $push:
-            {
-                friendRequestSent: { userID: new ObjectID.Types.ObjectId(friendID), notificationID: new ObjectID.Types.ObjectId(friendRequestNotificaiton._id) }
-            }
+            $addToSet: { friendRequestSent: friendID }
         })
-        // gửi thông báo đến người nhận
-        let sockets: string[] = await SocketManager.getSockets(friendID)
-        for (let i = 0; i < sockets.length; i++) {
-            req.io.to(sockets[i]).emit("new-notification", friendRequestNotificaiton)
-        }
-        return res.status(200).send(friendRequestNotificaiton)
+        await User.EventToUser(userSendRequest, "friend-request-sent", fUser, [excludeSocketId]);
+
+        return res.status(200).send({ message: "Gửi lời mời kết bạn thành công" })
     } catch (err) {
         console.log(err)
         res.status(500)
@@ -94,14 +59,16 @@ router.post('/api/friend/friend-request/:id', passport.authenticate('jwt', { ses
  */
 router.post("/api/friend/retake-friend-request/:retakeUserID", passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
-        const userID = req.auth?._id
+        const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
+        const userID = req.auth?._id.toString()!;
         const retakeUserID = req.params.retakeUserID
         await User.RemoveFriendRequest(userID, retakeUserID)
             .then(async () => {
                 res.status(200).json({ message: "Rút lời mời kết bạn thành công" })
-                // thông báo
-                await User.EventToUser(userID, "anothertab-retake-friend-request", { userID: retakeUserID })
-                await User.EventToUser(retakeUserID, "auser-retake-friend-request", { userID: userID })
+                // Người huỷ
+                await User.EventToUser(userID, "retake-friend-request-sent", { userID: retakeUserID }, [excludeSocketId])
+                // Người bị huỷ lời mời
+                await User.EventToUser(retakeUserID, "retake-pending-friend-request", { userID: userID })
             })
             .catch(err => {
                 if (err instanceof RequestNotExist) {
@@ -125,13 +92,16 @@ router.post("/api/friend/retake-friend-request/:retakeUserID", passport.authenti
  */
 router.post('/api/friend/denie-friend-request/:userDenieID', passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
-        const userID = req.auth?._id
+        const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
+        const userID = req.auth?._id.toString()!;
         const userDenieID = req.params.userDenieID
         await User.DenieFriendRequest(userID, userDenieID)
             .then(async () => {
                 res.status(200).json({ message: "Từ chối lời mời kết bạn thành công" })
-                await User.EventToUser(userID, "anothertab-denie-friend-request", { userID: userDenieID })
-                await User.EventToUser(userDenieID, "friend-request-be-denied", { userID: userID })
+                // Người từ chối
+                await User.EventToUser(userID, "denie-pending-friend-request", { userID: userDenieID }, [excludeSocketId])
+                // Người bị từ chối
+                await User.EventToUser(userDenieID, "denie-friend-request-sent", { userID: userID })
             })
             .catch(err => {
                 if (err instanceof UserNotExist) {
@@ -151,7 +121,7 @@ router.post('/api/friend/denie-friend-request/:userDenieID', passport.authentica
 })
 router.post('/api/friend/unfriend/:id', passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
-        const userID = req.auth?._id
+        const userID = req.auth?._id.toString()!;
         const idUnfriend = req.params.id
         await User.RemoveFriend(userID, idUnfriend)
             .then(async () => {
@@ -177,128 +147,112 @@ router.post('/api/friend/unfriend/:id', passport.authenticate("jwt", { session: 
     }
 })
 /**
- * Chấp nhận lời mời kết bạn bằng id của notification hoặc của user
+ * Chấp nhận lời mời kết bạn bằng userID
  */
 router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
+        const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
         // --------------- KIỂM TRA THÔNG TIN --------------------------
         // id người truy cập
-        const userID: string = req.auth?._id.toString() as string
+        const userID = req.auth?._id.toString()!;
         // lấy id thông báo xác nhận lời mời kết bạn từ param
-        const notificationID: string = req.params.id
-        // kiểm tra xem lời mời này có xác thực không
-        const validNotificationID = ObjectID.isValidObjectId(notificationID)
-        if (!validNotificationID)
-            return res.status(403).json({ message: "Mã lời mời kết bạn không hợp lệ" })
-        let notification = await NotificationModel.findOne({ "_id": notificationID })
-        if (!notification) {
-            // xét trương hợp id là id của user
-            notification = await NotificationModel.findOne({ 'userID': userID, 'infoNoti.userSent': notificationID })
-            if (!notification)
-                return res.status(403).json({ message: "Lời mời kết bạn không tồn tại" })
-        }
-        if (notification.userID.toString() !== userID)
-            return res.status(403).json({ message: "Bạn không có quyền chấp nhận lời mời kết bạn này" })
-        // kiểm tra xem mã có đúng là thông báo lời mời kết bạn không
-        if (notification.infoNoti.nt !== "friend-request")
-            return res.status(403).json("Lỗi không thể chấp nhận kết bạn do đây ko phải thông báo kết bạn")
-        // kiểm tra xem lời mời có được chấp nhận trước đó hay không
-        if (notification.infoNoti.accepted === true)
-            return res.status(403).send({ message: "Lời mời này đã được chấp nhận trước đó" })
-        //----------------------CHẤP NHẬN LỜI MỜI KẾT BẠN VÀ INSERT VÀO DB NHỮNG THÔNG TIN CẦN THIẾT-----------------------------
-        notification.infoNoti.accepted = true
-        await notification.save()
-        // thông báo đến người gửi rằng lời mời đã được chấp nhận
-        const acceptedNotification = new NotificationModel({
-            userID: notification.infoNoti.userSent.toString(),
-            infoNoti: {
-                nt: "accepted-friend-request",
-                userSent: userID
-            }
-        })
-        await acceptedNotification.save()
-        // gửi thông báo đến socket của user nếu online
-        const sockets = await SocketManager.getSockets(notification.infoNoti.userSent.toString())
-        for (let i = 0; i < sockets.length; i++) {
-            req.io.to(sockets[i]).emit("new-notification", acceptedNotification)
-        }
-        // gửi thông báo đến người gửi rằng đã chấp nhận lời mời kết bạn
-        // socket của user hiện tại
-        const socketsOfCurrentUser = await SocketManager.getSockets(userID)
-        for (let i = 0; i < socketsOfCurrentUser.length; i++) {
-            req.io.to(socketsOfCurrentUser[i]).emit("update-notification-satus", notification["infoNoti"])
-        }
-        // Khởi tạo tin nhắn cũ nhất
-        const lastReadMessageByUsers = [
-            {
-                userID: userID,
-                lastMessageID: null
-            },
-            {
-                userID: notification.infoNoti.userSent,
-                lastMessageID: null
-            }
-        ]
-        // tạo phòng chat riêng 
-        const room = await RoomModel.findOne({
-            userIDs: { $all: [userID, notification.infoNoti.userSent] },
-            isGroup: false
-        })
-        let PrivateRoom
-        if (!room) {
-            PrivateRoom = new RoomModel({
-                name: "",
-                isGroup: false,
-                userIDs: [userID, notification.infoNoti.userSent],
-                settings: {},
-                lastReadMessageByUsers: lastReadMessageByUsers
-            })
-            await PrivateRoom
-                .save()
-                .then(room => {
-                    Room.updateLastChange(room)
-                });
-        }
+        const friendID = req.params.id as string
+        // Kiểm tra người gửi
+        const user = await UserModel.findById(userID, { _id: 1, username: 1, fullname: 1 }).lean();
+        if (!user) return res.status(401).json({ type: 2, message: "User không tồn tại" })
 
-        if (!room) {
-            // thông báo cho cả 2 người dùng rằng có room mới vừa được tạo
-            const socketsForSendingNewRomNotification =
-                await SocketManager.getSockets(userID as string)
-                    .then(async (user1Socket) => {
-                        const user2Socket = await SocketManager.getSockets(notification?.infoNoti.userSent.toString()!)
-                        return user1Socket.concat(user2Socket)
-                    })
-            for (let i = 0; i < socketsForSendingNewRomNotification.length; i++)
-                req.io.to(socketsForSendingNewRomNotification[i]).emit("room-notification", PrivateRoom)
-        }
-        // xóa pending request và requestsent trong thông tin chung của 2 user
-        await UserModel.updateOne({ "_id": notification.infoNoti.userSent.toString() },
-            {
-                $push: {
-                    friends: userID
-                },
-                $pull: {
-                    friendRequestSent: {
-                        userID: userID,
-                        notificationID: notification._id
-                    }
-                }
-            })
-        await UserModel.updateOne(
-            { "_id": userID },
-            {
-                $push: {
-                    friends: notification.infoNoti.userSent
-                },
-                $pull: {
-                    pendingFriendRequest: {
-                        userID: notification.infoNoti.userSent.toString(),
-                        notificationID: notification._id
-                    }
-                }
-            })
-        // thêm bạn bè vào thông tin chung của 2 user
-        return res.status(200).json(acceptedNotification)
+        // kiêm tra xem người dùng có tồn tại hay không
+        const fUser = await UserModel.findById(friendID, { _id: 1, username: 1, fullname: 1 }).lean();
+        if (!fUser) return res.status(403).json({ type: 2, message: "User không tồn tại" })
+
+        // Người được đồng ý kết bạn
+        await UserModel.updateOne({ "_id": friendID }, {
+            $addToSet: { friends: userID },
+            $pull: {
+                friendRequestSent: userID
+            }
+        });
+        await User.EventToUser(friendID, "accept-friend-request-sent", user);
+
+        // Người chấp nhận đồng ý
+        await UserModel.updateOne({ "_id": userID }, {
+            $addToSet: { friends: friendID },
+            $pull: {
+                pendingFriendRequest: friendID
+            }
+        });
+        await User.EventToUser(userID, "accept-pending-friend-request", fUser, [excludeSocketId])
+        // Khởi tạo tin nhắn cũ nhất
+        // const lastReadMessageByUsers = [
+        //     {
+        //         userID: userID,
+        //         lastMessageID: null
+        //     },
+        //     {
+        //         userID: friendID,
+        //         lastMessageID: null
+        //     }
+        // ]
+        // // tạo phòng chat riêng 
+        // const room = await RoomModel.findOne({
+        //     userIDs: { $all: [userID, friendID] },
+        //     isGroup: false
+        // })
+        // let PrivateRoom
+        // if (!room) {
+        //     PrivateRoom = new RoomModel({
+        //         name: "",
+        //         isGroup: false,
+        //         userIDs: [userID, friendID],
+        //         settings: {},
+        //         lastReadMessageByUsers: lastReadMessageByUsers
+        //     })
+        //     await PrivateRoom
+        //         .save()
+        //         .then(room => {
+        //             Room.updateLastChange(room)
+        //         });
+        // }
+
+        // if (!room) {
+        //     // thông báo cho cả 2 người dùng rằng có room mới vừa được tạo
+        //     const socketsForSendingNewRomNotification =
+        //         await SocketManager.getSockets(userID as string)
+        //             .then(async (user1Socket) => {
+        //                 const user2Socket = await SocketManager.getSockets(notification?.infoNoti.userSent.toString()!)
+        //                 return user1Socket.concat(user2Socket)
+        //             })
+        //     for (let i = 0; i < socketsForSendingNewRomNotification.length; i++)
+        //         req.io.to(socketsForSendingNewRomNotification[i]).emit("room-notification", PrivateRoom)
+        // }
+        // // xóa pending request và requestsent trong thông tin chung của 2 user
+        // await UserModel.updateOne({ "_id": friendID.toString() },
+        //     {
+        //         $push: {
+        //             friends: userID
+        //         },
+        //         $pull: {
+        //             friendRequestSent: {
+        //                 userID: userID,
+        //                 notificationID: notification._id
+        //             }
+        //         }
+        //     })
+        // await UserModel.updateOne(
+        //     { "_id": userID },
+        //     {
+        //         $push: {
+        //             friends: friendID
+        //         },
+        //         $pull: {
+        //             pendingFriendRequest: {
+        //                 userID: friendID.toString(),
+        //                 notificationID: notification._id
+        //             }
+        //         }
+        //     })
+        // // thêm bạn bè vào thông tin chung của 2 user
+        return res.status(200).json({ message: 'Bạn đã chấp nhận kết bạn' })
     } catch (err) {
         console.log(err)
         return res.status(500).json({ message: "Lỗi hệ thống! Vui lòng thử lại" })
@@ -309,7 +263,7 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
  */
 router.get('/api/friend/isfriend/:id', passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
-        const userID = req.auth?._id.toString()
+        const userID = req.auth?._id.toString()!
         const user = await UserModel.findOne({ _id: userID })
         if (!user)
             return res.status(403).send({ message: "Lỗi" })
@@ -331,7 +285,7 @@ router.get('/api/friend/isfriend/:id', passport.authenticate("jwt", { session: f
  */
 router.get('/api/friend/arefriends', passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
-        const userID = req.auth?._id.toString()
+        const userID = req.auth?._id.toString()!
         const user = await UserModel.findOne({ _id: userID })
         if (!user)
             return res.status(403).send({ message: "Lỗi" })

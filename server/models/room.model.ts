@@ -30,14 +30,10 @@ const RoomSchema = new Schema<IRoomModel>({
     lastChange: {
         type: Date
     },
-    lastReadMessageByUsers: {
-        type: [
-            {
-                userID: String,
-                lastMessageID: String
-            }
-        ]
-    }
+    lastReadMessageByUsers: [{
+        userID: { type: String },
+        lastMessageID: { type: String }
+    }]
     
 }, { timestamps: true });
 const RoomModel = model<IRoomModel>('rooms', RoomSchema);

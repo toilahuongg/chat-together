@@ -2,14 +2,12 @@ import mongoose from 'mongoose';
 import { Schema, model } from 'mongoose';
 import SocketIO from '../helpers/socketIO';
 import SocketManager from '../helpers/socketManager';
-import { Socket } from 'socket.io';
 import { IUser } from '../types/user.type';
 import RoomModel, { Room } from './room.model';
 import console from 'console';
-import config from '../helpers/config';
 import UserNotExist from '../helpers/exception/UserNotExist';
 import RequestNotExist from '../helpers/exception/RequestNotExist';
-import NotificationModel from './notification.model';
+// import NotificationModel from './notification.model';
 import TransactionErr from '../helpers/exception/TransactionErr';
 import UnknownFriendRelation from '../helpers/exception/UnknownFriendRelation';
 const UserSchema = new Schema<IUser>({
@@ -29,24 +27,24 @@ const UserSchema = new Schema<IUser>({
         type: String,
         required: true
     },
-    friends: {
-        type: [String]
-    },
+    friends: [
+        {
+            type: String
+        }
+    ],
     avatar: {
         type: String
     },
-    pendingFriendRequest : {
-        type: [{
-            userID: String,
-            notificationID: String
-        }]
-    },
-    friendRequestSent    : {
-        type: [{
-            userID: String,
-            notificationID: String
-        }]
-    },
+    pendingFriendRequest : [
+        {
+            type: String
+        }
+    ],
+    friendRequestSent: [
+        {
+            type: String
+        }
+    ],
     phone: {
         type: String
     },
@@ -123,7 +121,6 @@ class User {
                     }
                 }
             }
-            console.log(fullname)
             sockets.forEach(socket => {
                 SocketIO.sendEvent("change-info", {id, fullname,avatar, email, phone}, socket)
             })
@@ -147,7 +144,7 @@ class User {
      * @param data 
      * @returns 
      */
-    static async EventToUser(userID, eventName, data) {
+    static async EventToUser(userID: string, eventName: string, data: object, exclude: string[] = []) {
         try {
         const sockets = await SocketManager.getSockets(userID)
                                         .catch(err => {
@@ -156,7 +153,7 @@ class User {
                                         })
         if(!sockets || !sockets.length || sockets.length === 0) return
         sockets.forEach(socket => {
-            SocketIO.sendEvent(eventName, data, socket)
+            if (!exclude.includes(socket)) SocketIO.sendEvent(eventName, data, socket)
         })
         } catch(err) {
             console.log("ERR: Lỗi hệ thống")
@@ -187,7 +184,7 @@ class User {
         let isSend = false
         const friendRequestSent = user.friendRequestSent
         for(let i = 0; i < friendRequestSent.length; i++) {
-            if(friendRequestSent[i].userID === userTakeRequestID) {
+            if(friendRequestSent[i] === userTakeRequestID) {
                 isSend = true;
                 break;
             }
@@ -200,25 +197,21 @@ class User {
             // xóa friend request phía người gửi
             await UserModel.findOneAndUpdate({_id: userID}, {
                 $pull: {
-                    friendRequestSent: {
-                        userID: userTakeRequestID
-                    }
+                    friendRequestSent: userTakeRequestID
                 }
             })
             // xóa friend request phía người nhận
             await UserModel.updateOne({_id: userTakeRequestID}, {
                 $pull: {
-                    pendingFriendRequest: {
-                        userID: userID
-                    }
+                    pendingFriendRequest: userID
                 }
             })
-            // xóa notification
-            await NotificationModel.deleteOne({
-                userID: userTakeRequestID,
-                "infoNoti.nt": "friend-request",
-                "infoNoti.userSent": userID
-            })
+            // // xóa notification
+            // await NotificationModel.deleteOne({
+            //     userID: userTakeRequestID,
+            //     "infoNoti.nt": "friend-request",
+            //     "infoNoti.userSent": userID
+            // })
         })
         } catch(err) {
             console.log("Err: Transaction ERR")
@@ -250,7 +243,7 @@ class User {
         let isSend = false
         const pendingFriendRequest = user.pendingFriendRequest;
         for(let i = 0; i < pendingFriendRequest.length; i++) {
-            if(pendingFriendRequest[i].userID === userSentRequestID) {
+            if(pendingFriendRequest[i] === userSentRequestID) {
                 isSend = true
                 break
             }
@@ -261,23 +254,19 @@ class User {
             session.withTransaction(async () => {
                 await UserModel.updateOne({_id: userID}, {
                     $pull: {
-                        pendingFriendRequest: {
-                            userID: userSentRequestID
-                        }
+                        pendingFriendRequest: userSentRequestID
                     }
                 })
                 await UserModel.updateOne({_id: userSentRequestID}, {
                     $pull: {
-                        friendRequestSent: {
-                            userID: userID
-                        }
+                        friendRequestSent: userID
                     }
                 })
-                await NotificationModel.deleteOne({
-                    userID: userID,
-                    "infoNoti.nt": "friend-request",
-                    "infoNoti.userSent": userSentRequestID
-                })
+                // await NotificationModel.deleteOne({
+                //     userID: userID,
+                //     "infoNoti.nt": "friend-request",
+                //     "infoNoti.userSent": userSentRequestID
+                // })
             })
         }
         catch(err) {
@@ -324,26 +313,26 @@ class User {
                         friends: userID
                     }
                 })
-                await NotificationModel.deleteOne({
-                    userID: userID,
-                    "infoNoti.nt": "friend-request",
-                    "infoNoti.userSent": removeID
-                })
-                await NotificationModel.deleteOne({
-                    userID: removeID,
-                    "infoNoti.nt": "friend-request",
-                    "infoNoti.userSent": userID
-                })
-                await NotificationModel.deleteOne({
-                    userID: userID,
-                    "infoNoti.nt": "accepted-friend-request",
-                    "infoNoti.userSent": removeID
-                })
-                await NotificationModel.deleteOne({
-                    userID: removeID,
-                    "infoNoti.nt": "accepted-friend-request",
-                    "infoNoti.userSent": userID
-                })
+                // await NotificationModel.deleteOne({
+                //     userID: userID,
+                //     "infoNoti.nt": "friend-request",
+                //     "infoNoti.userSent": removeID
+                // })
+                // await NotificationModel.deleteOne({
+                //     userID: removeID,
+                //     "infoNoti.nt": "friend-request",
+                //     "infoNoti.userSent": userID
+                // })
+                // await NotificationModel.deleteOne({
+                //     userID: userID,
+                //     "infoNoti.nt": "accepted-friend-request",
+                //     "infoNoti.userSent": removeID
+                // })
+                // await NotificationModel.deleteOne({
+                //     userID: removeID,
+                //     "infoNoti.nt": "accepted-friend-request",
+                //     "infoNoti.userSent": userID
+                // })
             })
         }
         catch(err) {
