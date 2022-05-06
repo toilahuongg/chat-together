@@ -5,13 +5,14 @@ import Modal from '@src/Components/Layout/Modal';
 import React, { useEffect, useRef } from 'react';
 import Tabs from '@src/Components/Layout/Tabs';
 import TextField from '@src/Components/Layout/TextField';
-import useUser, { friendsSentState, friendsState, pendingFriendsState } from '@src/hooks/useUser';
+import useUser from '@src/hooks/useUser';
 import instance from '@src/helpers/instance';
 import User from '../User';
 import randomChars from 'server/helpers/randomChars';
 import Loading from '@src/Components/Layout/Loading';
 
 import IconSearch from '@src/styles/svg/search.svg';
+import { useFriends, useFriendsRequestSent, usePendingFriendsRequest } from '@src/hooks/useFriends';
 
 type TProps = {
   isShow?: boolean,
@@ -23,9 +24,10 @@ const ModalFriends: React.FC<TProps> = ({
 }) => {
   const userState = useUser();
 
-  const pendingFriends = useState(pendingFriendsState);
-  const friendsSent = useState(friendsSentState);
-  const friends = useState(friendsState);
+  const friends = useFriends();
+  const pendingFriendsRequest = usePendingFriendsRequest(); 
+  console.log(pendingFriendsRequest);
+  const friendsRequestSent = useFriendsRequestSent();
 
 
   const [loadingPending, setLoadingPending] = React.useState(false);
@@ -75,7 +77,7 @@ const ModalFriends: React.FC<TProps> = ({
       setLoadingPending(true);
       const response = await instance.post('/api/user/profile-list', { ids: list });
       const data = response.data;
-      if (!unmount.current) pendingFriends.set(data);
+      if (!unmount.current) pendingFriendsRequest.list.set(data);
       setLoadingPending(false);
     })()
     return () => {
@@ -90,7 +92,7 @@ const ModalFriends: React.FC<TProps> = ({
       setLoadingSent(true);
       const response = await instance.post('/api/user/profile-list', { ids: list });
       const data = response.data;
-      if (!unmount.current) friendsSent.set(data);
+      if (!unmount.current) friendsRequestSent.list.set(data);
       setLoadingSent(false);
     })()
     return () => {
@@ -105,7 +107,7 @@ const ModalFriends: React.FC<TProps> = ({
       setLoadingFriend(true);
       const response = await instance.post('/api/user/profile-list', { ids: list });
       const data = response.data;
-      if (!unmount.current) friends.set(data);
+      if (!unmount.current) friends.list.set(data);
       setLoadingFriend(false);
     })()
     return () => {
@@ -115,17 +117,17 @@ const ModalFriends: React.FC<TProps> = ({
 
   const handleUpdatePendingRequest = (userID: string, unaccept?: boolean) => {
     userState.removePendingFriendRequest(userID);
-    const user = pendingFriends.find(({ _id }) => _id.get() === userID);
+    const user = pendingFriendsRequest.findById(userID);
     if (!unaccept && user) {
       userState.friends.merge([userID]);
-      friends.set(f => [...f, {...user.get()}])
+      friends.list.set(f => [...f, {...user.get()}])
     }
-    pendingFriends.set(current => current.filter(({ _id }) => _id !== userID));
+    pendingFriendsRequest.delete(userID);
   }
 
   const handleUpdateFriendRequestSent = (userID: string) => {
     userState.removeFriendRequestSent(userID);
-    friendsSent.set(current => current.filter(({ _id }) => _id !== userID));
+    friendsRequestSent.delete(userID);
   }
   return (
     <Modal isShow={isShow} onClose={onClose} size="lg">
@@ -144,32 +146,32 @@ const ModalFriends: React.FC<TProps> = ({
         <TextField icon={<IconSearch />} placeholder="Tìm kiếm..." value={typingTextState.get()} onChange={val => typingTextState.set(val)} />
         <div ref={divRef} style={{ height: 300, overflow: "auto" }}>
           {selectedTab.get() === 'pending-friends-request' && (
-            loadingPending ? <Loading /> : pendingFriends.map(user => (
+            loadingPending ? <Loading /> : pendingFriendsRequest.getList.map(user => (
               <User
-                key={user._id.get() + randomChars(8)}
+                key={user._id + randomChars(8)}
                 type="pending-friends-request"
-                data={user.get()}
+                data={user}
                 onUpdate={handleUpdatePendingRequest}
               />
             ))
           )}
           {selectedTab.get() === 'friends-request-sent' && (
-            loadingSent ? <Loading /> : friendsSent.map(user => (
+            loadingSent ? <Loading /> : friendsRequestSent.getList.map(user => (
               <User
-                key={user._id.get() + randomChars(8)}
+                key={user._id + randomChars(8)}
                 type="friends-request-sent"
-                data={user.get()}
+                data={user}
                 isFriendRequestSent={true}
                 onUpdate={handleUpdateFriendRequestSent}
               />
             ))
           )}
           {selectedTab.get() === 'friends' && (
-            loadingSent ? <Loading /> : friends.map(user => (
+            loadingSent ? <Loading /> : friends.getList.map(user => (
               <User
-                key={user._id.get() + randomChars(8)}
+                key={user._id + randomChars(8)}
                 type="friends"
-                data={user.get()}
+                data={user}
                 onUpdate={() => { }}
               />
             ))

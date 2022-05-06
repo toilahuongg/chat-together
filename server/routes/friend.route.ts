@@ -121,14 +121,14 @@ router.post('/api/friend/denie-friend-request/:userDenieID', passport.authentica
 })
 router.post('/api/friend/unfriend/:id', passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
+        const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
         const userID = req.auth?._id.toString()!;
         const idUnfriend = req.params.id
         await User.RemoveFriend(userID, idUnfriend)
             .then(async () => {
-                res.status(200).send({ message: "unfriend thành công" })
-                await User.EventToUser(userID, "unfriend", { userID: idUnfriend })
+                await User.EventToUser(userID, "unfriend", { userID: idUnfriend }, [excludeSocketId])
                 await User.EventToUser(idUnfriend, "unfriend", { userID: userID })
-                return
+                return res.status(200).send({ message: "unfriend thành công" })
             })
             .catch(err => {
                 if (err instanceof UserNotExist) {

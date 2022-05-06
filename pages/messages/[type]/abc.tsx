@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import instance from "@src/helpers/instance";
-import { useSocket } from "@src/Components/AppProvider";
+import useSocket from "@src/hooks/useSocket";
 
 const Message = () => {
     const router = useRouter();

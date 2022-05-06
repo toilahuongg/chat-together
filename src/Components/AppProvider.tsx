@@ -1,21 +1,22 @@
 import React, { useEffect } from 'react';
+import { useState } from '@hookstate/core';
 
 import useAuth from '@src/hooks/useAuth';
-import useUser, { friendsSentState, friendsState, pendingFriendsState } from '@src/hooks/useUser';
-import { useState } from '@hookstate/core';
+import useUser from '@src/hooks/useUser';
 import Loading from './Layout/Loading';
 import ModalAddFriends from './Messenger/ModalAddFriends';
 import Messenger from './Messenger';
 import useSocket, { SocketContext } from '@src/hooks/useSocket';
 import { IUser } from 'server/types/user.type';
+import { useFriends, useFriendsRequestSent, usePendingFriendsRequest } from '@src/hooks/useFriends';
 
 const AppProvider = ({ children }) => {
     const { accessToken, isAuth, setAccessToken, setRefreshToken } = useAuth();
     const socket = useSocket();
     const user = useUser();
-    const friends = useState(friendsState);
-    const friendsSent = useState(friendsSentState);
-    const pendingFriends = useState(pendingFriendsState);
+    const friends = useFriends();
+    const pendingFriendsRequest = usePendingFriendsRequest();
+    const friendsRequestSent = useFriendsRequestSent();
 
     const loadingState = useState(true);
     const getUser = async () => {
@@ -34,17 +35,18 @@ const AppProvider = ({ children }) => {
 
     useEffect(() => {
         if (isAuth && socket.connected) {
+            console.log("[SOCKET]: connected")
             getUser();
             //* Start: Gửi lời mời kết bạn (A gửi lời mời kết bạn đến B)*//
             // 1. Người gửi đi
             socket.on('friend-request-sent', (userData: IUser) => {
                 user.addFriendRequestSent(userData._id);
-                friendsSent.merge([userData]);
+                friendsRequestSent.add(userData);
             });
             // 2. Người nhận
             socket.on('pending-friend-request', (userData: IUser) => {
                 user.addPendingFriendRequest(userData._id);
-                pendingFriends.merge([userData]);
+                pendingFriendsRequest.add(userData);
             });
             //* End: Gửi lời mời kết bạn *//
 
@@ -52,12 +54,12 @@ const AppProvider = ({ children }) => {
             // 1. Các socket của A cập nhật
             socket.on('retake-friend-request-sent', ({ userID }) => {
                 user.removeFriendRequestSent(userID);
-                friendsSent.set(current => current.filter(({ _id }) => _id !== userID));
+                friendsRequestSent.delete(userID);
             });
             // 2. Các socket của B cập nhật
             socket.on('retake-pending-friend-request', ({ userID }) => {
                 user.removePendingFriendRequest(userID);
-                pendingFriends.set(current => current.filter(({ _id }) => _id !== userID));
+                pendingFriendsRequest.delete(userID);
             });
             //* End: Huỷ lời mời kết bạn đã gửi đi *//
 
@@ -65,17 +67,16 @@ const AppProvider = ({ children }) => {
             // 1. Các socket của A cập nhật
             socket.on('accept-pending-friend-request', (userData: IUser) => {
                 user.removePendingFriendRequest(userData._id);
-                pendingFriends.set(current => current.filter(({ _id }) => _id !== userData._id));
-                user.friends.merge([userData._id]);
-                friends.merge([userData]);
+                pendingFriendsRequest.delete(userData._id);
+                user.addFriend(userData._id);
+                friends.add(userData);
             });
             // 2. Các socket của B cập nhật
             socket.on('accept-friend-request-sent', (userData: IUser) => {
                 user.removeFriendRequestSent(userData._id);
-                friendsSent.set(current => current.filter(({ _id }) => _id !== userData._id));
-                user.friends.
-                    merge([userData._id]);
-                friends.merge([userData]);
+                friendsRequestSent.delete(userData._id);
+                user.addFriend(userData._id);
+                friends.add(userData);
             });
             //* End: Chấp nhận lời mời kết bạn *//
 
@@ -83,14 +84,22 @@ const AppProvider = ({ children }) => {
             // 1. Các socket của A cập nhật
             socket.on('denie-pending-friend-request', ({ userID }) => {
                 user.removePendingFriendRequest(userID);
-                pendingFriends.set(current => current.filter(({ _id }) => _id !== userID));
+                pendingFriendsRequest.delete(userID);
             });
             // 2. Các socket của B cập nhật
             socket.on('denie-friend-request-sent', ({ userID }) => {
                 user.removeFriendRequestSent(userID);
-                friendsSent.set(current => current.filter(({ _id }) => _id !== userID));
+                friendsRequestSent.delete(userID);
             });
             //* End: Không chấp nhận *//
+
+            //* Start: Huỷ kết bạn (A và B là bạn bè, A huỷ kế bạn) *//
+            // 1. Các socket của A, B cập nhật
+            socket.on('unfriend', ({ userID }) => {
+                user.removeFriend(userID);
+                friends.delete(userID);
+            });
+            //* End: Huỷ kết bạn *//
         }
         else loadingState.set(false);
     }, [isAuth, socket]);
