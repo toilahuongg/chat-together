@@ -34,8 +34,10 @@ const AppProvider = ({ children }) => {
     }
 
     useEffect(() => {
-        if (isAuth && socket.connected) {
-            console.log("[SOCKET]: connected")
+        if (isAuth && socket) {
+            socket.on("login", ({ type }) => {
+                console.log(`[SOCKET]: ${type === 'success' ? `đã kết nối với id: ${socket.id}` : 'lỗi! không thể kết nối'}`)
+            }) 
             getUser();
             //* Start: Gửi lời mời kết bạn (A gửi lời mời kết bạn đến B)*//
             // 1. Người gửi đi

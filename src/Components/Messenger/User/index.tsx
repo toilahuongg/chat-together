@@ -40,7 +40,7 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, onUpd
     } finally {
       setLoading(false);
     }
-    
+
   }
 
   const handleAcceptFriend = async () => {
@@ -75,13 +75,34 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, onUpd
       });
       const result = response.data;
       toast.success(result.message);
-      onUpdate(data._id);
+      onUpdate(data._id, true);
     } catch (error: any) {
       console.log(error);
       if (error.response && error.response.data && error.response.data.message) toast.error(error.response.data.message);
       else toast.error('Lỗi hệ thống! Vui lòng thử lại');
     } finally {
       setLoadingUnaccept(false);
+    }
+  }
+
+  const handleUnFriend = async () => {
+    if (isMounted.current) return;
+    try {
+      setLoading(true);
+      const response = await instance.post(`/api/friend/unfriend/${data._id}`, {}, {
+        headers: {
+          'x-exclude-socket-id': socket?.id!
+        }
+      });
+      const result = response.data;
+      toast.success(result.message);
+      onUpdate(data._id);
+    } catch (error: any) {
+      console.log(error);
+      if (error.response && error.response.data && error.response.data.message) toast.error(error.response.data.message);
+      else toast.error('Lỗi hệ thống! Vui lòng thử lại');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -131,7 +152,15 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, onUpd
             {isFriendRequestSent ? 'Huỷ lời mời' : 'Kết bạn'}
           </Button>
         )}
-
+        {type === 'friends' && (
+          <Button
+            variable="primary"
+            onClick={handleUnFriend}
+            loading={loading}
+          >
+            Huỷ kết bạn
+          </Button>
+        )}
       </div>
     </div>
   )

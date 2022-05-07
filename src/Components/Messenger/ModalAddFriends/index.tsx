@@ -98,7 +98,7 @@ const ModalAddFriends: React.FC<TProps> = ({
             isLoading={loadingUsers}
             loading={<Loading />}
           >
-            {listUserState.map(user => {
+            {listUserState.length ? listUserState.map(user => {
               const checked = checkUserInFriendRequestSent(user._id.get());
               return (
                 <User
@@ -109,7 +109,7 @@ const ModalAddFriends: React.FC<TProps> = ({
                   onUpdate={checked ? removeFriendRequestSent : addFriendRequestSent}
                 />
               )
-            })}
+            }) : !loadingUsers && 'Không có kết quả'}
           </InfiniteScroll>
         </div>
 

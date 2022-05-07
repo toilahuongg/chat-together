@@ -320,14 +320,13 @@ Router.get('/api/user/search', passport.authenticate('jwt', { session: false }),
         if (lastId) match['_id'] = { $lt: lastId };
         if (isNotFriend === "true") {
             // TODO bỏ trong phần pending
-            const user = await UserModel.findById(userID, { friends: 1 }).lean();
+            const user = await UserModel.findById(userID, { friends: 1, pendingFriendRequest: 1 }).lean();
             if (user) {
-                friends = user.friends;
-                friends.push(userID);
+                friends = [...user.friends, ...user.pendingFriendRequest, userID];
                 match['_id'] = { ...match['_id'], $nin: friends }
             }
         }
-        const users = await UserModel.find(match, { _id: 1, username: 1, fullname: 1 }).sort({ createdAt: -1 }).limit(10).lean();
+        const users = await UserModel.find(match, { _id: 1, username: 1, fullname: 1 }).sort({ createdAt: -1 }).limit(limit).lean();
         const count = await UserModel.count({ _id: { $nin: friends }, fullname: { $regex: `.*${fullname}.*` } });
         return res.status(200).json({ users, count });
     } catch (error) {
@@ -339,7 +338,7 @@ Router.get('/api/user/search', passport.authenticate('jwt', { session: false }),
 Router.get('/api/user/create-user', async (req, res) => {
     for (let i = 0; i < 50; i++) {
         await UserModel.create({
-            username: 'test'+i,
+            username: 'test' + i,
             fullname: `test${i}@gmail.com`,
             email: `test${i}@gmail.com`,
             password: '$2b$10$CYoxUBmfaApniOkuJc7Kvu.3xDu.YvCbVFOUHkjXEg236lNJBsbIK'

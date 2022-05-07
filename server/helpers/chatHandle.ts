@@ -29,11 +29,11 @@ const chatHandle = (io) => {
             }
             SocketManager.addSocket(socket.id, tokenDecript._id)   
             socket.userID = tokenDecript._id
-            socket.emit("login", {type: "sucess"}) 
+            socket.emit("login", {type: "success"}) 
             return 
             }catch(err) {
                 console.log(err);
-                socket.emit("login", {type: "error-login"})
+                socket.emit("login", {type: "error"})
             }
         })
         socket.on("read-message", async ({roomID, messageID}) => {

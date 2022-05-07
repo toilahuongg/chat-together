@@ -26,9 +26,7 @@ const ModalFriends: React.FC<TProps> = ({
 
   const friends = useFriends();
   const pendingFriendsRequest = usePendingFriendsRequest(); 
-  console.log(pendingFriendsRequest);
   const friendsRequestSent = useFriendsRequestSent();
-
 
   const [loadingPending, setLoadingPending] = React.useState(false);
   const [loadingSent, setLoadingSent] = React.useState(false);
@@ -119,8 +117,8 @@ const ModalFriends: React.FC<TProps> = ({
     userState.removePendingFriendRequest(userID);
     const user = pendingFriendsRequest.findById(userID);
     if (!unaccept && user) {
-      userState.friends.merge([userID]);
-      friends.list.set(f => [...f, {...user.get()}])
+      userState.addFriend(userID);
+      friends.add(user);
     }
     pendingFriendsRequest.delete(userID);
   }
@@ -129,6 +127,12 @@ const ModalFriends: React.FC<TProps> = ({
     userState.removeFriendRequestSent(userID);
     friendsRequestSent.delete(userID);
   }
+
+  const handleUnFriend = (userID: string) => {
+    userState.removeFriend(userID);
+    friends.delete(userID);
+  }
+  console.log(friends.get());
   return (
     <Modal isShow={isShow} onClose={onClose} size="lg">
       <Modal.Header>
@@ -146,7 +150,7 @@ const ModalFriends: React.FC<TProps> = ({
         <TextField icon={<IconSearch />} placeholder="Tìm kiếm..." value={typingTextState.get()} onChange={val => typingTextState.set(val)} />
         <div ref={divRef} style={{ height: 300, overflow: "auto" }}>
           {selectedTab.get() === 'pending-friends-request' && (
-            loadingPending ? <Loading /> : pendingFriendsRequest.getList.map(user => (
+            loadingPending ? <Loading /> : pendingFriendsRequest.get().map(user => (
               <User
                 key={user._id + randomChars(8)}
                 type="pending-friends-request"
@@ -156,7 +160,7 @@ const ModalFriends: React.FC<TProps> = ({
             ))
           )}
           {selectedTab.get() === 'friends-request-sent' && (
-            loadingSent ? <Loading /> : friendsRequestSent.getList.map(user => (
+            loadingSent ? <Loading /> : friendsRequestSent.get().map(user => (
               <User
                 key={user._id + randomChars(8)}
                 type="friends-request-sent"
@@ -167,12 +171,12 @@ const ModalFriends: React.FC<TProps> = ({
             ))
           )}
           {selectedTab.get() === 'friends' && (
-            loadingSent ? <Loading /> : friends.getList.map(user => (
+            loadingSent ? <Loading /> : friends.get().map(user => (
               <User
                 key={user._id + randomChars(8)}
                 type="friends"
                 data={user}
-                onUpdate={() => { }}
+                onUpdate={handleUnFriend}
               />
             ))
           )}

@@ -1,4 +1,4 @@
-import { createState, State, useState } from "@hookstate/core";
+import { createState, Downgraded, State, useState } from "@hookstate/core";
 import { IUser } from "server/types/user.type";
 
 export const showFriendsState = createState(false);
@@ -9,7 +9,7 @@ export const pendingFriendsRequestState = createState<IUser[]>([]);
 const wrapState = (s: State<IUser[]>) => {
   return {
     list: s,
-    getList: s.get(),
+    get: () => s.attach(Downgraded).get(),
     add: (user: IUser) => s.set(u => {
       if (!u.some(({ _id }) => _id === user._id)) u.push(user);
       return u;
@@ -17,7 +17,7 @@ const wrapState = (s: State<IUser[]>) => {
     delete: (userID: string) => s.set(u => {
       return u.filter(({ _id }) => _id !== userID);
     }),
-    findById: (userID: string) => s.find(({ _id }) => _id.get() === userID)
+    findById: (userID: string) => s.attach(Downgraded).get().find(({ _id }) => _id === userID)
   }
 };
 
