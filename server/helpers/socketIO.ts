@@ -1,6 +1,8 @@
+import { Server } from "socket.io"
+
 class SocketIO {
   static io = null as any
-  static async Init(io) {
+  static async Init(io: Server) {
     SocketIO.io = io
   }
   static async sendEvent(eventName, data, socket) {

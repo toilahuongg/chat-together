@@ -132,7 +132,6 @@ const ModalFriends: React.FC<TProps> = ({
     userState.removeFriend(userID);
     friends.delete(userID);
   }
-  console.log(friends.get());
   return (
     <Modal isShow={isShow} onClose={onClose} size="lg">
       <Modal.Header>

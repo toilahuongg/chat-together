@@ -10,7 +10,6 @@ import UserModel, { User } from '../models/user.model';
 import { IUser, IUserData } from '../types/user.type';
 import randomChars from '../helpers/randomChars';
 import SocketManager from '../helpers/socketManager';
-import { Notification } from '../models/notification.model'
 import uploadavartar from '../helpers/avartarUploadHandle'
 import MulterRequest from 'server/types/multerrequest';
 
@@ -170,23 +169,23 @@ Router.put("/api/user/update-profile", passport.authenticate('jwt', { session: f
         return res.status(500).json({ message: "Lỗi hệ thống" })
     }
 })
-Router.get("/api/user/notification", passport.authenticate('jwt', { session: false }), async (req, res) => {
-    try {
-        const userId = req.auth?._id
-        const offsetid = (req.query.offsetid ? req.query.offsetid : false) as string | boolean
-        const limit = req.query.limit
-        await Notification.getNotificationByRange(offsetid, limit, userId)
-            .then(notifications => {
-                return res.status(200).json(notifications)
-            })
-            .catch(err => {
-                return res.status(403).json({ message: err.message })
-            })
-    } catch (err) {
-        console.log(err)
-        return res.status(200).json({ message: "Lỗi hệ thống" })
-    }
-})
+// Router.get("/api/user/notification", passport.authenticate('jwt', { session: false }), async (req, res) => {
+//     try {
+//         const userId = req.auth?._id
+//         const offsetid = (req.query.offsetid ? req.query.offsetid : false) as string | boolean
+//         const limit = req.query.limit
+//         await Notification.getNotificationByRange(offsetid, limit, userId)
+//             .then(notifications => {
+//                 return res.status(200).json(notifications)
+//             })
+//             .catch(err => {
+//                 return res.status(403).json({ message: err.message })
+//             })
+//     } catch (err) {
+//         console.log(err)
+//         return res.status(200).json({ message: "Lỗi hệ thống" })
+//     }
+// })
 /**
  * Register route
  * cần phải gửi đủ 5 trường 

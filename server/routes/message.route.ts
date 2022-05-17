@@ -47,7 +47,6 @@ router.post("/api/message/:room/send-message", passport.authenticate("jwt", { se
         message = msg
     })
     // cập nhật thông tin của phòng
-    await Room.updateLastChange(room)
     // lấy socketID của các thành viên trong nhóm
     let sockets: string[] = [];
     for (let i = 0; i < roomMembers.length; i++) {

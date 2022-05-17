@@ -28,7 +28,7 @@ const ModalAddFriends: React.FC<TProps> = ({
 }) => {
   const unmount = useRef(false);
   const divRef = useRef<HTMLDivElement>(null);
-  const { checkUserInFriendRequestSent, addFriendRequestSent, removeFriendRequestSent } = useUser();
+  const { checkUserInFriendRequestSent, addFriendRequestSent, removeFriendRequestSent, checkUserInFriends } = useUser();
   const hiddenRecommendFriends = useState(false);
   const checkboxState = useState(false);
   if (typeof window !== 'undefined') hiddenRecommendFriends.attach(Persistence('hidden-recommend-friends'));
@@ -100,7 +100,7 @@ const ModalAddFriends: React.FC<TProps> = ({
           >
             {listUserState.length ? listUserState.map(user => {
               const checked = checkUserInFriendRequestSent(user._id.get());
-              return (
+              return checkUserInFriends(user._id.get()) ? <> </> :(
                 <User
                   key={user._id.get() + randomChars(8)}
                   data={user.get()}

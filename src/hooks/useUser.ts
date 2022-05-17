@@ -41,6 +41,9 @@ const wrapState = (s: State<IUser>) => ({
     removePendingFriendRequest: function(id: string) { return removeElement(s.pendingFriendRequest, id)},
     checkUserInFriendRequestSent: (id: string) => {
         return s.friendRequestSent.some(userID => userID.get() === id);
+    },
+    checkUserInFriends: (id: string) => {
+        return s.friends.some(userID => userID.get() === id);
     }
 });
 

@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { IUserData } from 'server/types/user.type';
 
 
 /**
@@ -22,11 +23,11 @@ export const signToken = (payload: any, secret: string, exp: string) => {
  * @param secret 
  * @returns 
  */
-export const verifyToken = (token: string, secret: string) => {
+export const verifyToken = (token: string, secret: string): Promise<IUserData> => {
     return new Promise((resolve, reject) => {
         jwt.verify(token, secret, function (err, decoded) {
             if (err) reject(err);
-            resolve(decoded);
+            resolve(decoded as IUserData);
         })
     })
 }

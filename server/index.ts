@@ -12,7 +12,7 @@ import roomRouter from './routes/room.route';
 import friendRouter from './routes/friend.route'
 import messageRouter from './routes/message.route'
 import './helpers/passport';
-import chatHandle from './helpers/chatHandle';
+import socketHandle from './helpers/SocketHandle';
 import SocketIO from './helpers/socketIO';
 
 const { PORT, MONGO_CONNECTSTRING, MONGO_USER, MONGO_PASSWORD } = process.env;
@@ -26,14 +26,14 @@ const bootstrap = async () => {
   const server = express()
   const httpServer = new http.Server(server);
   const io = new Server(httpServer, {});
-  chatHandle(io);
+  socketHandle(io);
   server.use(passport.initialize())
   server.use(cors())
   server.use((req, res, next) => {
     req.io = io;
     next()
   })
-  SocketIO.Init(io)
+  SocketIO.Init(io);
   server.use(bodyParser.json())
   server.use(bodyParser.urlencoded({ extended: true }));
   server.use(userRouter);

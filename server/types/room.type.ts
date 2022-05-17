@@ -6,10 +6,6 @@ export default interface IRoom {
     userIDs: string[],
     ownerID?: string,
     settings: any,
-    lastChange: Date,
-    avatar?: string|null|undefined,
-    background?: string|null|undefined
-    lastMessageRead?: string[]|null,
-    lastReadMessageByUsers?: any 
+    avatar?: string,
 };
 export interface IRoomModel extends Omit<IRoom, '_id'>, mongoose.Document {};

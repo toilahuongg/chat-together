@@ -12,11 +12,13 @@ import Github from '@src/styles/svg/github.svg';
 import GuestLayout from './GuestLayout';
 import { toast } from 'react-toastify';
 import useAuth from '@src/hooks/useAuth';
+import useSocket from '@src/hooks/useSocket';
 
 type TProviderID = 'google' | 'facebook' | 'github';
 const ClientHome = () => {
 	const router = useRouter();
 	const { setAccessToken, setRefreshToken } = useAuth();
+	const socket = useSocket();
 	const [loading, setLoading] = useState('');
 	const [errorMessage, setErrorMessage] = useState('');
 
@@ -43,9 +45,13 @@ const ClientHome = () => {
 			// @ts-ignore
 			if (providerId === 'github') fullname = user.reloadUserInfo.screenName;
 			const response = await axios.post('/api/auth/sign-in-with-social', { displayName: fullname, email, avatar: photoURL });
-			const { accessTocken, refreshToken } = response.data;
-			setAccessToken(accessTocken);
+			const { accessToken, refreshToken } = response.data;
+			setAccessToken(accessToken);
 			setRefreshToken(refreshToken);
+			socket.auth = {
+				token: accessToken
+			}
+			socket.connect();
 			await signOut(auth);
 			setErrorMessage('');
 			toast.success("Đăng nhập thành công");
