@@ -5,6 +5,8 @@ import ObjectID from 'mongoose'
 import RequestNotExist from '../helpers/exception/RequestNotExist'
 import UnknownFriendRelation from '../helpers/exception/UnknownFriendRelation'
 import UserNotExist from '../helpers/exception/UserNotExist'
+import RoomModel from '../models/room.model'
+import mongoose from 'mongoose'
 const router = express.Router()
 /**
  * gửi lời mởi kết bạn
@@ -178,77 +180,35 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
                 pendingFriendRequest: friendID
             }
         });
-        await User.EventToUser(userID, "accept-pending-friend-request", fUser, [excludeSocketId])
-        // Khởi tạo tin nhắn cũ nhất
-        // const lastReadMessageByUsers = [
-        //     {
-        //         userID: userID,
-        //         lastMessageID: null
-        //     },
-        //     {
-        //         userID: friendID,
-        //         lastMessageID: null
-        //     }
-        // ]
-        // // tạo phòng chat riêng 
-        // const room = await RoomModel.findOne({
-        //     userIDs: { $all: [userID, friendID] },
-        //     isGroup: false
-        // })
-        // let PrivateRoom
-        // if (!room) {
-        //     PrivateRoom = new RoomModel({
-        //         name: "",
-        //         isGroup: false,
-        //         userIDs: [userID, friendID],
-        //         settings: {},
-        //         lastReadMessageByUsers: lastReadMessageByUsers
-        //     })
-        //     await PrivateRoom
-        //         .save()
-        //         .then(room => {
-        //             Room.updateLastChange(room)
-        //         });
-        // }
+        await User.EventToUser(userID, "accept-pending-friend-request", fUser, [excludeSocketId]);
 
-        // if (!room) {
-        //     // thông báo cho cả 2 người dùng rằng có room mới vừa được tạo
-        //     const socketsForSendingNewRomNotification =
-        //         await SocketManager.getSockets(userID as string)
-        //             .then(async (user1Socket) => {
-        //                 const user2Socket = await SocketManager.getSockets(notification?.infoNoti.userSent.toString()!)
-        //                 return user1Socket.concat(user2Socket)
-        //             })
-        //     for (let i = 0; i < socketsForSendingNewRomNotification.length; i++)
-        //         req.io.to(socketsForSendingNewRomNotification[i]).emit("room-notification", PrivateRoom)
-        // }
-        // // xóa pending request và requestsent trong thông tin chung của 2 user
-        // await UserModel.updateOne({ "_id": friendID.toString() },
-        //     {
-        //         $push: {
-        //             friends: userID
-        //         },
-        //         $pull: {
-        //             friendRequestSent: {
-        //                 userID: userID,
-        //                 notificationID: notification._id
-        //             }
-        //         }
-        //     })
-        // await UserModel.updateOne(
-        //     { "_id": userID },
-        //     {
-        //         $push: {
-        //             friends: friendID
-        //         },
-        //         $pull: {
-        //             pendingFriendRequest: {
-        //                 userID: friendID.toString(),
-        //                 notificationID: notification._id
-        //             }
-        //         }
-        //     })
-        // // thêm bạn bè vào thông tin chung của 2 user
+        // Kiểm tra xem đã tồn tại group hay chưa
+        const isExistGroup = await RoomModel.findOne({
+            $and: [
+                {
+                    userIDs: { $in: [new mongoose.Types.ObjectId(userID)] },
+                },
+                {
+                    userIDs: { $in: [new mongoose.Types.ObjectId(friendID)] },
+                }, {
+                    isGroup: false
+
+                }
+            ]
+        });
+        console.log(isExistGroup);
+        // Nếu chưa có tiến hành tạo và gửi socket
+        if (!isExistGroup) {
+            console.log("Tạo Group");
+            const dataRoom = await RoomModel.create({
+                name: "",
+                isGroup: false,
+                userIDs: [userID, friendID],
+                settings: {}
+            });
+            await User.EventToUser(friendID, "new-room", dataRoom);
+            await User.EventToUser(userID, "new-room", dataRoom);
+        }
         return res.status(200).json({ message: 'Bạn đã chấp nhận kết bạn' })
     } catch (err) {
         console.log(err)

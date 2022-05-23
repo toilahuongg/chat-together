@@ -1,10 +1,12 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "es2018",
     "baseUrl": ".",
     "lib": [
       "dom",
+      "es2018",
       "dom.iterable",
+      "esnext.asynciterable",
       "esnext"
     ],
     "module": "commonjs",
@@ -23,15 +25,17 @@
     "paths": {
       "@src/*": [
         "src/*"
-      ]
+      ],
+      "server/*": [
+        "server/*"
+      ],
     }
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    "**/*.js"
   ],
-  "type": "module",
   "exclude": [
     "node_modules"
   ]
