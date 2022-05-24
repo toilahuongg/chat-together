@@ -7,6 +7,7 @@ import cors from 'cors';
 import passport from 'passport';
 import mongoose from 'mongoose';
 import { createAdapter } from '@socket.io/redis-adapter';
+import compression from 'compression';
 
 import userRouter from './routes/user.route';
 import roomRouter from './routes/room.route';
@@ -37,6 +38,10 @@ const bootstrap = async () => {
   await subscribeClient();
   socketHandle(io);
   SocketIO.Init(io);
+  server.use(compression({
+    level: 6,
+    threshold: 100*1024
+  }))
   server.use(passport.initialize());
   server.use(cors());
   server.use(bodyParser.json());
