@@ -1,3 +1,4 @@
+import { SocketContext } from "@src/hooks/useSocket";
 import axios from "axios";
 
 const instance = axios.create({
@@ -29,6 +30,7 @@ if (typeof window !== undefined) {
             if (err.response.status === 401 && !originalConfig._retry) {
               originalConfig._retry = true;
               try {
+                SocketContext
                 const auth = window.localStorage.getItem('auth');
                 const { refreshToken } = auth ? JSON.parse(auth) : null;
                 const rs = await axios.post("/api/auth/refresh-token", {

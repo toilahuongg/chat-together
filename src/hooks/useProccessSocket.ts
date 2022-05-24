@@ -11,6 +11,8 @@ export const useProccessSocket = (socket: Socket) => {
   const pendingFriendsRequest = usePendingFriendsRequest();
   const friendsRequestSent = useFriendsRequestSent();
   return useCallback(() => {
+    socket.on("abcd", val => console.log(val));
+    socket.on("abcde", val => console.log(val));
     //* Start: Gửi lời mời kết bạn (A gửi lời mời kết bạn đến B)*//
     // 1. Người gửi đi
     socket.on('friend-request-sent', (userData: IUser) => {

@@ -4,10 +4,10 @@ import { toast } from 'react-toastify';
 import Avatar from '@src/Components/Layout/Avatar';
 import Button from '@src/Components/Layout/Button';
 import { IUser } from 'server/types/user.type';
-import instance from '@src/helpers/instance';
 import useSocket from '@src/hooks/useSocket';
 
 import styles from './user.module.scss';
+import { useFetchAuth } from '@src/hooks/useFetchAuth';
 
 type TProps = {
   type: 'friends-request-sent' | 'pending-friends-request' | 'friends',
@@ -18,6 +18,7 @@ type TProps = {
 
 const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, onUpdate }) => {
   const socket = useSocket();
+  const instance = useFetchAuth();
   const isMounted = useRef(false);
   const [loading, setLoading] = React.useState(false);
   const [loadingUnaccept, setLoadingUnaccept] = React.useState(false);

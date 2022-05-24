@@ -6,6 +6,7 @@ import http from 'http';
 import cors from 'cors';
 import passport from 'passport';
 import mongoose from 'mongoose';
+import { createAdapter } from '@socket.io/redis-adapter';
 
 import userRouter from './routes/user.route';
 import roomRouter from './routes/room.route';
@@ -14,6 +15,8 @@ import messageRouter from './routes/message.route'
 import './helpers/passport';
 import socketHandle from './helpers/SocketHandle';
 import SocketIO from './helpers/socketIO';
+import socketManager from './helpers/socketManager';
+import { subscribeClient } from './helpers/subscribeClient';
 
 const { PORT, MONGO_CONNECTSTRING, MONGO_USER, MONGO_PASSWORD } = process.env;
 const port = parseInt(PORT || '3000', 10);
@@ -25,16 +28,18 @@ const bootstrap = async () => {
   await app.prepare();
   const server = express()
   const httpServer = new http.Server(server);
-  const io = new Server(httpServer, {});
+  const { pubClient, subClient } = socketManager;
+  const io = new Server(httpServer);
+  await Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
+    //@ts-ignore
+    io.adapter(createAdapter(pubClient, subClient));
+  });
+  await subscribeClient();
   socketHandle(io);
-  server.use(passport.initialize())
-  server.use(cors())
-  server.use((req, res, next) => {
-    req.io = io;
-    next()
-  })
   SocketIO.Init(io);
-  server.use(bodyParser.json())
+  server.use(passport.initialize());
+  server.use(cors());
+  server.use(bodyParser.json());
   server.use(bodyParser.urlencoded({ extended: true }));
   server.use(userRouter);
   server.use(roomRouter);
@@ -47,8 +52,8 @@ const bootstrap = async () => {
   await mongoose.connect(MONGO_CONNECTSTRING || '', {
     user: MONGO_USER,
     pass: MONGO_PASSWORD,
-    })
-    console.log("Mongodb Connected");
+  })
+  console.log("Mongodb Connected");
   httpServer.listen(port, () => {
     console.log(`> Ready on http://localhost:${port}`)
   })

@@ -1,57 +1,53 @@
 /**
  * Quản lí các socket khi kết nối với server
  */
-class SocketManager{
-    static sockets = {};
-    /**
-     * Thêm socket vào kho lưu trữ cùng với userID tương ứng
-     * 
-     * @async
-     * @param socketID 
-     * @param userid 
-     */
-    static async addSocket(socketID:string, userid:string) {
-        if(!SocketManager.sockets[userid]) {
-            SocketManager.sockets[userid] = []
-        }
-        // Loại bỏ socketId trùng lặp
-        SocketManager.sockets[userid] = [...new Set([...SocketManager.sockets[userid], socketID])];
-    }
-    /**
-     * Xóa socket khỏi kho lưu trữ nếu nó tồn tại
-     * @async
-     * @param sockerID 
-     * @param userid 
-     */
-    static async removeSocket(socketID:string, userid:string) {
-        if(!SocketManager.sockets[userid]) return 
-        // tìm index của socket id này
-        let indexSocket = SocketManager.sockets[userid].indexOf(socketID)
-        if(indexSocket === -1) return
-        SocketManager.sockets[userid].splice(indexSocket, 1)
-    }
-    /**
-     * tìm Socket đang online dựa trên userID 
-     * trả về 1 array bao gôm các kết quả
-     * @async
-     * @param userid string
-     * @returns string[]
-     */
-    static async getSockets(userid:string) : Promise<string[]>  {
-        if(!SocketManager.sockets[userid]) return []
+import { createClient } from 'redis';
+import * as redisStore from './redisStore';
+const store = () => {
+    const pubClient = createClient({ url: "redis://localhost:6379" });
+    const subClient = pubClient.duplicate();
+    const sockets = {};
+    return {
+        pubClient,
+        subClient,
+        sockets,
+        addSocket: async (socketID:string, userid:string) => {
+            const allSocket = await redisStore.getRedis(pubClient, 'sockets');
+            if(!allSocket || !allSocket[userid]) {
+                allSocket[userid] = [];
+            }
+            if (!sockets[userid]) sockets[userid] = [];
+            // Loại bỏ socketId trùng lặp
+            sockets[userid] = [...new Set([...sockets[userid], socketID])];
+            allSocket[userid] = [...new Set([...allSocket[userid], socketID])];
+            await redisStore.setRedis(pubClient, 'sockets', allSocket);
+        },
+        removeSocket: async (socketID:string, userid:string) => {
+            const allSocket = await redisStore.getRedis(pubClient, 'sockets');
+            if(!allSocket || !allSocket[userid]) return;
+            if (sockets[userid]) {
+                const idx = sockets[userid].indexOf(socketID);
+                if(idx === -1) return;
+                sockets[userid].splice(idx, 1);
+            }
+            // tìm index của socket id này
+            let indexSocket = allSocket[userid].indexOf(socketID);
+            if(indexSocket === -1) return;
+            allSocket[userid].splice(indexSocket, 1);
+            await redisStore.setRedis(pubClient, 'sockets', allSocket);
+        },
+        getSockets: async (userid:string) =>  {
+            const sockets = await redisStore.getRedis(pubClient, 'sockets');
+            if(!sockets || !sockets[userid]) return [];
+            return sockets[userid];
+        },
+        getAllSockets: async () => {
+            const sockets = await redisStore.getRedis(pubClient, 'sockets').then(res => res || {});
+            return sockets;
+        },
+        isOnline: async (userID: string) => true
+      };
+} 
 
-        return SocketManager.sockets[userid]
-    }
-    /**
-     * kiểm tra user có online hay ko
-     * @async
-     * @param userid 
-     * @return boolean
-     */
-    static async isOnline(userid: string) {
-        if(!SocketManager.sockets[userid] || SocketManager.sockets[userid].length === 0) return false
-        return true
-    }
-}
-
-export default SocketManager
+const socketManager = store();
+export default socketManager;

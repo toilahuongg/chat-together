@@ -35,6 +35,7 @@ const AppProvider = ({ children }) => {
 
     useEffect(() => {
         processSocket();
+        console.log(socket.id);
     }, []);
     return loadingState.get() ? <Loading fullScreen /> : (
         <SocketContext.Provider value={socket}>

@@ -1,12 +1,13 @@
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
-import instance from "@src/helpers/instance";
 import useSocket from "@src/hooks/useSocket";
+import { useFetchAuth } from "@src/hooks/useFetchAuth";
 
 const Message = () => {
     const router = useRouter();
     const { type, id } = router.query;
     const socket = useSocket();
+    const instance = useFetchAuth();
     const [messages, setMessages] = useState<any>([]);
     const [msg, setMsg] = useState('');
     const [dataRoom, setDataRoom] = useState<any>();

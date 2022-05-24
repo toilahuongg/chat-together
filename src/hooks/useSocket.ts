@@ -17,7 +17,8 @@ const getToken = () => {
 export const SocketContext = createContext<Socket<DefaultEventsMap, DefaultEventsMap>>(socketIOClient(process.env.NEXT_PUBLIC_APP_URL!, {
   auth: {
     token: getToken()
-  }
+  },
+  transports: ['websocket']
 }))
 
 const useSocket = () => useContext(SocketContext)

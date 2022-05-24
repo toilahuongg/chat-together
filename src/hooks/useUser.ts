@@ -1,8 +1,8 @@
 import { createState, State, useState } from "@hookstate/core";
 import { defaultUser } from "@src/contants/user.contant";
-import instance from "@src/helpers/instance";
-import axios from "axios";
+import axios, { AxiosInstance } from "axios";
 import { IUser } from "server/types/user.type";
+import { useFetchAuth } from "./useFetchAuth";
 
 const addElement = (list: State<string[]>, id: string) => {
     list.set(l => {
@@ -16,7 +16,7 @@ const removeElement = (list: State<string[]>, id: string) => {
     })
 }
 const userState = createState<IUser>(defaultUser());
-const wrapState = (s: State<IUser>) => ({
+const wrapState = (s: State<IUser>, instance: AxiosInstance) => ({
     ...s,
     loginUser: () => new Promise(
         (resolve, reject) => axios.post('/api/login', s.get()).then(res => resolve(res.data))
@@ -47,6 +47,9 @@ const wrapState = (s: State<IUser>) => ({
     }
 });
 
-export const useUser = () => wrapState(useState(userState))
+export const useUser = () => {
+    const instance = useFetchAuth();
+    return wrapState(useState(userState), instance);
+}
 
 export default useUser;

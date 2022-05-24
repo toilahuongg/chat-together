@@ -6,6 +6,7 @@ declare global {
     interface Request {
         auth?: IUserData | undefined;
         io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
+        redis: any
     }
   }
 }

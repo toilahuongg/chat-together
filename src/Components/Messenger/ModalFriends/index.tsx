@@ -6,13 +6,13 @@ import React, { useEffect, useRef } from 'react';
 import Tabs from '@src/Components/Layout/Tabs';
 import TextField from '@src/Components/Layout/TextField';
 import useUser from '@src/hooks/useUser';
-import instance from '@src/helpers/instance';
 import User from '../User';
 import randomChars from 'server/helpers/randomChars';
 import Loading from '@src/Components/Layout/Loading';
 
 import IconSearch from '@src/styles/svg/search.svg';
 import { useFriends, useFriendsRequestSent, usePendingFriendsRequest } from '@src/hooks/useFriends';
+import { useFetchAuth } from '@src/hooks/useFetchAuth';
 
 type TProps = {
   isShow?: boolean,
@@ -22,6 +22,7 @@ const ModalFriends: React.FC<TProps> = ({
   isShow = false,
   onClose = () => { }
 }) => {
+  const instance = useFetchAuth();
   const userState = useUser();
 
   const friends = useFriends();

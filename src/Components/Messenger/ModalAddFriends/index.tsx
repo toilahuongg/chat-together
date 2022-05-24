@@ -6,7 +6,6 @@ import TextField from '@src/Components/Layout/TextField';
 import Button from '@src/Components/Layout/Button';
 import Modal from '@src/Components/Layout/Modal';
 import Checkbox from '@src/Components/Layout/Checkbox';
-import instance from '@src/helpers/instance';
 import { IUser } from 'server/types/user.type';
 import InfiniteScroll from '@src/Components/Layout/InfiniteScroll';
 import randomChars from 'server/helpers/randomChars';
@@ -15,6 +14,7 @@ import useUser from '@src/hooks/useUser';
 import User from '../User';
 
 import IconSearch from '@src/styles/svg/search.svg';
+import { useFetchAuth } from '@src/hooks/useFetchAuth';
 
 type TProps = {
   isRecommend?: boolean,
@@ -26,6 +26,7 @@ const ModalAddFriends: React.FC<TProps> = ({
   isShow = false,
   onClose = () => { }
 }) => {
+  const instance = useFetchAuth();
   const unmount = useRef(false);
   const divRef = useRef<HTMLDivElement>(null);
   const { checkUserInFriendRequestSent, addFriendRequestSent, removeFriendRequestSent, checkUserInFriends } = useUser();
