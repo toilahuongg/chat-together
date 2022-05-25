@@ -11,7 +11,9 @@ import { IUser, IUserData } from '../types/user.type';
 import randomChars from '../helpers/randomChars';
 import SocketManager from '../helpers/socketManager';
 import uploadavartar from '../helpers/avartarUploadHandle'
-import MulterRequest from 'server/types/multerrequest';
+import MulterRequest from '../types/multerrequest';
+import RoomModel from '../models/room.model';
+import mongoose from 'mongoose';
 
 dotenv.config();
 const Router = express.Router();
@@ -168,46 +170,8 @@ Router.put("/api/user/update-profile", passport.authenticate('jwt', { session: f
         console.log(err)
         return res.status(500).json({ message: "Lỗi hệ thống" })
     }
-})
-// Router.get("/api/user/notification", passport.authenticate('jwt', { session: false }), async (req, res) => {
-//     try {
-//         const userId = req.auth?._id
-//         const offsetid = (req.query.offsetid ? req.query.offsetid : false) as string | boolean
-//         const limit = req.query.limit
-//         await Notification.getNotificationByRange(offsetid, limit, userId)
-//             .then(notifications => {
-//                 return res.status(200).json(notifications)
-//             })
-//             .catch(err => {
-//                 return res.status(403).json({ message: err.message })
-//             })
-//     } catch (err) {
-//         console.log(err)
-//         return res.status(200).json({ message: "Lỗi hệ thống" })
-//     }
-// })
-/**
- * Register route
- * cần phải gửi đủ 5 trường 
- * --------------------
- * REQUEST
- * POST      /api/register
- * Request header:
- *          content-type: application/json
- * 
- * Request body:
- *          username
- *          fullname
- *          password
- *          email
- *          phone
- * Success
- *          status: 200
- * Error
- *          status: 4xx
- * 
- * 
- */
+});
+
 Router.post('/api/register', async (req, res) => {
     const username: string = req.body.username
     const fullname: string = req.body.fullname
@@ -305,7 +269,7 @@ Router.post('/api/login', async (req, res) => {
         })
 })
 //----------------------------------------------------------------------
-// gợi ý kết bạn
+// Tìm kiếm
 
 Router.get('/api/user/search', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
@@ -333,6 +297,27 @@ Router.get('/api/user/search', passport.authenticate('jwt', { session: false }),
         return res.status(500).json({ message: "Lỗi hệ thống!" });
     }
 })
+
+// // Lấy Room
+Router.get('/api/user/rooms', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const userID = req.auth?._id.toString() as string;
+        const { name, lastTime } = req.query;
+        const limit = 10;
+        let match = { userIDs: { $in: [new mongoose.Types.ObjectId(userID)] }};
+        if (name) match['name'] = { $regex: `.*${name}.*`, $options: 'i' };
+        const rooms = await RoomModel.aggregate([
+            { $match: match },
+            // { $sort: {} },
+            { $limit: limit }
+        ]);
+        const count = await RoomModel.count({ name: { $regex: `.*${name}.*` } });
+        return res.status(200).json({ rooms, count });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Lỗi hệ thống!" });
+    }
+})
 // TODO: bỏ
 Router.get('/api/user/create-user', async (req, res) => {
     for (let i = 0; i < 50; i++) {
@@ -346,40 +331,4 @@ Router.get('/api/user/create-user', async (req, res) => {
     return res.status(200).json('oke')
 })
 
-// // TODO: bỏ
-// Router.get('/api/user/randomuser', async (req, res) => {
-//     let offsetid;
-//     let limit;
-//     if (req.query.offsetid) {
-//         try {
-//             offsetid = req.query.offsetid
-//             limit = req.query.limit
-//         }
-//         catch (err) {
-//             return res.status(403).send({ message: "query err" })
-//         }
-//         const users = await UserModel.find({ '_id': { $gt: new mongoose.Types.ObjectId(offsetid) } }).limit(limit)
-//         res.status(200)
-//         return res.send(users)
-//     }
-//     try {
-//         limit = req.query.limit ? req.query.limit : 5
-//         const user = await UserModel.find({}).limit(limit)
-//         const result: Object[] = []
-
-//         for (let i = 0; i < user.length; i++) {
-//             const temp = new Object({
-//                 id: user[i]._id.toString(),
-//                 username: user[i].username,
-//                 fullname: user[i].fullname
-//             })
-//             result.push(temp)
-//         }
-//         res.status(200)
-//         return res.send(result)
-//     } catch (err) {
-//         res.status(500)
-//         return res.send({ message: "Lỗi" })
-//     }
-// })
 export default Router;

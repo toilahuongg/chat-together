@@ -15,6 +15,7 @@ import User from '../User';
 
 import IconSearch from '@src/styles/svg/search.svg';
 import { useFetchAuth } from '@src/hooks/useFetchAuth';
+import useDebounce from '@src/hooks/useDebounce';
 
 type TProps = {
   isRecommend?: boolean,
@@ -62,28 +63,26 @@ const ModalAddFriends: React.FC<TProps> = ({
       console.log(error);
     }
   }
+  
+  const debouncedSearchTerm = useDebounce(typingTextState.get(), 300);
 
-  const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    unmount.current = false;
-    if (typingTimeout.current) clearTimeout(typingTimeout.current);
-    typingTimeout.current = setTimeout(async () => {
+  useEffect(
+    () => {
       if (searchTextState.get() !== typingTextState.get()) {
-        searchTextState.set(typingTextState.get());
-        setLoadingUsers(true);
-        const response = await instance.get(`/api/user/search?fullname=${searchTextState.get()}&isNotFriend=true`);
-        const { count, users } = response.data;
-        setCount(count)
-        listUserState.set(users);
-        setLoadingUsers(false);
-        if (divRef.current) divRef.current.scrollTop = 0;
+        searchTextState.set(debouncedSearchTerm);
+        (async () => {
+          setLoadingUsers(true);
+          const response = await instance.get(`/api/user/search?fullname=${debouncedSearchTerm}&isNotFriend=true`);
+          const { count, users } = response.data;
+          setCount(count)
+          listUserState.set(users);
+          setLoadingUsers(false);
+          if (divRef.current) divRef.current.scrollTop = 0;
+        })()
       }
-    }, 300);
-    return () => {
-      if (typingTimeout.current) clearTimeout(typingTimeout.current);
-      unmount.current = true;
-    }
-  }, [typingTextState.get(), divRef]);
+    },
+    [debouncedSearchTerm, divRef]
+  );
 
   return (
     <Modal isShow={!isRecommend ? isShow : !showState.get()} onClose={!isRecommend ? onClose : handleClose} size="md">
@@ -91,7 +90,7 @@ const ModalAddFriends: React.FC<TProps> = ({
         Hãy thêm bạn để trò truyện
       </Modal.Header>
       <Modal.Body>
-        <TextField icon={<IconSearch />} placeholder="Tìm kiếm..." value={typingTextState.get()} onChange={val => typingTextState.set(val)} />
+        <TextField icon={<IconSearch />} placeholder="Tìm kiếm..." value={typingTextState.get()} onChange={val => typingTextState.set(val)} plain />
         <div ref={divRef} style={{ height: 300, overflow: "auto" }}>
           <InfiniteScroll
             next={() => fetchMoreData(lastId)}
@@ -101,7 +100,7 @@ const ModalAddFriends: React.FC<TProps> = ({
           >
             {listUserState.length ? listUserState.map(user => {
               const checked = checkUserInFriendRequestSent(user._id.get());
-              return checkUserInFriends(user._id.get()) ? <> </> :(
+              return checkUserInFriends(user._id.get()) ? <> </> : (
                 <User
                   key={user._id.get() + randomChars(8)}
                   data={user.get()}

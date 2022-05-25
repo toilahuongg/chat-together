@@ -1,21 +1,21 @@
 import express from 'express';
 import passport from 'passport';
-import UserModel from '../models/user.model';
-import RoomModel from '../models/room.model';
-// import { Request, Response } from 'express';
-// import IRoom, { IRoomModel } from 'server/types/room.type';
-// import { Notification } from '../models/notification.model';
-// import SocketManager from '../helpers/socketManager';
+import UserModel, { User } from '../models/user.model';
+import RoomModel, { Room } from '../models/room.model';
+import MessageModel from '../models/message.model'
+
 const Router = express.Router();
 /**
  * Tạo phòng
  */
 Router.post('/api/room', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
+        const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
         const userID = req.auth?._id.toString()!;
         const { userIDs, name: groupName } = req.body as { userIDs: string[], name: string };
         if (userIDs.length === 0) return res.status(400).json({ message: "Bạn cần thêm ít nhất một user để tạo group" })
         let NAME = groupName;
+        const listIds = [...userIDs, userID];
         if (!groupName) {
             NAME = `Nhóm của: ${req.auth?.username}`
             const userNames = await Promise.all(userIDs.map(async (userID) => {
@@ -29,16 +29,70 @@ Router.post('/api/room', passport.authenticate('jwt', { session: false }), async
         const result = await RoomModel.create({
             name: NAME,
             isGroup: true,
-            userIDs,
+            userIDs: listIds,
             ownerID: userID,
             settings: {},
         });
+        for (const id of listIds) {
+            await User.EventToUser(id, 'new-room', result, [excludeSocketId]);
+        }
         return res.status(200).json(result)
     } catch (err) {
         console.log(err);
         return res.status(500).json({ message: "lỗi hệ thống" })
     }
-})
+});
+/**
+ * Sửa phòng
+ */
+Router.put('/api/room/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
+        const { id } = req.params;
+        const { name, settings } = req.body as { name: string[], settings: any };
+        const result = await RoomModel.findOneAndUpdate({ _id: id }, { name, settings }, { new: true });
+        if (!result) return res.status(500).json({ message: 'Không tồn tại Group' });
+        for (const _id of result.userIDs) {
+            await User.EventToUser(_id, 'new-room', result, [excludeSocketId]);
+        }
+        return res.status(200).json(result);
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "lỗi hệ thống" })
+    }
+});
+
+/**
+ * Lấy thông tin phòng
+ */
+Router.get('/api/room/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await RoomModel.findOne({ _id: id }).lean();
+        return res.status(200).json(result);
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "lỗi hệ thống" })
+    }
+});
+
+/**
+ * Lấy tin nhắn trong phòng
+ */
+ Router.get('/api/room/:id/messages', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const { lastId } = req.query;
+        const limit = 10;
+        let match = {};
+        if (lastId) match['_id'] = { $lt: lastId };
+        const messages = await MessageModel.find(match, { _id: 1, username: 1, fullname: 1 }).sort({ createdAt: -1 }).limit(limit).lean();
+        const count = await MessageModel.count();
+        return res.status(200).json({ messages, count });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "lỗi hệ thống" })
+    }
+});
 // /**
 //  * Thêm thành viên vào phòng
 //  */

@@ -47,7 +47,7 @@ const wrapState = (s: State<IUser>, instance: AxiosInstance) => ({
     }
 });
 
-export const useUser = () => {
+const useUser = () => {
     const instance = useFetchAuth();
     return wrapState(useState(userState), instance);
 }

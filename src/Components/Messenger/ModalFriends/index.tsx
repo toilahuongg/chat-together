@@ -7,16 +7,16 @@ import Tabs from '@src/Components/Layout/Tabs';
 import TextField from '@src/Components/Layout/TextField';
 import useUser from '@src/hooks/useUser';
 import User from '../User';
-import randomChars from 'server/helpers/randomChars';
 import Loading from '@src/Components/Layout/Loading';
 
 import IconSearch from '@src/styles/svg/search.svg';
 import { useFriends, useFriendsRequestSent, usePendingFriendsRequest } from '@src/hooks/useFriends';
 import { useFetchAuth } from '@src/hooks/useFetchAuth';
+import useDebounce from '@src/hooks/useDebounce';
 
 type TProps = {
-  isShow?: boolean,
-  onClose?: () => void
+  isShow: boolean,
+  onClose: () => void
 }
 const ModalFriends: React.FC<TProps> = ({
   isShow = false,
@@ -49,25 +49,9 @@ const ModalFriends: React.FC<TProps> = ({
   const selectedTab = useState('pending-friends-request');
 
   const typingTextState = useState("");
-  const searchTextState = useState("");
   const unmount = useRef(false);
   const divRef = useRef<HTMLDivElement>(null);
-  const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    unmount.current = false;
-    if (typingTimeout.current) clearTimeout(typingTimeout.current);
-    typingTimeout.current = setTimeout(async () => {
-      if (searchTextState.get() !== typingTextState.get()) {
-        searchTextState.set(typingTextState.get());
-        if (divRef.current) divRef.current.scrollTop = 0;
-      }
-    }, 300);
-    return () => {
-      if (typingTimeout.current) clearTimeout(typingTimeout.current);
-      unmount.current = true;
-    }
-  }, [typingTextState.get(), divRef]);
+  const debouncedSearchTerm = useDebounce(typingTextState.get(), 300);
 
   useEffect(() => {
     unmount.current = false;
@@ -147,12 +131,12 @@ const ModalFriends: React.FC<TProps> = ({
             typingTextState.set("");
           }}
         />
-        <TextField icon={<IconSearch />} placeholder="Tìm kiếm..." value={typingTextState.get()} onChange={val => typingTextState.set(val)} />
+        <TextField icon={<IconSearch />} placeholder="Tìm kiếm..." value={typingTextState.get()} onChange={val => typingTextState.set(val)} plain />
         <div ref={divRef} style={{ height: 300, overflow: "auto" }}>
           {selectedTab.get() === 'pending-friends-request' && (
-            loadingPending ? <Loading /> : pendingFriendsRequest.get().map(user => (
+            loadingPending ? <Loading /> : pendingFriendsRequest.get().filter(({ fullname }) => fullname.includes(debouncedSearchTerm)).map(user => (
               <User
-                key={user._id + randomChars(8)}
+                key={user._id}
                 type="pending-friends-request"
                 data={user}
                 onUpdate={handleUpdatePendingRequest}
@@ -160,9 +144,9 @@ const ModalFriends: React.FC<TProps> = ({
             ))
           )}
           {selectedTab.get() === 'friends-request-sent' && (
-            loadingSent ? <Loading /> : friendsRequestSent.get().map(user => (
+            loadingSent ? <Loading /> : friendsRequestSent.get().filter(({ fullname }) => fullname.includes(debouncedSearchTerm)).map(user => (
               <User
-                key={user._id + randomChars(8)}
+                key={user._id}
                 type="friends-request-sent"
                 data={user}
                 isFriendRequestSent={true}
@@ -171,9 +155,9 @@ const ModalFriends: React.FC<TProps> = ({
             ))
           )}
           {selectedTab.get() === 'friends' && (
-            loadingSent ? <Loading /> : friends.get().map(user => (
+            loadingFriend ? <Loading /> : friends.get().filter(({ fullname }) => fullname.includes(debouncedSearchTerm)).map(user => (
               <User
-                key={user._id + randomChars(8)}
+                key={user._id}
                 type="friends"
                 data={user}
                 onUpdate={handleUnFriend}

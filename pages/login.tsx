@@ -6,7 +6,7 @@ import { StateMethods, useState } from "@hookstate/core";
 import GuestLayout from "@src/Components/Guest/GuestLayout"
 import TextField from "@src/Components/Layout/TextField";
 import Button from "@src/Components/Layout/Button";
-import { useUser } from "@src/hooks/useUser";
+import useUser from "@src/hooks/useUser";
 
 import User from '@src/styles/svg/user2.svg';
 import Key from '@src/styles/svg/key.svg';

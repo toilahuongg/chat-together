@@ -16,7 +16,7 @@ const RoomSchema = new Schema<IRoomModel>({
         type: Types.ObjectId
     }], 
     ownerID: {
-        type: String,
+        type: Types.ObjectId,
         transform: (v: any) => v == null ? '' : v
     },
     avatar: {

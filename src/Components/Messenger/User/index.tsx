@@ -8,15 +8,17 @@ import useSocket from '@src/hooks/useSocket';
 
 import styles from './user.module.scss';
 import { useFetchAuth } from '@src/hooks/useFetchAuth';
+import Checkbox from '@src/Components/Layout/Checkbox';
 
 type TProps = {
-  type: 'friends-request-sent' | 'pending-friends-request' | 'friends',
+  type: 'friends-request-sent' | 'pending-friends-request' | 'friends' | 'checkbox',
   data: IUser,
   isFriendRequestSent?: boolean,
+  isChecked?: boolean,
   onUpdate: (userID: string, unaccept?: boolean) => void
 }
 
-const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, onUpdate }) => {
+const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, isChecked = false, onUpdate }) => {
   const socket = useSocket();
   const instance = useFetchAuth();
   const isMounted = useRef(false);
@@ -123,7 +125,7 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, onUpd
       />
       <div className={styles.user}>
         <div className={styles.name}>{data.fullname}</div>
-        <div className={styles.status}>Tôi rất vui khi chúng ta trở thành bạn bè</div>
+        {type !== 'checkbox' && <div className={styles.status}>Tôi rất vui khi chúng ta trở thành bạn bè</div> }
       </div>
       <div className={styles.action}>
         {type === 'pending-friends-request' && (
@@ -161,6 +163,9 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, onUpd
           >
             Huỷ kết bạn
           </Button>
+        )}
+        {type === 'checkbox' && (
+          <Checkbox checked={isChecked} onChange={() => onUpdate(data._id)} />
         )}
       </div>
     </div>

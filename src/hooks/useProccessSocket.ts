@@ -3,6 +3,7 @@ import IRoom from "server/types/room.type";
 import { IUser } from "server/types/user.type";
 import { Socket } from "socket.io-client";
 import { useFriends, useFriendsRequestSent, usePendingFriendsRequest } from "./useFriends";
+import useListGroup from "./useListGroup";
 import useUser from "./useUser";
 
 export const useProccessSocket = (socket: Socket) => {
@@ -10,6 +11,7 @@ export const useProccessSocket = (socket: Socket) => {
   const friends = useFriends();
   const pendingFriendsRequest = usePendingFriendsRequest();
   const friendsRequestSent = useFriendsRequestSent();
+  const listGroup = useListGroup();
   return useCallback(() => {
     socket.on("abcd", val => console.log(val));
     socket.on("abcde", val => console.log(val));
@@ -80,6 +82,7 @@ export const useProccessSocket = (socket: Socket) => {
     // Tạo group
     socket.on('new-room', (newGroup: IRoom) => {
       console.log(newGroup);
+      listGroup.add(newGroup);
     });
   }, [friends, pendingFriendsRequest, friendsRequestSent])
 }

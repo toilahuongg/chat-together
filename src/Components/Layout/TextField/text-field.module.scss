@@ -1,11 +1,16 @@
 .textField {
     margin-bottom: 20px;
+    label {
+        padding: 5px;
+        display: block;
+        font-size: 16px;
+    }
     .relative {
         position: relative;
     }
     input {
         width: 100%;
-        padding: 10px 40px;
+        padding: 10px;
         border-radius: 20px;
         font-size: 14px;
         border: 2px solid #AFAFAF;
@@ -13,6 +18,9 @@
         color: #6b6b6b;
         &:focus {
             border-color: #FF4747;
+        }
+        &.plain:focus { 
+            border: 2px solid #AFAFAF;
         }
         
     }

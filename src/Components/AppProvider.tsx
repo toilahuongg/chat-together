@@ -8,6 +8,7 @@ import ModalAddFriends from './Messenger/ModalAddFriends';
 import Messenger from './Messenger';
 import useSocket, { SocketContext } from '@src/hooks/useSocket';
 import { useProccessSocket } from '@src/hooks/useProccessSocket';
+import useListGroup from '@src/hooks/useListGroup';
 
 const AppProvider = ({ children }) => {
     const { isAuth, setAccessToken, setRefreshToken } = useAuth();
@@ -15,10 +16,13 @@ const AppProvider = ({ children }) => {
     const user = useUser();
     const processSocket = useProccessSocket(socket);
     const loadingState = useState(true);
+    const { getListGroup } = useListGroup();
+
     const getUser = async () => {
         try {
             loadingState.set(true);
             await user.getCurrentUser();
+            await getListGroup();
             loadingState.set(false);
         } catch (error) {
             console.log(error);

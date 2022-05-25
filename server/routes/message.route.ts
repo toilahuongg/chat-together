@@ -2,75 +2,39 @@ import express from 'express'
 import passport from 'passport'
 import mongoose from 'mongoose'
 import RoomModel, { Room } from '../models/room.model'
-import UserModel from '../models/user.model'
+import UserModel, { User } from '../models/user.model'
 import MessageModel from '../models/message.model'
 import SocketManager from '../helpers/socketManager'
+import { IMessage } from 'server/types/message.type'
 const router = express.Router()
 
 /**
  * Gửi tin nhắn vào phòng 
  * vi dụ api/message/:idroom
  */
-router.post("/api/message/:room/send-message", passport.authenticate("jwt", { session: false }), async (req, res) => {
-    interface Message {
-        sender: string,
-        msg: string,
-        roomID: string
-    }
-    if (!req.body || !req.body.message) {
+router.post("/api/message/:id/send-message", passport.authenticate("jwt", { session: false }), async (req, res) => {
+    const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
+    if (!req.body) {
         return res.status(403).json({ message: "Tin nhắn trống không thể gửi" })
     }
-    const userID : string = req.auth?._id.toString() as unknown as string
-    let messageInfo: Message = {
-        msg: req.body.message,
-        sender: userID,
-        roomID: req.params.room
-    };
-    if (!mongoose.isValidObjectId(messageInfo.roomID))
-        return res.status(403).json({ message: "Mã này không phải mã phòng" })
-    // kiểm tra phòng có tồn tại không
-    const room = await RoomModel.findOne({ "_id": messageInfo.roomID })
-    if (!room)
-        return res.status(403).json({ message: "Phòng không tồn tại" })
-    // kiểm tra user có phải là thành viên trong phòng không
-    const roomMembers = room.userIDs;
-    const indexMember = roomMembers.indexOf(messageInfo.sender)
-    if (indexMember < 0) {
-        return res.status(403).json({ message: "Bạn không phải là thành viên trong phòng không thể gửi request" })
+    const roomID = req.params.id;
+    const room = await RoomModel.findOne({ _id: roomID }).lean();
+    if (!room) return res.status(500).json({ message: "Nhóm không tồn tại" })
+    const { message } = req.body as { message: string };
+    const sender: string = req.auth?._id.toString()!;
+    if (!room.userIDs.includes(sender)) return res.status(500).json({ message: "Bạn không là thành viên của nhóm này" });
+    const result = await MessageModel.create({
+        sender,
+        roomID,
+        msg: {
+            type: 'text',
+            value: message
+        }
+    });
+    for (const _id of room.userIDs) {
+        await User.EventToUser(_id, 'new-message', result, [excludeSocketId]);
     }
-    // lưu tin nhắn
-    let message = new MessageModel({
-        ...messageInfo
-    })
-    await message.save((err, msg) => {
-        // lấy thông tin cần thiết
-        message = msg
-    })
-    // cập nhật thông tin của phòng
-    // lấy socketID của các thành viên trong nhóm
-    let sockets: string[] = [];
-    for (let i = 0; i < roomMembers.length; i++) {
-        if(roomMembers[i] === messageInfo.sender ) 
-            continue
-        let temp: string[] = await SocketManager.getSockets(roomMembers[i].toString())
-        sockets = sockets.concat(temp)
-    }
-    // gửi thông báo đến các socket rằng có tin nhắn mới
-    for (let i = 0; i < sockets.length; i++) {
-        req.io.to(sockets[i]).emit("new-chat-message", {
-            ...message["_doc"]
-        })
-    }
-    res.status(200).json({ "status": "tin nhắn gửi thành công", "messageID": message.id })
-    // gửi thông báo đến chính bản thân
-    const socketsCurrentUser = await SocketManager.getSockets(userID)
-    for (let i = 0; i < socketsCurrentUser.length; i++) {
-        req.io.to(socketsCurrentUser[i]).emit("new-chat-message", {
-            ...message["_doc"]
-        })
-    }
-    return
-
+    return res.status(200).json(result);
 })
 /**
  * Lấy các tin nhắn đã gửi trong phòng
