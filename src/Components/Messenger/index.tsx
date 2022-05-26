@@ -14,17 +14,17 @@ type TProps = {
 	children: React.ReactNode
 }
 const Messenger: React.FC<TProps> = ({ children }) => {
-  const isMounted = useRef(false);
+	const isMounted = useRef(false);
 	const showGroupSetting = useState(showGroupSettingState);
 	const showListGroup = useState(showListGroupState);
 	const showModalFriends = useState(showFriendsState);
-	
-  useEffect(() => {
-    isMounted.current = false;
-    return () => {
-      isMounted.current = true;
-    }
-  }, []);
+
+	useEffect(() => {
+		isMounted.current = false;
+		return () => {
+			isMounted.current = true;
+		}
+	}, []);
 	return (
 		<>
 			<Nav />
@@ -32,19 +32,10 @@ const Messenger: React.FC<TProps> = ({ children }) => {
 				{showListGroup.get() && (
 					<ListGroup />
 				)}
-				<div className={styles.group}>
-					{children}
-				</div>
-				{
-					showGroupSetting.get() && (
-						<div className={styles.settings}>
-							Hello
-						</div>
-					)
-				}
+				{children}
 			</div>
-			{ showModalFriends.get() && <ModalFriends isShow={showModalFriends.get()} onClose={() => !isMounted.current && showModalFriends.set(false)} />}
-			
+			{showModalFriends.get() && <ModalFriends isShow={showModalFriends.get()} onClose={() => !isMounted.current && showModalFriends.set(false)} />}
+
 		</>
 	)
 }

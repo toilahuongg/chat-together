@@ -2,17 +2,3 @@
     display: flex;
 }
 
-.group {
-    flex: 1;
-    background-color: #efefef;
-    height: calc(100vh - 64px);
-    display: flex;
-    flex-flow: column;
-
-}
-.settings {
-    width: 300px;
-    height: calc(100vh - 64px);
-    background-color: #fff;
-    border-left: 1px solid #efefef;
-}
