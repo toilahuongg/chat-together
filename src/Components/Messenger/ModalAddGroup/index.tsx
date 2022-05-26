@@ -64,8 +64,10 @@ const ModalAddGroup: React.FC<TProps> = ({
           'x-exclude-socket-id': socket?.id!
         }
       });    
-      listGroup.add(response.data);
-      group.set(defaultGroup());
+      if (!unmount.current) {
+        listGroup.add(response.data);
+        group.set(defaultGroup());
+      }
       onClose();
     } catch (error: any) {
       toast.error(error.toString());
@@ -81,7 +83,7 @@ const ModalAddGroup: React.FC<TProps> = ({
         Tạo nhóm
       </Modal.Header>
       <Modal.Body>
-        <TextField label="Tên nhóm" placeholder="Nhập tên nhóm..." value={group.name.get()} onChange={val => group.name.set(val)} plain />
+        <TextField label="Tên nhóm" placeholder="Nhập tên nhóm..." value={group.name.get()} onChange={val => !unmount.current && group.name.set(val)} plain />
         <TextField label="Thêm bạn vào nhóm" icon={<IconSearch />} placeholder="Tìm kiếm..." value={typingTextState.get()} onChange={val => typingTextState.set(val)} plain />
         <div ref={divRef} style={{ height: 300, overflow: "auto" }}>
           {loadingFriend ? <Loading /> : friends.get().filter(({ fullname }) => fullname.includes(debouncedSearchTerm)).map(user => (
@@ -90,7 +92,7 @@ const ModalAddGroup: React.FC<TProps> = ({
               type="checkbox"
               data={user}
               isChecked={userIDs.includes(user._id)}
-              onUpdate={(userID) => group.userIDs.set(u => {
+              onUpdate={(userID) => !unmount.current && group.userIDs.set(u => {
                 const idx = u.indexOf(userID);
                 if (idx >= 0) u.splice(idx, 1);
                 else u.push(userID);

@@ -7,5 +7,6 @@ export const defaultGroup = (): IRoom => ({
     settings: {},
     userIDs: [],
     avatar: '',
-    ownerID: ''
+    ownerID: '',
+    name2: {}
 });

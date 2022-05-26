@@ -13,6 +13,7 @@ import GuestLayout from './GuestLayout';
 import { toast } from 'react-toastify';
 import useAuth from '@src/hooks/useAuth';
 import useSocket from '@src/hooks/useSocket';
+import Head from 'next/head';
 
 type TProviderID = 'google' | 'facebook' | 'github';
 const ClientHome = () => {
@@ -67,12 +68,17 @@ const ClientHome = () => {
 		}
 	}
 	return (
-		<GuestLayout errorMessage={errorMessage}>
-			<Button variable="default-guest" onClick={() => router.push('/login')} icon={<User />}> Đăng nhập </Button>
-			<Button variable="login-google" icon={<Google />} onClick={() => oauthLogin('google')} loading={loading === 'google'}> Tiếp tục với Google </Button>
-			<Button variable="login-facebook" icon={<Facebook />} onClick={() => oauthLogin('facebook')} loading={loading === 'facebook'}> Tiếp tục với Facebook </Button>
-			<Button variable="login-github" icon={<Github />} onClick={() => oauthLogin('github')} loading={loading === 'github'}> Tiếp tục với Github </Button>
-		</GuestLayout>
+		<>
+			<Head>
+				<title> Chat together </title>
+			</Head>
+			<GuestLayout errorMessage={errorMessage}>
+				<Button variable="default-guest" onClick={() => router.push('/login')} icon={<User />}> Đăng nhập </Button>
+				<Button variable="login-google" icon={<Google />} onClick={() => oauthLogin('google')} loading={loading === 'google'}> Tiếp tục với Google </Button>
+				<Button variable="login-facebook" icon={<Facebook />} onClick={() => oauthLogin('facebook')} loading={loading === 'facebook'}> Tiếp tục với Facebook </Button>
+				<Button variable="login-github" icon={<Github />} onClick={() => oauthLogin('github')} loading={loading === 'github'}> Tiếp tục với Github </Button>
+			</GuestLayout>
+		</>
 	)
 }
 

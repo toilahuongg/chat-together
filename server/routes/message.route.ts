@@ -1,11 +1,9 @@
 import express from 'express'
 import passport from 'passport'
-import mongoose from 'mongoose'
 import RoomModel, { Room } from '../models/room.model'
 import UserModel, { User } from '../models/user.model'
 import MessageModel from '../models/message.model'
-import SocketManager from '../helpers/socketManager'
-import { IMessage } from 'server/types/message.type'
+import mongoose from 'mongoose'
 const router = express.Router()
 
 /**
@@ -18,11 +16,10 @@ router.post("/api/message/:id/send-message", passport.authenticate("jwt", { sess
         return res.status(403).json({ message: "Tin nhắn trống không thể gửi" })
     }
     const roomID = req.params.id;
-    const room = await RoomModel.findOne({ _id: roomID }).lean();
+    const sender: string = req.auth?._id.toString()!;
+    const room = await RoomModel.findOne({ _id: roomID, userIDs: { $in: new mongoose.Types.ObjectId(sender)} }).lean();
     if (!room) return res.status(500).json({ message: "Nhóm không tồn tại" })
     const { message } = req.body as { message: string };
-    const sender: string = req.auth?._id.toString()!;
-    if (!room.userIDs.includes(sender)) return res.status(500).json({ message: "Bạn không là thành viên của nhóm này" });
     const result = await MessageModel.create({
         sender,
         roomID,

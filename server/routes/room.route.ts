@@ -76,17 +76,31 @@ Router.get('/api/room/:id', passport.authenticate('jwt', { session: false }), as
     }
 });
 
+Router.get('/api/room/:id/users', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await RoomModel.findOne({ _id: id }).lean();
+        if (!result) return res.status(500).json({ message: 'Không tồn tại Group' });
+        const users = await UserModel.find({ _id: { $in: result.userIDs }}).lean();
+        return res.status(200).json(users);
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "lỗi hệ thống" })
+    }
+});
+
 /**
  * Lấy tin nhắn trong phòng
  */
  Router.get('/api/room/:id/messages', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
+        const { id } = req.params;
         const { lastId } = req.query;
         const limit = 10;
-        let match = {};
+        let match = { roomID: id };
         if (lastId) match['_id'] = { $lt: lastId };
-        const messages = await MessageModel.find(match, { _id: 1, username: 1, fullname: 1 }).sort({ createdAt: -1 }).limit(limit).lean();
-        const count = await MessageModel.count();
+        const messages = await MessageModel.find(match).sort({ createdAt: -1 }).limit(limit).lean();
+        const count = await MessageModel.count({ roomID: id });
         return res.status(200).json({ messages, count });
     } catch (err) {
         console.log(err);

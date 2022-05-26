@@ -1,4 +1,4 @@
-import React, { FormEvent } from "react";
+import React, { FormEvent, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { NextPage } from "next";
 import { StateMethods, useState } from "@hookstate/core";
@@ -18,6 +18,7 @@ import withGuest from "@src/Components/Guest/withGuest";
 import useSocket from "@src/hooks/useSocket";
 const LoginPage: NextPage = () => {
     const router = useRouter();
+    const unmount = useRef(false);
     const user = useUser();
     const socket = useSocket();
     const { setAccessToken, setRefreshToken } = useAuth();
@@ -25,6 +26,7 @@ const LoginPage: NextPage = () => {
     const errorState = useState({ username: '', password: '' });
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (unmount.current) return;
         if (errorState.password.get() || errorState.username.get()) return;
         let id: React.ReactText = "";
         try {
@@ -32,16 +34,16 @@ const LoginPage: NextPage = () => {
             id = toast.loading('Đang đăng nhập!');
             const { accessToken, refreshToken } = await user.loginUser() as { accessToken: string, refreshToken: string };
             setAccessToken(accessToken);
-			setRefreshToken(refreshToken);
+            setRefreshToken(refreshToken);
             socket.auth = {
                 token: accessToken
             }
             socket.connect();
-            toast.update(id, {render: "Đăng nhập thành công", type: "success", isLoading: false, autoClose: 3000 });
+            toast.update(id, { render: "Đăng nhập thành công", type: "success", isLoading: false, autoClose: 3000 });
         } catch (error) {
             console.log(error);
             // TODO
-            toast.update(id, {render: "Đã xảy ra lỗi", type: "error", isLoading: false, autoClose: 3000 });
+            toast.update(id, { render: "Đã xảy ra lỗi", type: "error", isLoading: false, autoClose: 3000 });
         } finally {
             setLoading(false);
         }
@@ -52,17 +54,22 @@ const LoginPage: NextPage = () => {
         else state.set(message);
     }
 
+    useEffect(() => {
+        return () => {
+          unmount.current = true;
+        }
+      }, []);
     return (
         <GuestLayout>
-            <div className={styles.back} onClick={() => router.push('/')}> <Back /> <span>  Quay lại </span></div>
+            <div className={styles.back} onClick={() => !unmount.current && router.push('/')}> <Back /> <span>  Quay lại </span></div>
             <h1 className={styles.title}> Đăng Nhập</h1>
             <form onSubmit={handleSubmit}>
                 <TextField
                     icon={<User />}
                     placeholder="Enter your username or email..."
                     value={user.username.get()}
-                    onChange={(val: string) => user.username.set(val)}
-                    onKeyUp={(e) => handleKeyUp((e.target as any).value, errorState.username, 'Tài khoản không được để trống')}
+                    onChange={(val: string) => !unmount.current && user.username.set(val)}
+                    onKeyUp={(e) => !unmount.current && handleKeyUp((e.target as any).value, errorState.username, 'Tài khoản không được để trống')}
                     errorMessage={errorState.username.get()}
                 />
                 <TextField
@@ -70,8 +77,8 @@ const LoginPage: NextPage = () => {
                     icon={<Key />}
                     placeholder="Enter your Password..."
                     value={user.password.get()}
-                    onChange={(val: string) => user.password.set(val)}
-                    onKeyUp={(e) => handleKeyUp((e.target as any).value, errorState.password, 'Mật khẩu không được để trống')}
+                    onChange={(val: string) => !unmount.current && user.password.set(val)}
+                    onKeyUp={(e) => !unmount.current && handleKeyUp((e.target as any).value, errorState.password, 'Mật khẩu không được để trống')}
                     errorMessage={errorState.password.get()}
                 />
                 <Button
@@ -80,7 +87,7 @@ const LoginPage: NextPage = () => {
                     loading={loading}
                 > Đăng nhập </Button>
             </form>
-            
+
         </GuestLayout>
     );
 }

@@ -9,4 +9,9 @@ export interface IMessage {
     roomID: string,
 }
 
+export interface IGroupMessage {
+    sender: string,
+    messages: IMessage[]
+}
+
 export interface IMessageModel extends Omit<IMessage, '_id'>, mongoose.Document {};

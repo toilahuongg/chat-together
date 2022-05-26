@@ -4,6 +4,7 @@ import { IUser } from "server/types/user.type";
 export const showFriendsState = createState(false);
 export const friendsState = createState<IUser[]>([]);
 export const friendsRequestSent = createState<IUser[]>([]);
+export const listUserOfGroup = createState<IUser[]>([]);
 export const pendingFriendsRequestState = createState<IUser[]>([]);
 
 const wrapState = (s: State<IUser[]>) => {
@@ -21,6 +22,7 @@ const wrapState = (s: State<IUser[]>) => {
   }
 };
 
-export const useFriends = () => wrapState(useState(friendsState))
-export const usePendingFriendsRequest = () => wrapState(useState(pendingFriendsRequestState))
-export const useFriendsRequestSent = () => wrapState(useState(friendsRequestSent))
+export const useFriends = () => wrapState(useState(friendsState));
+export const usePendingFriendsRequest = () => wrapState(useState(pendingFriendsRequestState));
+export const useFriendsRequestSent = () => wrapState(useState(friendsRequestSent));
+export const useListUserOfGroup = () => wrapState(useState(listUserOfGroup));

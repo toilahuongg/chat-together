@@ -1,9 +1,11 @@
 import { useCallback } from "react";
+import { IMessage } from "server/types/message.type";
 import IRoom from "server/types/room.type";
 import { IUser } from "server/types/user.type";
 import { Socket } from "socket.io-client";
 import { useFriends, useFriendsRequestSent, usePendingFriendsRequest } from "./useFriends";
-import useListGroup from "./useListGroup";
+import useListGroup, { useGroup } from "./useListGroup";
+import useListMessage from "./useListMessage";
 import useUser from "./useUser";
 
 export const useProccessSocket = (socket: Socket) => {
@@ -12,6 +14,8 @@ export const useProccessSocket = (socket: Socket) => {
   const pendingFriendsRequest = usePendingFriendsRequest();
   const friendsRequestSent = useFriendsRequestSent();
   const listGroup = useListGroup();
+  const group = useGroup();
+  const listMessage = useListMessage();
   return useCallback(() => {
     socket.on("abcd", val => console.log(val));
     socket.on("abcde", val => console.log(val));
@@ -81,8 +85,13 @@ export const useProccessSocket = (socket: Socket) => {
 
     // Tạo group
     socket.on('new-room', (newGroup: IRoom) => {
-      console.log(newGroup);
       listGroup.add(newGroup);
     });
-  }, [friends, pendingFriendsRequest, friendsRequestSent])
+    // Them tin nhan
+    socket.on('new-message', (message: IMessage) => {
+      if (group.get()._id === message.roomID) {
+        listMessage.add(message);
+      }
+    });
+  }, [friends, pendingFriendsRequest, friendsRequestSent, group.get()._id])
 }

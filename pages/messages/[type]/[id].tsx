@@ -1,4 +1,6 @@
 import { useState } from '@hookstate/core';
+import { useRouter } from 'next/router';
+import { useEffect } from 'react';
 import Avatar from '@src/Components/Layout/Avatar';
 import InputBox from '@src/Components/Messenger/BoxMessage/InputBox';
 import ListMessage from '@src/Components/Messenger/BoxMessage/ListMessage';
@@ -6,12 +8,18 @@ import withAuth from '@src/Components/withAuth';
 import { showGroupSettingState } from '@src/hooks/useGroupSetting';
 import IconSettings from '@src/styles/svg/settings.svg';
 import IconUser3 from '@src/styles/svg/user3.svg';
-import { useEffect } from 'react';
+
 import styles from './message.module.scss';
+import { useGroup } from '@src/hooks/useListGroup';
+import { useListUserOfGroup } from '@src/hooks/useFriends';
+import useUser from '@src/hooks/useUser';
 
 const Message = () => {
-	const isGroup = true;
+  const user = useUser();
   const showGroupSetting = useState(showGroupSettingState);
+  const group = useGroup();
+  const listUserOfGroup = useListUserOfGroup();
+  const { name, name2, isGroup } = group.get();
   useEffect(() => {
     showGroupSetting.set(true);
   }, []); 
@@ -26,12 +34,12 @@ const Message = () => {
             height={58}          
           />
           <div className={styles.infoGroup}>
-            <div className={styles.title}>Đây là tên Grouppppppppppppppppppppppppppppppppppppppppppppppppppppppp</div>
+            <div className={styles.title}>{ isGroup ? name : name2[user._id.get() as string]}</div>
             <div className={styles.onlineStatus}>
               {isGroup ? (
                 <>
                   <span><IconUser3 /> </span>
-                  <span> 1000 thành viên </span>
+                  <span> {listUserOfGroup.list.length} thành viên </span>
                 </>
               ) : 'Đang hoạt động'}
             </div>

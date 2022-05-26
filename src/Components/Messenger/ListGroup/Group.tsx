@@ -10,7 +10,7 @@ type TProps = {
 	userID: string
 }
 const Group: React.FC<TProps> = ({ data, userID }) => {
-	const { _id, name, isGroup, userIDs } = data;
+	const { _id, name, name2, isGroup, userIDs } = data;
 	return (
 		<div className={styles.group}>
 			<Avatar
@@ -20,7 +20,7 @@ const Group: React.FC<TProps> = ({ data, userID }) => {
 			<div className={styles.infoGroup}>
 				<div className={styles.title}>
 					<Link href={`/messages/${isGroup ? 'r/'+_id : 'u/' + userIDs.find(id => id !== userID)}`}><a>
-						{ name } 
+						{ isGroup ? name : name2[userID] } 
 					</a></Link>
 				</div>
 				<div className={styles.message}>Vũ Bá Hướng: Oke nhé nhé nhé nhé nhé nhé</div>

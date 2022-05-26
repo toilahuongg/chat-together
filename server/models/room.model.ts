@@ -23,6 +23,7 @@ const RoomSchema = new Schema<IRoomModel>({
         type: String
     },
     settings: {},
+    name2: {}
 }, { timestamps: true });
 const RoomModel = model<IRoomModel>('rooms', RoomSchema);
 export default RoomModel;

@@ -77,61 +77,29 @@ Router.post('/api/auth/refresh-token', async (req, res) => {
 Router.get('/api/user/profile/', passport.authenticate('jwt', { session: false }), async (req, res) => {
     // route có id thì tìm theo id
     try {
-        let ID = req.auth?._id as unknown as string
-        // TODO bỏ query
-        if (ID === req.query.id) req.query.id = undefined
-        if (req.query.id) {
-            ID = req.query.id as unknown as string
-            const isvalidID = ObjectID.isValidObjectId(ID)
-            if (!isvalidID)
-                return res.status(403).json({ message: "Mã người dùng không hợp lệ" })
-            // Danh sach ban của người gửi request
-            const friendsID = await UserModel.findOne({ _id: req.auth?._id })
-                .then(data => {
-                    if (!data) return []
-                    return data.friends
-                })
-            const isFriend = friendsID.includes(ID)
-            const profile = await UserModel.findOne({ _id: ID }) as any
-            if (!profile) return res.status(403).json({ message: "User không tồn tại" })
-            profile.password = undefined
-            // Kiểm tra user online 
-            const isOnline = await SocketManager.isOnline(ID)
-            if (isFriend) {
-                return res.status(200).json({
-                    username: profile.username,
-                    fullname: profile.fullname,
-                    email: profile.email,
-                    phone: profile.phone,
-                    onlinestatus: isOnline
-                })
-            }
-            else {
-                return res.status(200).json({
-                    username: profile.username,
-                    fullname: profile.fullname,
-                })
-            }
+        let ID = req.auth?._id!;
+        const isvalidID = ObjectID.isValidObjectId(ID)
+        if (!isvalidID)
+            return res.status(403).json({ message: "Mã người dùng không hợp lệ" })
 
-        }
-        // route không có id không trả về thông tin của người của người gọi
-        else {
-            const ID = req.auth?._id
-            let profile = await UserModel.findOne({ _id: ID }) as Partial<IUser>
-            if (!profile) return res.status(500).json({ message: "Lỗi hệ thống" })
-            delete profile.password
-            return res.status(200).json(profile)
-        }
+        const profile = await UserModel.findOne({ _id: ID }, { username: 1, fullname: 1, email: 1, phone: 1, pendingFriendRequest: 1, friends: 1, friendRequestSent: 1 });
+        if (!profile) return res.status(403).json({ message: "User không tồn tại" })
+        return res.status(200).json(profile);
     } catch (err) {
         console.log(err)
         return res.status(500).json({ message: "Lỗi hệ thống" })
     }
 });
-Router.get("/api/user/profile/:id", passport.authenticate('jwt', { session: false }), async (req, res) => {
+Router.get("/api/user/profile/:id", async (req, res) => {
     try {
-        if (!req.params.id) return res.status(403).json({ message: "ParamID ko dc de trống" })
-        const user = await User.getUserByID(req.params.id)
-        return res.status(200).json(user)
+        const ID = req.params.id;
+        const isvalidID = ObjectID.isValidObjectId(ID)
+        if (!isvalidID)
+            return res.status(403).json({ message: "Mã người dùng không hợp lệ" })
+
+        const user = await UserModel.findOne({ _id: ID }, { username: 1, fullname: 1 });
+        if (!user) return res.status(403).json({ message: "User không tồn tại" })
+        return res.status(200).json(user);
     }
     catch (err) {
         console.log(err)
@@ -304,7 +272,7 @@ Router.get('/api/user/rooms', passport.authenticate('jwt', { session: false }), 
         const userID = req.auth?._id.toString() as string;
         const { name, lastTime } = req.query;
         const limit = 10;
-        let match = { userIDs: { $in: [new mongoose.Types.ObjectId(userID)] }};
+        let match = { userIDs: { $in: [new mongoose.Types.ObjectId(userID)] } };
         if (name) match['name'] = { $regex: `.*${name}.*`, $options: 'i' };
         const rooms = await RoomModel.aggregate([
             { $match: match },
