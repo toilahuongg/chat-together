@@ -4,10 +4,11 @@ import useAuth from '@src/hooks/useAuth';
 import Slider from '@src/Components/Guest/Slider';
 import Head from 'next/head';
 
+import styles from './style.module.scss';
 const Home: NextPage = () => {
   const { isAuth } = useAuth();
   return isAuth ? (
-    <>
+    <div className={styles.home}>
       <Head>
         <title> Chat together </title>
       </Head>
@@ -16,7 +17,7 @@ const Home: NextPage = () => {
           <Slider />
         </div>
       </div>
-    </>
+    </div>
   ) : <GuestHome />;
 }
 

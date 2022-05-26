@@ -5,13 +5,24 @@
     line-height: 100px;
     text-transform: uppercase;
 }
+
 .back {
     display: flex;
     align-items: center;
     gap: 10px;
     font-weight: 500;
     cursor: pointer;
+
     &:hover {
         text-decoration: underline;
     }
+}
+
+.home {
+    flex: 1;
+    background-color: #efefef;
+    height: calc(100vh);
+    display: flex;
+    flex-flow: column;
+
 }
