@@ -24,10 +24,6 @@ const InputBox = () => {
     try {
       const response = await instance.post(`/api/message/${roomID}/send-message`, {
         message: message.get().msg.value
-      }, {
-        headers: {
-          'x-exclude-socket-id': socket?.id!
-        }
       })
       listMessage.add(response.data);
       message.data.set(defaultMessage());

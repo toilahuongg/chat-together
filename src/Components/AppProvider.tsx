@@ -12,7 +12,7 @@ import useListGroup from '@src/hooks/useListGroup';
 
 const AppProvider = ({ children }) => {
 
-    const { isAuth, setAccessToken, setRefreshToken } = useAuth();
+    const { isAuth } = useAuth();
     const socket = useSocket();
     const user = useUser();
     const processSocket = useProccessSocket(socket);
@@ -27,8 +27,6 @@ const AppProvider = ({ children }) => {
         } catch (error) {
             console.log(error);
             loadingState.set(false);
-            setAccessToken('');
-            setRefreshToken('');
         }
     }
     useEffect(() => {

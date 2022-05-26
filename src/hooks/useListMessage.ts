@@ -1,27 +1,25 @@
 import { createState, Downgraded, State, useState } from "@hookstate/core";
 import { defaultMessage } from "@src/contants/message.contant";
-import { AxiosInstance } from "axios";
+import { AxiosInstance, CancelToken } from "axios";
 import { IGroupMessage, IMessage } from "server/types/message.type";
-import { useFetchAuth } from "./useFetchAuth";
 
 
 const messageState = createState<IMessage>(defaultMessage());
-const wrapMessageState = (s: State<IMessage>, instance: AxiosInstance) => ({
+const wrapMessageState = (s: State<IMessage>) => ({
   data: s,
   get: () => s.get()
 });
 export const useMessage = () => {
-  const instance = useFetchAuth();
-  return wrapMessageState(useState(messageState), instance);
+  return wrapMessageState(useState(messageState));
 }
 
 const listMessageState = createState<IGroupMessage[]>([]);
-const wrapListMessageState = (s: State<IGroupMessage[]>, instance: AxiosInstance) => ({
+const wrapListMessageState = (s: State<IGroupMessage[]>) => ({
   ...s,
   list: s,
   get: () => s.attach(Downgraded).get(),
-  getListMessage: (id: string): Promise<IMessage[]> => new Promise(
-    (resolve, reject) => instance.get(`api/room/${id}/messages`).then(res => {
+  getListMessage: (instance: AxiosInstance, token: CancelToken, id: string): Promise<IMessage[]> => new Promise(
+    (resolve, reject) => instance.get(`api/room/${id}/messages`, { cancelToken: token }).then(res => {
       s.set(m => {
         const { messages } = res.data as { messages: IMessage[] };
         for (const message of messages) {
@@ -46,8 +44,7 @@ const wrapListMessageState = (s: State<IGroupMessage[]>, instance: AxiosInstance
 });
 
 const useListMessage = () => {
-  const instance = useFetchAuth();
-  return wrapListMessageState(useState(listMessageState), instance);
+  return wrapListMessageState(useState(listMessageState));
 }
 
 export default useListMessage;

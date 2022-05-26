@@ -5,15 +5,20 @@ import useSocket from "./useSocket";
 
 export const useFetchAuth = () => {
     const socket = useSocket();
-    const { accessToken: at, refreshToken, setAccessToken } = useAuth();
+    const { refreshToken, setAccessToken, setRefreshToken } = useAuth();
     return useMemo(() => {
         const instance = axios.create({
-            baseURL: process.env.NEXT_PUBLIC_APP_URL
+            baseURL: process.env.NEXT_PUBLIC_APP_URL,
+            headers: {
+                'x-exclude-socket-id': socket?.id!
+            }
         });
         instance.interceptors.request.use(
             (config) => {
-                if (at && config.headers) {
-                    config.headers['Authorization'] = 'Bearer ' + at;
+                const auth = window.localStorage.getItem('auth');
+                const { accessToken } = auth ? JSON.parse(auth) : null;
+                if (accessToken && config.headers) {
+                    config.headers['Authorization'] = 'Bearer ' + accessToken;
                 }
                 return config;
             },
@@ -27,12 +32,11 @@ export const useFetchAuth = () => {
             },
             async (err) => {
                 const originalConfig = err.config;
-                if (originalConfig.url !== "/api/auth/sign-in" && err.response) {
+                if (originalConfig?.url !== "/api/auth/sign-in" && err.response) {
                     // Access Token was expired
                     if (err.response.status === 401 && !originalConfig._retry) {
                         originalConfig._retry = true;
                         try {
-                            socket.disconnect();
                             const rs = await axios.post("/api/auth/refresh-token", {
                                 refreshToken: refreshToken,
                             });
@@ -41,9 +45,11 @@ export const useFetchAuth = () => {
                             socket.auth = {
                                 token: accessToken
                             }
-                            socket.connect();
                             return instance(originalConfig);
                         } catch (_error) {
+                            socket.disconnect();
+                            setAccessToken('');
+                            setRefreshToken('');
                             return Promise.reject(_error);
                         }
                     }
@@ -52,6 +58,6 @@ export const useFetchAuth = () => {
             }
         );
         return instance;
-    }, [socket, at, refreshToken]);
+    }, [socket, refreshToken]);
 
 }

@@ -1,4 +1,4 @@
-import { Schema, model, Types } from 'mongoose';
+import { Schema, model } from 'mongoose';
 import { IMessageModel } from '../types/message.type';
 const MessageSchema = new Schema<IMessageModel>({
     msg: {
@@ -6,10 +6,10 @@ const MessageSchema = new Schema<IMessageModel>({
         value: { type: String }
     },
     sender: {
-        type: String
+        type: Schema.Types.ObjectId
     },
     roomID: {
-        type: String
+        type: Schema.Types.ObjectId
     },
 }, { timestamps: true });
 

@@ -14,4 +14,11 @@ export interface IGroupMessage {
     messages: IMessage[]
 }
 
-export interface IMessageModel extends Omit<IMessage, '_id'>, mongoose.Document {};
+export interface IMessageModel extends mongoose.Document {
+    sender: mongoose.Types.ObjectId,
+    msg: {
+        type: 'image' | 'text' | 'notify',
+        value: string
+    },
+    roomID: mongoose.Types.ObjectId,
+}

@@ -18,6 +18,7 @@ import useListMessage from '@src/hooks/useListMessage';
 import Loading from '@src/Components/Layout/Loading';
 import { useFetchAuth } from '@src/hooks/useFetchAuth';
 import IRoom from 'server/types/room.type';
+import axios from 'axios';
 
 const Message = () => {
   const router = useRouter();
@@ -37,6 +38,7 @@ const Message = () => {
   }, []);
   useEffect(() => {
     listMessage.list.set([]);
+    const axiosCancelSource = axios.CancelToken.source();
     if (id && type) {
       (async () => {
         setLoading(true);
@@ -50,12 +52,15 @@ const Message = () => {
           router.push("/404");
           return;
         }
-        const response = await instance.get(`/api/room/${g._id}/users`);
+        const response = await instance.get(`/api/room/${g._id}/users`, { cancelToken: axiosCancelSource.token });
         listUserOfGroup.list.set(response.data);
         group.data.set(g);
-        await listMessage.getListMessage(g._id);
+        await listMessage.getListMessage(instance, axiosCancelSource.token, g._id);
         setLoading(false);
       })();
+    }
+    return () => {
+      axiosCancelSource.cancel();
     }
   }, [id, type]);
   return (

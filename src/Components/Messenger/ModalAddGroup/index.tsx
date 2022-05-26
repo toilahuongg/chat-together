@@ -15,7 +15,6 @@ import { useFetchAuth } from '@src/hooks/useFetchAuth';
 import useDebounce from '@src/hooks/useDebounce';
 import { defaultGroup } from '@src/contants/group.contant';
 import { toast } from 'react-toastify';
-import useSocket from '@src/hooks/useSocket';
 
 type TProps = {
   isShow: boolean,
@@ -25,7 +24,6 @@ const ModalAddGroup: React.FC<TProps> = ({
   isShow = false,
   onClose = () => { }
 }) => {
-  const socket = useSocket();
   const instance = useFetchAuth();
   const userState = useUser();
   const listGroup = useListGroup();
@@ -59,11 +57,7 @@ const ModalAddGroup: React.FC<TProps> = ({
   const handleAddGroup = async () => {
     try {
       setLoading(true);
-      const response = await instance.post('/api/room', group.get(), {
-        headers: {
-          'x-exclude-socket-id': socket?.id!
-        }
-      });    
+      const response = await instance.post('/api/room', group.get());    
       if (!unmount.current) {
         listGroup.add(response.data);
         group.set(defaultGroup());
