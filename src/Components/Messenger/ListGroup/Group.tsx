@@ -25,7 +25,7 @@ const Group: React.FC<TProps> = ({ data, userID }) => {
 				</div>
 				<div className={styles.message}>
 					{(message && user) ?
-						user.fullname + ': ' + message.msg.value
+						(user._id === userID ? 'Bạn' : user.fullname) + ': ' + message.msg.value
 						: 'Chưa có tin nhắn'}
 				</div>
 			</div>
