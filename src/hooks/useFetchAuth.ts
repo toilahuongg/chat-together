@@ -9,9 +9,6 @@ export const useFetchAuth = () => {
     return useMemo(() => {
         const instance = axios.create({
             baseURL: process.env.NEXT_PUBLIC_APP_URL,
-            headers: {
-                'x-exclude-socket-id': socket?.id!
-            }
         });
         instance.interceptors.request.use(
             (config) => {

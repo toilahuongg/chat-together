@@ -2870,7 +2870,17 @@
   "resolved" "https://registry.npmjs.org/data-uri-to-buffer/-/data-uri-to-buffer-3.0.1.tgz"
   "version" "3.0.1"
 
-"dayjs@~1.8.24", "dayjs@~1.8.25":
+"dayjs@^1.11.2":
+  "integrity" "sha512-F4LXf1OeU9hrSYRPTTj/6FbO4HTjPKXvEIC1P2kcnFurViINCVk3ZV0xAS3XVx9MkMsXbbqlK6hjseaYbgKEHw=="
+  "resolved" "https://registry.npmjs.org/dayjs/-/dayjs-1.11.2.tgz"
+  "version" "1.11.2"
+
+"dayjs@~1.8.24":
+  "integrity" "sha512-3VmRXEtw7RZKAf+4Tv1Ym9AGeo8r8+CjDi26x+7SYQil1UqtqdaokhzoEJohqlzt0m5kacJSDhJQkG/LWhpRBw=="
+  "resolved" "https://registry.npmjs.org/dayjs/-/dayjs-1.8.36.tgz"
+  "version" "1.8.36"
+
+"dayjs@~1.8.25":
   "integrity" "sha512-3VmRXEtw7RZKAf+4Tv1Ym9AGeo8r8+CjDi26x+7SYQil1UqtqdaokhzoEJohqlzt0m5kacJSDhJQkG/LWhpRBw=="
   "resolved" "https://registry.npmjs.org/dayjs/-/dayjs-1.8.36.tgz"
   "version" "1.8.36"

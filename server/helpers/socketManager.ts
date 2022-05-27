@@ -12,7 +12,7 @@ const store = () => {
         subClient,
         sockets,
         addSocket: async (socketID:string, userid:string) => {
-            const allSocket = await redisStore.getRedis(pubClient, 'sockets');
+            const allSocket = await redisStore.getRedis(pubClient, 'sockets').then(res => res || {});
             if(!allSocket || !allSocket[userid]) {
                 allSocket[userid] = [];
             }
@@ -23,7 +23,7 @@ const store = () => {
             await redisStore.setRedis(pubClient, 'sockets', allSocket);
         },
         removeSocket: async (socketID:string, userid:string) => {
-            const allSocket = await redisStore.getRedis(pubClient, 'sockets');
+            const allSocket = await redisStore.getRedis(pubClient, 'sockets').then(res => res || {});
             if(!allSocket || !allSocket[userid]) return;
             if (sockets[userid]) {
                 const idx = sockets[userid].indexOf(socketID);
@@ -37,7 +37,7 @@ const store = () => {
             await redisStore.setRedis(pubClient, 'sockets', allSocket);
         },
         getSockets: async (userid:string) =>  {
-            const sockets = await redisStore.getRedis(pubClient, 'sockets');
+            const sockets = await redisStore.getRedis(pubClient, 'sockets').then(res => res || {});
             if(!sockets || !sockets[userid]) return [];
             return sockets[userid];
         },

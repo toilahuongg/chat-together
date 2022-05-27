@@ -3,7 +3,11 @@ import { useState } from 'react';
 import Router from 'next/router';
 import { ToastContainer } from 'react-toastify';
 import TopBarProgress from 'react-topbar-progress-indicator';
-
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import 'dayjs/locale/vi';
+dayjs.locale('vi');
+dayjs.extend(relativeTime);
 
 import AppProvider from '@src/Components/AppProvider';
 

@@ -55,7 +55,6 @@ const Message = () => {
         const response = await instance.get(`/api/room/${g._id}/users`, { cancelToken: axiosCancelSource.token });
         listUserOfGroup.list.set(response.data);
         group.data.set(g);
-        await listMessage.getListMessage(instance, axiosCancelSource.token, g._id);
         setLoading(false);
       })();
     }

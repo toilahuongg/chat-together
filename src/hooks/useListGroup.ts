@@ -1,7 +1,9 @@
 import { createState, Downgraded, State, useState } from "@hookstate/core";
 import { defaultGroup } from "@src/contants/group.contant";
 import { AxiosInstance } from "axios";
+import { IMessage } from "server/types/message.type";
 import IRoom, { IMessageRoom } from "server/types/room.type";
+import { IUserData } from "server/types/user.type";
 import { useFetchAuth } from "./useFetchAuth";
 
 export const showListGroupState = createState(true);
@@ -28,7 +30,7 @@ const listGroupState = createState<IMessageRoom[]>([]);
 const wrapListGroupState = (s: State<IMessageRoom[]>, instance: AxiosInstance) => ({
   ...s,
   list: s,
-  get: () => s.attach(Downgraded).get(),
+  get: () => s.attach(Downgraded).get().sort((a,b) => new Date(b.createdAt).valueOf() - new Date(a.createdAt).valueOf()),
   getListGroup: (): Promise<IMessageRoom[]> => new Promise(
     (resolve, reject) => instance.get('/api/user/rooms/').then(res => {
       s.set(g => {
@@ -43,8 +45,19 @@ const wrapListGroupState = (s: State<IMessageRoom[]>, instance: AxiosInstance) =
       .catch(err => reject(err))
   ),
   add: (room: IMessageRoom) => s.set(g => {
-    if (!g.some(({ _id }) => _id === room._id)) g.push(room);
+    if (!g.some(({ _id }) => _id === room._id)) g.unshift(room);
     return g;
+  }),
+  updateMessage: ({ message, user }: { message: IMessage, user: IUserData }) => s.set(g => {
+    return g.map(data => {
+      if (data._id === message.roomID) return {
+        ...data,
+        message,
+        user,
+        createdAt: message.createdAt
+      }
+      return data;
+    });
   }),
   findById: (roomID: string) => s.attach(Downgraded).get().find(({ _id }) => _id === roomID),
   findPrivateByUserID: (userID: string) => s.attach(Downgraded).get().find(({ isGroup, userIDs }) => !isGroup &&  userIDs.includes(userID))

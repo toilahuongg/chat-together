@@ -8,6 +8,7 @@ import { IUser } from 'server/types/user.type';
 import styles from './user.module.scss';
 import { useFetchAuth } from '@src/hooks/useFetchAuth';
 import Checkbox from '@src/Components/Layout/Checkbox';
+import useSocket from '@src/hooks/useSocket';
 
 type TProps = {
   type: 'friends-request-sent' | 'pending-friends-request' | 'friends' | 'checkbox',
@@ -18,6 +19,7 @@ type TProps = {
 }
 
 const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, isChecked = false, onUpdate }) => {
+  const socket = useSocket();
   const instance = useFetchAuth();
   const isMounted = useRef(false);
   const [loading, setLoading] = React.useState(false);
@@ -26,7 +28,11 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, isChe
     if (isMounted.current) return;
     try {
       setLoading(true);
-      const response = await instance.post(`/api/friend/${isFriendRequestSent ? 'retake-friend-request' : 'friend-request'}/${data._id}`);
+      const response = await instance.post(`/api/friend/${isFriendRequestSent ? 'retake-friend-request' : 'friend-request'}/${data._id}`, {}, {
+        headers: {
+          'x-exclude-socket-id': socket?.id!
+        }
+      });
       const result = response.data;
       toast.success(result.message);
       onUpdate(data._id);
@@ -44,7 +50,11 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, isChe
     if (isMounted.current) return;
     try {
       setLoading(true);
-      const response = await instance.post(`/api/friend/accept-friend-request/${data._id}`);
+      const response = await instance.post(`/api/friend/accept-friend-request/${data._id}`, {}, {
+        headers: {
+          'x-exclude-socket-id': socket?.id!
+        }
+      });
       const result = response.data;
       toast.success(result.message);
       onUpdate(data._id);
@@ -61,7 +71,11 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, isChe
     if (isMounted.current) return;
     try {
       setLoadingUnaccept(true);
-      const response = await instance.post(`/api/friend/denie-friend-request/${data._id}`);
+      const response = await instance.post(`/api/friend/denie-friend-request/${data._id}`, {}, {
+        headers: {
+          'x-exclude-socket-id': socket?.id!
+        }
+      });
       const result = response.data;
       toast.success(result.message);
       onUpdate(data._id, true);
@@ -78,7 +92,11 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, isChe
     if (isMounted.current) return;
     try {
       setLoading(true);
-      const response = await instance.post(`/api/friend/unfriend/${data._id}`);
+      const response = await instance.post(`/api/friend/unfriend/${data._id}`, {}, {
+        headers: {
+          'x-exclude-socket-id': socket?.id!
+        }
+      });
       const result = response.data;
       toast.success(result.message);
       onUpdate(data._id);
@@ -107,7 +125,7 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, isChe
       />
       <div className={styles.user}>
         <div className={styles.name}>{data.fullname}</div>
-        {type !== 'checkbox' && <div className={styles.status}>Tôi rất vui khi chúng ta trở thành bạn bè</div> }
+        {type !== 'checkbox' && <div className={styles.status}>Tôi rất vui khi chúng ta trở thành bạn bè</div>}
       </div>
       <div className={styles.action}>
         {type === 'pending-friends-request' && (

@@ -3,6 +3,8 @@ import { defaultMessage } from "@src/contants/message.contant";
 import { AxiosInstance, CancelToken } from "axios";
 import { IGroupMessage, IMessage } from "server/types/message.type";
 
+const signalSend = createState<string>('');
+export const useSignalSend = () => useState(signalSend);
 
 const messageState = createState<IMessage>(defaultMessage());
 const wrapMessageState = (s: State<IMessage>) => ({
@@ -18,8 +20,8 @@ const wrapListMessageState = (s: State<IGroupMessage[]>) => ({
   ...s,
   list: s,
   get: () => s.attach(Downgraded).get(),
-  getListMessage: (instance: AxiosInstance, token: CancelToken, id: string): Promise<IMessage[]> => new Promise(
-    (resolve, reject) => instance.get(`api/room/${id}/messages`, { cancelToken: token }).then(res => {
+  getListMessage: (instance: AxiosInstance, token: CancelToken, id: string, lastId: string | null) => new Promise(
+    (resolve, reject) => instance.get(`api/room/${id}/messages${lastId ? `?lastId=${lastId}` : ''}`, { cancelToken: token }).then(res => {
       s.set(m => {
         const { messages } = res.data as { messages: IMessage[] };
         for (const message of messages) {
@@ -41,6 +43,21 @@ const wrapListMessageState = (s: State<IGroupMessage[]>) => ({
     }
     return m;
   }),
+  updateMessage: (message: IMessage, id: string) => s.set(l => {
+    for (let i = l.length - 1;  i >= 0; i--) {
+      if (l[i].sender !== message.sender) continue;
+      for (let j = l[i].messages.length - 1; j >= 0; j--) {
+        if (l[i].messages[j]._id === id) {
+          l[i].messages[j] = message;
+          return l;
+        }
+      }
+    }
+    return l;
+  }),
+  countMessage: () => {
+    return s.reduce((prev, current) => prev + current.messages.length,0)
+  }
 });
 
 const useListMessage = () => {

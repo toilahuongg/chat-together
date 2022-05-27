@@ -18,6 +18,7 @@ const removeElement = (list: State<string[]>, id: string) => {
 const userState = createState<IUser>(defaultUser());
 const wrapState = (s: State<IUser>, instance: AxiosInstance) => ({
     ...s,
+    data: s,
     loginUser: () => new Promise(
         (resolve, reject) => axios.post('/api/login', s.get()).then(res => resolve(res.data))
             .catch(err => reject(err))

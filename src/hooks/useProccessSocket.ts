@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { IMessage } from "server/types/message.type";
 import IRoom from "server/types/room.type";
-import { IUser } from "server/types/user.type";
+import { IUser, IUserData } from "server/types/user.type";
 import { Socket } from "socket.io-client";
 import { useFriends, useFriendsRequestSent, usePendingFriendsRequest } from "./useFriends";
 import useListGroup, { useGroup } from "./useListGroup";
@@ -85,10 +85,11 @@ export const useProccessSocket = (socket: Socket) => {
 
     // Tạo group
     socket.on('new-room', (newGroup: IRoom) => {
-      listGroup.add(newGroup);
+      listGroup.add({ ...newGroup, message: null, user: null});
     });
     // Them tin nhan
-    socket.on('new-message', (message: IMessage) => {
+    socket.on('new-message', ({ message, user }: { message: IMessage, user: IUserData }) => {
+      listGroup.updateMessage({ message, user });
       if (group.get()._id === message.roomID) {
         listMessage.add(message);
       }

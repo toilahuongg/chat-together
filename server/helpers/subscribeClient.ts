@@ -4,14 +4,16 @@ import socketManager from "./socketManager";
 
 export const subscribeClient = async () => {
     await socketManager.subClient.subscribe('socket', (message, chanel) => {
-        const { data, eventName, userID } = JSON.parse(message) as TMsg;
+        const { data, eventName, userID, exclude } = JSON.parse(message) as TMsg;
         const sockets = socketManager.sockets[userID];
         if (sockets && sockets.length) {
-            sockets.forEach(socket => {
-                SocketIO.sendEvent({
-                    eventName, data, socketID: socket, userID
+            if (!exclude.some(e => sockets.some(s => s === e))) {
+                sockets.forEach(socket => {
+                    SocketIO.sendEvent({
+                        eventName, data, socketID: socket, userID
+                    })
                 })
-            })
+            }
         }
     });
 }

@@ -152,7 +152,7 @@ class User {
      */
     static async EventToUser(userID: string, eventName: string, data: object, exclude: string[] = []) {
         try {
-            await socketManager.pubClient.publish('socket', JSON.stringify({ data, userID, eventName }));
+            await socketManager.pubClient.publish('socket', JSON.stringify({ data, userID, eventName, exclude }));
             const sockets = SocketManager.sockets[userID];
             if (sockets && sockets.length)  {
                 sockets.forEach(socket => {

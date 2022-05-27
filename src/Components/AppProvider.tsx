@@ -11,7 +11,6 @@ import { useProccessSocket } from '@src/hooks/useProccessSocket';
 import useListGroup from '@src/hooks/useListGroup';
 
 const AppProvider = ({ children }) => {
-
     const { isAuth } = useAuth();
     const socket = useSocket();
     const user = useUser();

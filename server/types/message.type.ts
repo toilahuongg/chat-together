@@ -7,6 +7,7 @@ export interface IMessage {
         value: string
     },
     roomID: string,
+    createdAt: string
 }
 
 export interface IGroupMessage {

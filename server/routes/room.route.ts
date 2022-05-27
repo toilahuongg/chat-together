@@ -53,7 +53,7 @@ Router.put('/api/room/:id', passport.authenticate('jwt', { session: false }), as
         const result = await RoomModel.findOneAndUpdate({ _id: id }, { name, settings }, { new: true });
         if (!result) return res.status(500).json({ message: 'Không tồn tại Group' });
         for (const _id of result.userIDs) {
-            await User.EventToUser(_id, 'new-room', result, [excludeSocketId]);
+            await User.EventToUser(_id, 'update-room', result, [excludeSocketId]);
         }
         return res.status(200).json(result);
     } catch (err) {
@@ -96,7 +96,7 @@ Router.get('/api/room/:id/users', passport.authenticate('jwt', { session: false 
     try {
         const { id } = req.params;
         const { lastId } = req.query;
-        const limit = 10;
+        const limit = 15;
         let match = { roomID: id };
         if (lastId) match['_id'] = { $lt: lastId };
         const messages = await MessageModel.find(match).sort({ createdAt: -1 }).limit(limit).lean();
