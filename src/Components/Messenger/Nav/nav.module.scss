@@ -9,18 +9,37 @@
     color: #fff;
     display: flex;
     align-items: center;
+    .multiFeature button {
+        background-color: #009947;
+    }
     button {
         @extend .flexCenter;
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
         border: none;
         background: none;
         cursor: pointer;
+        position: relative;
         &:hover {
             background-color: #038b42;
         }
+        .counter {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            font-size: 12px;
+            background-color: rgb(184, 45, 45);
+            color: #fff;
+        }
     }
+
     .navBar {
         width: 80px;
         @extend .flexCenter;
@@ -32,5 +51,8 @@
     .multiFeature {
         width: 200px;
         display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-right: 20px;
     }
 }

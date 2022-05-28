@@ -7,6 +7,7 @@ export interface IMessage {
         value: string
     },
     roomID: string,
+    readers: string[],
     createdAt: string
 }
 
@@ -22,4 +23,5 @@ export interface IMessageModel extends mongoose.Document {
         value: string
     },
     roomID: mongoose.Types.ObjectId,
+    readers: mongoose.Types.ObjectId[]
 }

@@ -31,8 +31,8 @@ const wrapListGroupState = (s: State<IMessageRoom[]>, instance: AxiosInstance) =
   ...s,
   list: s,
   get: () => s.attach(Downgraded).get().sort((a,b) => new Date(b.createdAt).valueOf() - new Date(a.createdAt).valueOf()),
-  getListGroup: (): Promise<IMessageRoom[]> => new Promise(
-    (resolve, reject) => instance.get('/api/user/rooms/').then(res => {
+  getListGroup: (lastTime: string | null, name?: string) => new Promise(
+    (resolve, reject) => instance.get(`/api/user/rooms${lastTime ? `?lastTime=${lastTime}` : ''}`).then(res => {
       s.set(g => {
         const { rooms } = res.data as { rooms: IMessageRoom[] };
         for (const room of rooms) {
@@ -55,6 +55,18 @@ const wrapListGroupState = (s: State<IMessageRoom[]>, instance: AxiosInstance) =
         message,
         user,
         createdAt: message.createdAt
+      }
+      return data;
+    });
+  }),
+  updateReaders: (id: string, userID: string) => s.set(g => {
+    return g.map(data => {
+      if (data._id === id && data.message) return {
+        ...data,
+        message: {
+          ...data.message,
+          readers: [... new Set([...data.message.readers, userID ])]
+        }
       }
       return data;
     });

@@ -11,6 +11,9 @@ const MessageSchema = new Schema<IMessageModel>({
     roomID: {
         type: Schema.Types.ObjectId
     },
+    readers: [{
+        type: Schema.Types.ObjectId
+    }]
 }, { timestamps: true });
 
 const MessageModel = model('messages', MessageSchema);

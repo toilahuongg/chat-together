@@ -3,6 +3,7 @@
     background-color: #fff;
     border-right: 1px solid #efefef;
 }
+
 .wrapperHeader {
     border-bottom: 1px solid #efefef;
     height: 80px;
@@ -10,19 +11,23 @@
     display: flex;
     align-items: center;
 }
+
 .header {
     height: 50px;
     display: flex;
     align-items: center;
     gap: 5px;
+
     .icon {
         width: 20px;
         height: 20px;
     }
+
     .search {
         flex: 1;
         position: relative;
         height: 36px;
+
         input {
             background-color: #F0F0F0;
             border: none;
@@ -32,6 +37,7 @@
             border-radius: 20px;
             width: 100%;
         }
+
         .iconSearch {
             @extend .icon;
             position: absolute;
@@ -40,6 +46,7 @@
             transform: translateY(-50%);
         }
     }
+
     button {
         background-color: transparent;
         border: none;
@@ -50,32 +57,42 @@
         justify-content: center;
         align-items: center;
         cursor: pointer;
-        .iconAddUser, .iconAddGroup {
+
+        .iconAddUser,
+        .iconAddGroup {
             @extend .icon;
         }
+
         &:hover {
             background-color: #efefef;
             border-radius: 50%;
         }
     }
 }
+
 .listGroup {
     height: calc(100vh - 64px - 50px - 2em - 1px - 10px);
     margin: 5px;
     overflow-y: auto;
+
     .group {
         display: flex;
         gap: 10px;
         align-items: center;
         padding: 1em;
         border-radius: 5px;
+
         &:last-child {
             margin-bottom: 0;
         }
+
         cursor: pointer;
+
     }
+
     .infoGroup {
         flex: 1;
+
         .title {
             font-size: 16px;
             display: -webkit-box;
@@ -86,11 +103,13 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
         .message {
             color: #8C8C8C;
             margin-top: 0.5em;
             display: -webkit-box;
             line-height: 1;
+            font-size: 14px;
             word-break: break-all;
             -webkit-line-clamp: 1;
             -webkit-box-orient: vertical;
@@ -98,16 +117,19 @@
             text-overflow: ellipsis;
         }
     }
+
     .moreInfo {
         width: 50px;
         display: flex;
         flex-flow: column;
         justify-content: space-between;
         align-items: flex-end;
+
         .time {
             font-size: 12px;
             color: #8C8C8C;
         }
+
         button {
             background: none;
             border: none;
@@ -117,10 +139,23 @@
             cursor: pointer;
         }
     }
+
     .group:hover {
         background-color: #efefef;
+
         .moreInfo button {
             visibility: inherit;
+        }
+    }
+    .group.current {
+        background-color: #ecfae3;
+    }
+    .group.noRead {
+        .infoGroup {
+            font-weight: 500;
+            .message {
+                color: rgb(107, 107, 255);
+            }
         }
     }
 }

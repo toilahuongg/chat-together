@@ -42,19 +42,19 @@ const Message = () => {
     if (id && type) {
       (async () => {
         setLoading(true);
-        let g: IRoom | undefined;
+        let g: IRoom | null;
         if (type === 'r') {
-          g = findById(id as string);
+          g = await instance.get(`/api/room/${id}`, { cancelToken: axiosCancelSource.token }).then(res => res.data);
         } else {
-          g = findPrivateByUserID(id as string);
+          g = await instance.get(`/api/room/${id}/private`, { cancelToken: axiosCancelSource.token }).then(res => res.data);
         }
         if (!g) {
           router.push("/404");
           return;
         }
+        group.data.set(g);
         const response = await instance.get(`/api/room/${g._id}/users`, { cancelToken: axiosCancelSource.token });
         listUserOfGroup.list.set(response.data);
-        group.data.set(g);
         setLoading(false);
       })();
     }

@@ -1,8 +1,10 @@
-import { useCallback } from "react";
+import axios from "axios";
+import { useCallback, useRef } from "react";
 import { IMessage } from "server/types/message.type";
 import IRoom from "server/types/room.type";
 import { IUser, IUserData } from "server/types/user.type";
 import { Socket } from "socket.io-client";
+import { useFetchAuth } from "./useFetchAuth";
 import { useFriends, useFriendsRequestSent, usePendingFriendsRequest } from "./useFriends";
 import useListGroup, { useGroup } from "./useListGroup";
 import useListMessage from "./useListMessage";
@@ -10,6 +12,8 @@ import useUser from "./useUser";
 
 export const useProccessSocket = (socket: Socket) => {
   const user = useUser();
+  const instance = useFetchAuth();
+  const axiosCancelSource = useRef(axios.CancelToken.source());
   const friends = useFriends();
   const pendingFriendsRequest = usePendingFriendsRequest();
   const friendsRequestSent = useFriendsRequestSent();
@@ -89,10 +93,18 @@ export const useProccessSocket = (socket: Socket) => {
     });
     // Them tin nhan
     socket.on('new-message', ({ message, user }: { message: IMessage, user: IUserData }) => {
-      listGroup.updateMessage({ message, user });
       if (group.get()._id === message.roomID) {
+        listGroup.updateMessage({ message: {
+          ...message,
+          readers: [...new Set([...message.readers, user._id ])]
+        }, user });
+        axiosCancelSource.current.cancel();
+        axiosCancelSource.current = axios.CancelToken.source();
         listMessage.add(message);
-      }
+        (async() => {
+          await instance.post(`/api/room/${message.roomID}/read-messages`, {}, { cancelToken: axiosCancelSource.current.token })
+        })();
+      } else listGroup.updateMessage({ message, user });
     });
   }, [friends, pendingFriendsRequest, friendsRequestSent, group.get()._id])
 }

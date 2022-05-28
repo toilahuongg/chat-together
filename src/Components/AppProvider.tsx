@@ -16,12 +16,12 @@ const AppProvider = ({ children }) => {
     const user = useUser();
     const processSocket = useProccessSocket(socket);
     const loadingState = useState(true);
-    const { getListGroup } = useListGroup();
+    const { getListGroup, list } = useListGroup();
 
     const getUser = async () => {
         try {
             loadingState.set(true);
-            await Promise.all([user.getCurrentUser(), getListGroup()]);
+            await user.getCurrentUser();
             loadingState.set(false);
         } catch (error) {
             console.log(error);

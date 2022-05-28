@@ -16,6 +16,7 @@ import useDebounce from '@src/hooks/useDebounce';
 import { defaultGroup } from '@src/contants/group.contant';
 import { toast } from 'react-toastify';
 import useSocket from '@src/hooks/useSocket';
+import { useRouter } from 'next/router';
 
 type TProps = {
   isShow: boolean,
@@ -25,6 +26,7 @@ const ModalAddGroup: React.FC<TProps> = ({
   isShow = false,
   onClose = () => { }
 }) => {
+  const router = useRouter();
   const socket = useSocket();
   const instance = useFetchAuth();
   const userState = useUser();
@@ -67,6 +69,7 @@ const ModalAddGroup: React.FC<TProps> = ({
       if (!unmount.current) {
         listGroup.add(response.data);
         group.set(defaultGroup());
+        router.push(`/messages/r/${response.data._id}`);
       }
       onClose();
     } catch (error: any) {

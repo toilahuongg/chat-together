@@ -2,8 +2,6 @@ import { useState } from "@hookstate/core";
 
 import Nav from "./Nav";
 import ListGroup from "./ListGroup";
-import { showGroupSettingState } from "@src/hooks/useGroupSetting";
-import { showListGroupState } from "@src/hooks/useListGroup";
 import ModalFriends from "./ModalFriends";
 import { showFriendsState } from "@src/hooks/useFriends";
 
@@ -15,8 +13,6 @@ type TProps = {
 }
 const Messenger: React.FC<TProps> = ({ children }) => {
 	const isMounted = useRef(false);
-	const showGroupSetting = useState(showGroupSettingState);
-	const showListGroup = useState(showListGroupState);
 	const showModalFriends = useState(showFriendsState);
 
 	useEffect(() => {
@@ -29,9 +25,7 @@ const Messenger: React.FC<TProps> = ({ children }) => {
 		<>
 			<Nav />
 			<div className={styles.container}>
-				{showListGroup.get() && (
-					<ListGroup />
-				)}
+			<ListGroup />
 				{children}
 			</div>
 			{showModalFriends.get() && <ModalFriends isShow={showModalFriends.get()} onClose={() => !isMounted.current && showModalFriends.set(false)} />}

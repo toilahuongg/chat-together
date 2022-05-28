@@ -5,16 +5,30 @@ import IconMore from '@src/styles/svg/more.svg';
 import styles from './list-group.module.scss';
 import dayjs from 'dayjs';
 import { useRouter } from 'next/router';
+import { classNames } from '@src/helpers/classNames';
+import { useMemo } from 'react';
 
 type TProps = {
 	data: IMessageRoom
-	userID: string
+	userID: string,
+	updateReaders: (id: string) => void;
 }
-const Group: React.FC<TProps> = ({ data, userID }) => {
+const Group: React.FC<TProps> = ({ data, userID, updateReaders }) => {
 	const router = useRouter();
+	const { id, type } = router.query;
 	const { _id, name, name2, isGroup, userIDs, message, user, createdAt } = data;
+	const className = useMemo(() => {
+		const c = ['group'];
+		if (message && !message.readers.includes(userID)) c.push('noRead');
+		if (type === 'r' && id === _id) c.push('current');
+		else if (type === 'u' && !isGroup && userIDs.includes(id as string)) c.push('current');
+		return c;
+	}, [message, id, type, userIDs])
 	return (
-		<div className={styles.group} onClick={() => router.push(`/messages/${isGroup ? 'r/' + _id : 'u/' + userIDs.find(id => id !== userID)}`)}>
+		<div className={classNames(styles, className)} onClick={() => {
+			updateReaders(_id);
+			router.push(`/messages/${isGroup ? 'r/' + _id : 'u/' + userIDs.find(id => id !== userID)}`);
+		}}>
 			<Avatar
 				src={`https://ui-avatars.com/api/?name=${String.fromCharCode(Math.floor(Math.random() * 25 + 65))}&background=random`}
 				alt="avatar"

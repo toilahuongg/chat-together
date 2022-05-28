@@ -366,7 +366,7 @@ Router.get('/api/user/rooms', passport.authenticate('jwt', { session: false }), 
                     'createdAt': -1
                 }
             }, {
-                '$limit': 10
+                '$limit': limit
             }
         ]);
         const count = await RoomModel.count({ userIDs: { $in: [new mongoose.Types.ObjectId(userID)] }, name: { $regex: `.*${name}.*` } });

@@ -26,7 +26,8 @@ router.post("/api/message/:id/send-message", passport.authenticate("jwt", { sess
         msg: {
             type: 'text',
             value: message
-        }
+        },
+        readers: [sender],
     });
     for (const _id of room.userIDs) {
         await User.EventToUser(_id, 'new-message', {
