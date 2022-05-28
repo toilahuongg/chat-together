@@ -32,7 +32,8 @@ router.post("/api/message/:id/send-message", passport.authenticate("jwt", { sess
     for (const _id of room.userIDs) {
         await User.EventToUser(_id, 'new-message', {
             message: result,
-            user: req.auth
+            user: req.auth,
+            room
         }, [excludeSocketId]);
     }
     return res.status(200).json(result);

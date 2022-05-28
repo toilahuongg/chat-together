@@ -92,19 +92,19 @@ export const useProccessSocket = (socket: Socket) => {
       listGroup.add({ ...newGroup, message: null, user: null});
     });
     // Them tin nhan
-    socket.on('new-message', ({ message, user }: { message: IMessage, user: IUserData }) => {
+    socket.on('new-message', ({ message, user, room }: { message: IMessage, user: IUserData, room: IRoom }) => {
       if (group.get()._id === message.roomID) {
         listGroup.updateMessage({ message: {
           ...message,
           readers: [...new Set([...message.readers, user._id ])]
-        }, user });
+        }, user, room });
         axiosCancelSource.current.cancel();
         axiosCancelSource.current = axios.CancelToken.source();
         listMessage.add(message);
         (async() => {
           await instance.post(`/api/room/${message.roomID}/read-messages`, {}, { cancelToken: axiosCancelSource.current.token })
         })();
-      } else listGroup.updateMessage({ message, user });
+      } else listGroup.updateMessage({ message, user, room });
     });
   }, [friends, pendingFriendsRequest, friendsRequestSent, group.get()._id])
 }

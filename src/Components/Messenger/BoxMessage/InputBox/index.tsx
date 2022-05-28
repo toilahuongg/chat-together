@@ -50,7 +50,7 @@ const InputBox = () => {
           'x-exclude-socket-id': socket?.id!
         }
       }).then((res) => {
-        listGroup.updateMessage({ message: res.data, user: user.data.get() });
+        listGroup.updateMessage({ message: res.data, user: user.data.get(), room: group.data.get() });
         listMessage.updateMessage(res.data, 'sending'+randomID);
       }).catch((error) => {
         console.log(error);

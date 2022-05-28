@@ -30,7 +30,7 @@ const listGroupState = createState<IMessageRoom[]>([]);
 const wrapListGroupState = (s: State<IMessageRoom[]>, instance: AxiosInstance) => ({
   ...s,
   list: s,
-  get: () => s.attach(Downgraded).get().sort((a,b) => new Date(b.createdAt).valueOf() - new Date(a.createdAt).valueOf()),
+  get: () => s.attach(Downgraded).get().sort((a, b) => new Date(b.createdAt).valueOf() - new Date(a.createdAt).valueOf()),
   getListGroup: (lastTime: string | null, name?: string) => new Promise(
     (resolve, reject) => instance.get(`/api/user/rooms${lastTime ? `?lastTime=${lastTime}` : ''}`).then(res => {
       s.set(g => {
@@ -48,16 +48,26 @@ const wrapListGroupState = (s: State<IMessageRoom[]>, instance: AxiosInstance) =
     if (!g.some(({ _id }) => _id === room._id)) g.unshift(room);
     return g;
   }),
-  updateMessage: ({ message, user }: { message: IMessage, user: IUserData }) => s.set(g => {
-    return g.map(data => {
-      if (data._id === message.roomID) return {
-        ...data,
+  updateMessage: ({ message, user, room }: { message: IMessage, user: IUserData, room: IRoom }) => s.set(g => {
+    if (g.some(({ _id }) => _id === room._id))
+      return g.map(data => {
+        if (data._id === room._id) return {
+          ...data,
+          message,
+          user,
+          createdAt: message.createdAt
+        }
+        return data;
+      })
+    else {
+      g.unshift({
+        ...room,
         message,
         user,
         createdAt: message.createdAt
-      }
-      return data;
-    });
+      });
+      return g;
+    }
   }),
   updateReaders: (id: string, userID: string) => s.set(g => {
     return g.map(data => {
@@ -65,14 +75,14 @@ const wrapListGroupState = (s: State<IMessageRoom[]>, instance: AxiosInstance) =
         ...data,
         message: {
           ...data.message,
-          readers: [... new Set([...data.message.readers, userID ])]
+          readers: [... new Set([...data.message.readers, userID])]
         }
       }
       return data;
     });
   }),
   findById: (roomID: string) => s.attach(Downgraded).get().find(({ _id }) => _id === roomID),
-  findPrivateByUserID: (userID: string) => s.attach(Downgraded).get().find(({ isGroup, userIDs }) => !isGroup &&  userIDs.includes(userID))
+  findPrivateByUserID: (userID: string) => s.attach(Downgraded).get().find(({ isGroup, userIDs }) => !isGroup && userIDs.includes(userID))
 });
 const useListGroup = () => {
   const instance = useFetchAuth();
