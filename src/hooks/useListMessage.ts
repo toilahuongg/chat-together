@@ -1,5 +1,5 @@
 import { createState, Downgraded, State, useState } from "@hookstate/core";
-import { defaultMessage } from "@src/contants/message.contant";
+import { defaultMessage } from "@src/constants/message.constant";
 import { AxiosInstance, CancelToken } from "axios";
 import { IGroupMessage, IMessage } from "server/types/message.type";
 

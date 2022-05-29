@@ -7,7 +7,7 @@ import GuestLayout from "@src/Components/Guest/GuestLayout"
 import TextField from "@src/Components/Layout/TextField";
 import Button from "@src/Components/Layout/Button";
 import useUser from "@src/hooks/useUser";
-import { defaultUser } from "@src/contants/user.contant";
+import { defaultUser } from "@src/constants/user.constant";
 import {
     validateConfirmPassword,
     validateEmail,

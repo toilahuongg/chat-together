@@ -1,5 +1,5 @@
 import { createState, Downgraded, State, useState } from "@hookstate/core";
-import { defaultGroup } from "@src/contants/group.contant";
+import { defaultGroup } from "@src/constants/group.constant";
 import { AxiosInstance } from "axios";
 import { IMessage } from "server/types/message.type";
 import IRoom, { IMessageRoom } from "server/types/room.type";

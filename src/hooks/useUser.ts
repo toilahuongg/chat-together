@@ -1,5 +1,5 @@
 import { createState, State, useState } from "@hookstate/core";
-import { defaultUser } from "@src/contants/user.contant";
+import { defaultUser } from "@src/constants/user.constant";
 import axios, { AxiosInstance } from "axios";
 import { IUser } from "server/types/user.type";
 import { useFetchAuth } from "./useFetchAuth";

@@ -1,7 +1,7 @@
 import useListMessage, { useMessage, useSignalSend } from '@src/hooks/useListMessage';
 import { useFetchAuth } from '@src/hooks/useFetchAuth';
 import useListGroup, { useGroup } from '@src/hooks/useListGroup';
-import { defaultMessage } from '@src/contants/message.contant';
+import { defaultMessage } from '@src/constants/message.constant';
 import { FormEvent, useState } from 'react';
 import randomChars from 'server/helpers/randomChars';
 import useUser from '@src/hooks/useUser';

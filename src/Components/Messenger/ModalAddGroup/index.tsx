@@ -13,7 +13,7 @@ import IconSearch from '@src/styles/svg/search.svg';
 import { useFriends } from '@src/hooks/useFriends';
 import { useFetchAuth } from '@src/hooks/useFetchAuth';
 import useDebounce from '@src/hooks/useDebounce';
-import { defaultGroup } from '@src/contants/group.contant';
+import { defaultGroup } from '@src/constants/group.constant';
 import { toast } from 'react-toastify';
 import useSocket from '@src/hooks/useSocket';
 import { useRouter } from 'next/router';

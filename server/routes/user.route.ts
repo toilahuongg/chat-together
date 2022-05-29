@@ -9,10 +9,8 @@ import { signToken, verifyToken } from '../helpers/jwt';
 import UserModel, { User } from '../models/user.model';
 import { IUserData } from '../types/user.type';
 import randomChars from '../helpers/randomChars';
-import uploadavartar from '../helpers/avartarUploadHandle'
-import MulterRequest from '../types/multerrequest';
 import RoomModel from '../models/room.model';
-import { GROUPS_QUERY } from '../contants';
+import { GROUPS_QUERY } from '../constants';
 
 dotenv.config();
 const Router = express.Router();
@@ -121,23 +119,6 @@ Router.post("/api/user/profile-list", passport.authenticate('jwt', { session: fa
         return res.status(500).json({ message: "Lỗi hệ thống" })
     }
 })
-
-Router.put("/api/user/update-profile", passport.authenticate('jwt', { session: false }), uploadavartar.single("avartar"), async (req, res) => {
-    try {
-        const { username, email, phone, fullname } = req.body
-        const id = req.auth?._id as string
-        try {
-            (req as any).body.avatar = (req as MulterRequest).file.filename
-        } catch (err) {
-            (req as any).body.avatar = undefined
-        }
-        await User.changeUserInFo(id, req.body as any)
-        return res.status(200).send()
-    } catch (err) {
-        console.log(err)
-        return res.status(500).json({ message: "Lỗi hệ thống" })
-    }
-});
 
 Router.post('/api/register', async (req, res) => {
     const username: string = req.body.username
