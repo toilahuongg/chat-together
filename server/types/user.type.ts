@@ -12,5 +12,5 @@ export interface IUser extends IUserData {
     friends: string[],
     pendingFriendRequest: string[],
     friendRequestSent: string[],
-    avatar?: string | null | undefined,
+    avatar: string
 }

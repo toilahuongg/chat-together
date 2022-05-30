@@ -6,7 +6,7 @@ import { IUser, IUserData } from "server/types/user.type";
 import { Socket } from "socket.io-client";
 import { useFetchAuth } from "./useFetchAuth";
 import { useFriends, useFriendsRequestSent, usePendingFriendsRequest } from "./useFriends";
-import useListGroup, { useGroup } from "./useListGroup";
+import useListGroup, { useGroup, useTxtSearchGroup } from "./useListGroup";
 import useListMessage from "./useListMessage";
 import useUser from "./useUser";
 
@@ -20,9 +20,12 @@ export const useProccessSocket = (socket: Socket) => {
   const listGroup = useListGroup();
   const group = useGroup();
   const listMessage = useListMessage();
+	const searchTextState = useTxtSearchGroup();
+  const checkGroup = (room: IRoom) => {
+    if (!room.isGroup && room.name2) return room.name2[user._id.get()].includes(searchTextState.get());
+    else return room.name.includes(searchTextState.get());
+  }
   return useCallback(() => {
-    socket.on("abcd", val => console.log(val));
-    socket.on("abcde", val => console.log(val));
     //* Start: Gửi lời mời kết bạn (A gửi lời mời kết bạn đến B)*//
     // 1. Người gửi đi
     socket.on('friend-request-sent', (userData: IUser) => {
@@ -94,7 +97,7 @@ export const useProccessSocket = (socket: Socket) => {
     // Them tin nhan
     socket.on('new-message', ({ message, user, room }: { message: IMessage, user: IUserData, room: IRoom }) => {
       if (group.get()._id === message.roomID) {
-        listGroup.updateMessage({ message: {
+        if (checkGroup(room)) listGroup.updateMessage({ message: {
           ...message,
           readers: [...new Set([...message.readers, user._id ])]
         }, user, room });
@@ -104,7 +107,7 @@ export const useProccessSocket = (socket: Socket) => {
         (async() => {
           await instance.post(`/api/room/${message.roomID}/read-messages`, {}, { cancelToken: axiosCancelSource.current.token })
         })();
-      } else listGroup.updateMessage({ message, user, room });
+      } else if (checkGroup(room)) listGroup.updateMessage({ message, user, room });
     });
   }, [friends, pendingFriendsRequest, friendsRequestSent, group.get()._id])
 }

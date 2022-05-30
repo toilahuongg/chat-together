@@ -36,11 +36,11 @@ const ModalAddGroup: React.FC<TProps> = ({
   const [loading, setLoading] = React.useState(false);
   const [loadingFriend, setLoadingFriend] = React.useState(false);
 
-  const typingTextState = useState("");
   const group = useState(defaultGroup());
   const userIDs = group.userIDs.get();
   const unmount = useRef(false);
   const divRef = useRef<HTMLDivElement>(null);
+  const typingTextState = useState("");
   const debouncedSearchTerm = useDebounce(typingTextState.get(), 300);
 
   useEffect(() => {

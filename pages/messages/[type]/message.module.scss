@@ -13,7 +13,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 1em;
-  border-bottom: 1px solid #efefef;
+  border-bottom: 1px solid #e7e1e1;
 }   
 
 .navLeft {
@@ -51,14 +51,14 @@
       align-items: center;
       cursor: pointer;
       &:hover, &.active {
-          background-color: #efefef;
+          background-color: #d5d5d5;
       }
   }
 }
 
 .group {
   flex: 1;
-  background-color: #efefef;
+  background-color: #d5d5d5;
   height: calc(100vh - 64px);
   display: flex;
   flex-flow: column;
@@ -68,5 +68,5 @@
   width: 300px;
   height: calc(100vh - 64px);
   background-color: #fff;
-  border-left: 1px solid #efefef;
+  border-left: 1px solid #e7e1e1;
 }

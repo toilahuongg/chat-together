@@ -27,12 +27,14 @@ export const useGroup = () => {
 
 
 const listGroupState = createState<IMessageRoom[]>([]);
+const searchTextState = createState<string>('');
+export const useTxtSearchGroup = () => useState(searchTextState); 
 const wrapListGroupState = (s: State<IMessageRoom[]>, instance: AxiosInstance) => ({
   ...s,
   list: s,
   get: () => s.attach(Downgraded).get().sort((a, b) => new Date(b.createdAt).valueOf() - new Date(a.createdAt).valueOf()),
   getListGroup: (lastTime: string | null, name?: string) => new Promise(
-    (resolve, reject) => instance.get(`/api/user/rooms${lastTime ? `?lastTime=${lastTime}` : ''}`).then(res => {
+    (resolve, reject) => instance.get(`/api/user/rooms?name=${name}${lastTime ? `&lastTime=${lastTime}` : ''}`).then(res => {
       s.set(g => {
         const { rooms } = res.data as { rooms: IMessageRoom[] };
         for (const room of rooms) {

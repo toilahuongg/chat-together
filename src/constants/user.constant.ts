@@ -10,5 +10,6 @@ export const defaultUser = (): IUser => ({
     pendingFriendRequest: [],
     refreshToken: '',
     password: '',
-    friends: []
+    friends: [],
+    avatar: ''
 });

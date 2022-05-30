@@ -4,6 +4,9 @@ import dotenv from 'dotenv';
 import passport from 'passport';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
+import multer from 'multer';
+import fetch from 'node-fetch';
+import fs from 'fs';
 
 import { signToken, verifyToken } from '../helpers/jwt';
 import UserModel, { User } from '../models/user.model';
@@ -11,8 +14,10 @@ import { IUserData } from '../types/user.type';
 import randomChars from '../helpers/randomChars';
 import RoomModel from '../models/room.model';
 import { GROUPS_QUERY } from '../constants';
+import FormData from 'form-data';
 
 dotenv.config();
+const upload = multer();
 const Router = express.Router();
 /**
  * URL cho việc login bằng database
@@ -79,7 +84,7 @@ Router.get('/api/user/profile/', passport.authenticate('jwt', { session: false }
         if (!isvalidID)
             return res.status(403).json({ message: "Mã người dùng không hợp lệ" })
 
-        const profile = await UserModel.findOne({ _id: ID }, { username: 1, fullname: 1, email: 1, phone: 1, pendingFriendRequest: 1, friends: 1, friendRequestSent: 1 });
+        const profile = await UserModel.findOne({ _id: ID }, { username: 1, fullname: 1, email: 1, phone: 1, pendingFriendRequest: 1, friends: 1, friendRequestSent: 1, avatar: 1 });
         if (!profile) return res.status(403).json({ message: "User không tồn tại" })
         return res.status(200).json(profile);
     } catch (err) {
@@ -216,6 +221,53 @@ Router.post('/api/login', async (req, res) => {
             })
         })
 })
+
+Router.put('/api/user/update-profile', passport.authenticate('jwt', { session: false }), upload.single('image'), async (req, res) => {
+    try {
+        const userID = req.auth?._id!;
+        const { width, height, fullname, password, newPassword, email, phone } = req.body;
+        const user = await UserModel.findOne({ _id: userID });
+        if (!user) return res.status(500).send('Server Error');
+        let hashPassword = user.password;
+        if (password && newPassword) {
+            if (!bcrypt.compareSync(password, user.password)) return res.status(400).json({ message: 'Mật khẩu cũ không chính xác '});
+            hashPassword = bcrypt.hashSync(newPassword, parseInt(process.env.SALT_ROUNDS || '', 10));
+        }
+        let avatar = '';
+        if (req.file) {
+            const formData = new FormData();
+            formData.append('width', width);
+            formData.append('height', height);
+            formData.append('allowMimes[0]', 'image/png');
+            formData.append('allowMimes[1]', 'image/jpeg');
+            formData.append('file', req.file?.buffer, {
+                contentType: 'image/jpeg',
+                filename: 'image.jpg',
+              });
+            const response = await fetch(`${process.env.SERVER_FILE_MANAGER}/api/upload`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'x-app-name': process.env.APP_NAME!
+                }
+            });
+            const data= await response.json();
+            avatar = data.url;
+        }
+        const result = await UserModel.findOneAndUpdate({ _id: userID }, {
+            fullname,
+            password: hashPassword,
+            email,
+            phone,
+            avatar
+        }, { new: true }).lean();
+        return res.status(200).json(result);
+    } catch (error: any) {
+        console.log(error);
+        return res.status(500).send('Server Error');
+    }
+})
+
 //----------------------------------------------------------------------
 // Tìm kiếm
 
@@ -253,7 +305,10 @@ Router.get('/api/user/rooms', passport.authenticate('jwt', { session: false }), 
         const { name, lastTime } = req.query;
         const limit = 10;
         let match = { userIDs: { $in: [new mongoose.Types.ObjectId(userID)] } };
-        if (name) match['name'] = { $regex: `.*${name}.*`, $options: 'i' };
+        if (name) match['$or'] = [
+            { name: { "$regex": `.*${name}.*`, "$options": 'i' } },
+            { [`name2.${userID}`]: { "$regex": `.*${name}.*`, "$options": 'i' } },
+        ];
         const q: any = [
             { $match: match },
             ...GROUPS_QUERY
@@ -273,7 +328,7 @@ Router.get('/api/user/rooms', passport.authenticate('jwt', { session: false }), 
                 '$limit': limit
             }
         ]);
-        const count = await RoomModel.count({ userIDs: { $in: [new mongoose.Types.ObjectId(userID)] } });
+        const count = await RoomModel.count(match);
         return res.status(200).json({ rooms, count });
     } catch (error) {
         console.log(error);

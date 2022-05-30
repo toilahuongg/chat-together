@@ -1,6 +1,5 @@
 import express from 'express';
 import next from 'next';
-import bodyParser from 'body-parser';
 import { Server } from 'socket.io';
 import http from 'http';
 import cors from 'cors';
@@ -44,8 +43,8 @@ const bootstrap = async () => {
   }))
   server.use(passport.initialize());
   server.use(cors());
-  server.use(bodyParser.json());
-  server.use(bodyParser.urlencoded({ extended: true }));
+  server.use(express.json());
+  server.use(express.urlencoded({ extended: true }));
   server.use(userRouter);
   server.use(roomRouter);
   server.use(friendRouter)
