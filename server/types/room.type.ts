@@ -8,8 +8,8 @@ export default interface IRoom {
     userIDs: string[],
     ownerID?: string,
     settings: any,
-    avatar?: string,
-    name2: Record<string, string>,
+    avatar: string,
+    infoUsers: Record<string, IUserData>,
     createdAt: string
 };
 export type IMessageRoom = IRoom & {

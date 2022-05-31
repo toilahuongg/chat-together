@@ -32,8 +32,9 @@ const Message = () => {
   const listUserOfGroup = useListUserOfGroup();
   const [loading, setLoading] = React.useState(false);
   const listMessage = useListMessage();
-  const { name, name2, isGroup } = group.get();
-  const groupName = isGroup ? name : name2[user._id.get() as string];
+  const { name, infoUsers, isGroup, avatar } = group.get();
+  const groupName = isGroup ? name : infoUsers[user._id.get() as string]?.fullname;
+  const groupAvatar = isGroup ? avatar : infoUsers[user._id.get() as string]?.avatar;
   useEffect(() => {
     showGroupSetting.set(true);
   }, []);
@@ -75,7 +76,7 @@ const Message = () => {
               <div className={styles.nav}>
                 <div className={styles.navLeft}>
                   <Avatar
-                    src={group.data.avatar.get() || `https://ui-avatars.com/api/?name=A`}
+                    src={groupAvatar || `/images/group-default.jpg`}
                     alt="avatar"
                     width={58}
                     height={58}

@@ -112,7 +112,7 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, isChe
       <Avatar
         width={48}
         height={48}
-        src={`https://ui-avatars.com/api/?name=${String.fromCharCode(Math.floor(Math.random() * 25 + 65))}&background=random`}
+        src={data.avatar}
         alt="Avatar"
       />
       <div className={styles.user}>

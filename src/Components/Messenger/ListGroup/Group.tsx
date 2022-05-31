@@ -16,7 +16,9 @@ type TProps = {
 const Group: React.FC<TProps> = ({ data, userID, updateReaders }) => {
 	const router = useRouter();
 	const { id, type } = router.query;
-	const { _id, name, name2, isGroup, userIDs, message, user, createdAt } = data;
+	const { _id, name, avatar, infoUsers, isGroup, userIDs, message, user, createdAt } = data;
+	const groupName = isGroup ? name : infoUsers[userID]?.fullname;
+  const groupAvatar = isGroup ? avatar : infoUsers[userID]?.avatar;
 	const className = useMemo(() => {
 		const c = ['group'];
 		if (message && !message.readers.includes(userID)) c.push('noRead');
@@ -30,12 +32,12 @@ const Group: React.FC<TProps> = ({ data, userID, updateReaders }) => {
 			router.push(`/messages/${isGroup ? 'r/' + _id : 'u/' + userIDs.find(id => id !== userID)}`);
 		}}>
 			<Avatar
-				src={data?.avatar ||'/images/avatar-default.jpg'}
+				src={groupAvatar ||'/images/group-default.jpg'}
 				alt="avatar"
 			/>
 			<div className={styles.infoGroup}>
 				<div className={styles.title}>
-					{isGroup ? name : name2[userID]}
+					{groupName}
 				</div>
 				<div className={styles.message}>
 					{(message && user) ?

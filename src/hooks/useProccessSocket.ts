@@ -22,7 +22,7 @@ export const useProccessSocket = (socket: Socket) => {
   const listMessage = useListMessage();
 	const searchTextState = useTxtSearchGroup();
   const checkGroup = (room: IRoom) => {
-    if (!room.isGroup && room.name2) return room.name2[user._id.get()].includes(searchTextState.get());
+    if (!room.isGroup && room.infoUsers) return room.infoUsers[user._id.get()].fullname.includes(searchTextState.get());
     else return room.name.includes(searchTextState.get());
   }
   return useCallback(() => {

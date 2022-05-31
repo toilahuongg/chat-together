@@ -22,11 +22,12 @@ const Router = express.Router();
  */
 Router.post('/api/auth/sign-in-with-social', async (req, res) => {
     const { displayName, email } = req.body;
-    const userData = await UserModel.findOne({ email }, { _id: 1, fullname: 1, username: 1 }).lean();
+    const userData = await UserModel.findOne({ email }, { _id: 1, fullname: 1, username: 1, avatar: 1 }).lean();
     let payload: IUserData = {
         _id: '',
         fullname: '',
-        username: ''
+        username: '',
+        avatar: ''
     }
     if (userData) payload = userData;
     else {
@@ -40,7 +41,8 @@ Router.post('/api/auth/sign-in-with-social', async (req, res) => {
         payload = {
             _id: newUser._id,
             fullname: newUser.fullname,
-            username: newUser.username
+            username: newUser.username,
+            avatar: newUser.avatar
         }
     }
     const accessToken = signToken(payload, process.env.TOKEN_SECRET || '', process.env.TOKEN_EXPIRESIN || '');
@@ -83,7 +85,7 @@ Router.get('/api/user/profile/', passport.authenticate('jwt', { session: false }
         if (!isvalidID)
             return res.status(403).json({ message: "Mã người dùng không hợp lệ" })
 
-        const profile = await UserModel.findOne({ _id: ID }, { username: 1, fullname: 1, email: 1, phone: 1, pendingFriendRequest: 1, friends: 1, friendRequestSent: 1, avatar: 1 });
+        const profile = await UserModel.findOne({ _id: ID }, { username: 1, fullname: 1, email: 1, phone: 1, pendingFriendRequest: 1, friends: 1, friendRequestSent: 1, avatar: 1, isSocial: 1 });
         if (!profile) return res.status(403).json({ message: "User không tồn tại" })
         return res.status(200).json(profile);
     } catch (err) {
@@ -98,7 +100,7 @@ Router.get("/api/user/profile/:id", async (req, res) => {
         if (!isvalidID)
             return res.status(403).json({ message: "Mã người dùng không hợp lệ" })
 
-        const user = await UserModel.findOne({ _id: ID }, { username: 1, fullname: 1 });
+        const user = await UserModel.findOne({ _id: ID }, { username: 1, fullname: 1, avatar: 1 });
         if (!user) return res.status(403).json({ message: "User không tồn tại" })
         return res.status(200).json(user);
     }
@@ -116,6 +118,7 @@ Router.post("/api/user/profile-list", passport.authenticate('jwt', { session: fa
             _id: 1,
             username: 1,
             fullname: 1,
+            avatar: 1,
         });
         return res.status(200).json(listUser)
     } catch (err) {
@@ -199,7 +202,8 @@ Router.post('/api/login', async (req, res) => {
                     const payload = {
                         _id: user._id,
                         username: user.username,
-                        fullname: user.fullname
+                        fullname: user.fullname,
+                        avatar: user.avatar
                     }
                     const accessToken = signToken(payload, process.env.TOKEN_SECRET || '', process.env.TOKEN_EXPIRESIN || '');
                     let refreshToken = '';
@@ -256,8 +260,14 @@ Router.put('/api/user/update-profile', passport.authenticate('jwt', { session: f
             ]
         });
         await Promise.all(groups.map(async (group) => {
-            const fIds = group.userIDs.filter(id => id !== userID);
-            await group.updateOne({ [`name2.${fIds[0]}`]: fullname });
+            const fIds = group.userIDs.filter(id => id.toString() !== userID.toString());
+            console.log(fIds);
+            await group.updateOne({ [`infoUsers.${fIds[0]}`]: {
+                _id: userID,
+                fullname,
+                username: result?.username,
+                avatar: result?.avatar
+            } });
         }));
         result!.password = "";
         result!.refreshToken = "";
@@ -290,7 +300,7 @@ Router.get('/api/user/search', passport.authenticate('jwt', { session: false }),
                 match['_id'] = { ...match['_id'], $nin: friends }
             }
         }
-        const users = await UserModel.find(match, { _id: 1, username: 1, fullname: 1 }).sort({ createdAt: -1 }).limit(limit).lean();
+        const users = await UserModel.find(match, { _id: 1, username: 1, fullname: 1, avatar: 1, }).sort({ createdAt: -1 }).limit(limit).lean();
         const count = await UserModel.count({ _id: { $nin: friends }, fullname: { $regex: `.*${fullname}.*` } });
         return res.status(200).json({ users, count });
     } catch (error) {
@@ -308,7 +318,7 @@ Router.get('/api/user/rooms', passport.authenticate('jwt', { session: false }), 
         let match = { userIDs: { $in: [new mongoose.Types.ObjectId(userID)] } };
         if (name) match['$or'] = [
             { name: { "$regex": `.*${name}.*`, "$options": 'i' } },
-            { [`name2.${userID}`]: { "$regex": `.*${name}.*`, "$options": 'i' } },
+            { [`infoUsers.${userID}.fullname`]: { "$regex": `.*${name}.*`, "$options": 'i' } },
         ];
         const q: any = [
             { $match: match },

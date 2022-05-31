@@ -27,7 +27,7 @@ const UserSchema = new Schema<IUser>({
         }
     ],
     avatar: {
-        type: String
+        type: String,
     },
     pendingFriendRequest: [
         {

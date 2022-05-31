@@ -61,8 +61,7 @@ const ModalUpdateProfile: React.FC<TProps> = ({
     id: 'general',
     label: 'Thông tin chung'
   }];
-
-  if (!user.isSocial) tabs.push({
+  if (!user.isSocial.get()) tabs.push({
     id: 'change-password',
     label: 'Mật khẩu'
   });
@@ -111,7 +110,7 @@ const ModalUpdateProfile: React.FC<TProps> = ({
             />
           </>
         )}
-        {selected === 'change-password' && !user.isSocial && (
+        {selected === 'change-password' && !user.isSocial.get() && (
           <>
             <TextField
               label="Mật khẩu cũ"

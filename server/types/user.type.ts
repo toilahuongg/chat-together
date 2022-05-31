@@ -1,7 +1,8 @@
 export interface IUserData {
     _id: string,
     fullname: string,
-    username: string
+    username: string,
+    avatar: string
 }
 
 export interface IUser extends IUserData {

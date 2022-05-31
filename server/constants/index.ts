@@ -50,8 +50,8 @@ export const GROUPS_QUERY = [
       'settings': {
         '$first': '$settings'
       },
-      'name2': {
-        '$first': '$name2'
+      'infoUsers': {
+        '$first': '$infoUsers'
       },
       'createdAt': {
         '$first': '$createdAt'
@@ -60,7 +60,7 @@ export const GROUPS_QUERY = [
   }, {
     '$project': {
       'name': 1,
-      'name2': 1,
+      'infoUsers': 1,
       'userIDs': 1,
       'message': 1,
       'user': {

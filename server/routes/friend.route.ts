@@ -145,11 +145,11 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
         // lấy id thông báo xác nhận lời mời kết bạn từ param
         const friendID = req.params.id as string
         // Kiểm tra người gửi
-        const user = await UserModel.findById(userID, { _id: 1, username: 1, fullname: 1 }).lean();
+        const user = await UserModel.findById(userID, { _id: 1, username: 1, fullname: 1, avatar: 1 }).lean();
         if (!user) return res.status(401).json({ type: 2, message: "User không tồn tại" })
 
         // kiêm tra xem người dùng có tồn tại hay không
-        const fUser = await UserModel.findById(friendID, { _id: 1, username: 1, fullname: 1 }).lean();
+        const fUser = await UserModel.findById(friendID, { _id: 1, username: 1, fullname: 1, avatar: 1 }).lean();
         if (!fUser) return res.status(403).json({ type: 2, message: "User không tồn tại" })
 
         // Người được đồng ý kết bạn
@@ -191,9 +191,9 @@ router.post('/api/friend/accept-friend-request/:id', passport.authenticate("jwt"
                 isGroup: false,
                 userIDs: [userID, friendID],
                 settings: {},
-                name2: {
-                    [userID]: fUser.fullname,
-                    [friendID]: user.fullname,
+                infoUsers: {
+                    [userID]: fUser,
+                    [friendID]: user,
                 }
             });
             await User.EventToUser(friendID, "new-room", dataRoom);
