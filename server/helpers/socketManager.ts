@@ -3,8 +3,11 @@
  */
 import { createClient } from 'redis';
 import * as redisStore from './redisStore';
+import dotenv from 'dotenv';
+dotenv.config();
+
 const store = () => {
-    const pubClient = createClient({ url: "redis://localhost:6379" });
+    const pubClient = createClient({ url: process.env.REDIS_SERVER, password: process.env.REDIS_PASSWORD });
     const subClient = pubClient.duplicate();
     const sockets = {};
     return {

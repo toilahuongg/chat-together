@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/return-await */
 /* eslint-disable @typescript-eslint/lines-between-class-members */
 // Import the Session type from the library, along with the Node redis package, and `promisify` from Node
-import redis from 'redis';
-import { promisify } from 'util';
 
 export const setRedis = async (client: any, id: string, data: any) => {
   try {
