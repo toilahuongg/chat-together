@@ -26,8 +26,11 @@ const wrapListMessageState = (s: State<IGroupMessage[]>) => ({
         const { messages } = res.data as { messages: IMessage[] };
         for (const message of messages) {
           if (!m.some(g => g.messages.some(({ _id }) => _id === message._id))) {
-            if (m.length && m[0].sender === message.sender) m[0].messages.unshift(message);
-            else m.unshift({ sender: message.sender, messages: [message]})
+            if (message.msg.type === 'notify') {
+              if (m.length && m[0].sender === 'notify') m[0].messages.unshift(message);
+              else m.unshift({ sender: 'notify', messages: [message] });
+            } else if (m.length && m[0].sender === message.sender) m[0].messages.unshift(message);
+            else m.unshift({ sender: message.sender, messages: [message] })
           }
         }
         return m;
@@ -38,13 +41,20 @@ const wrapListMessageState = (s: State<IGroupMessage[]>) => ({
   ),
   add: (message: IMessage) => s.set(m => {
     if (!m.some(g => g.messages.some(({ _id }) => _id === message._id))) {
-      if (m.length && m[m.length-1].sender === message.sender) m[m.length-1].messages.push(message);
-      else m.push({ sender: message.sender, messages: [message]})
+      if (m.length && m[m.length - 1].sender === message.sender) m[m.length - 1].messages.push(message);
+      else m.push({ sender: message.sender, messages: [message] })
+    }
+    return m;
+  }),
+  addNotify: (message: IMessage) => s.set(m => {
+    if (!m.some(g => g.messages.some(({ _id }) => _id === message._id))) {
+      if (m.length && m[m.length - 1].sender === 'notify') m[m.length - 1].messages.push(message);
+      else m.push({ sender: 'notify', messages: [message] });
     }
     return m;
   }),
   updateMessage: (message: IMessage, id: string) => s.set(l => {
-    for (let i = l.length - 1;  i >= 0; i--) {
+    for (let i = l.length - 1; i >= 0; i--) {
       if (l[i].sender !== message.sender) continue;
       for (let j = l[i].messages.length - 1; j >= 0; j--) {
         if (l[i].messages[j]._id === id) {
@@ -56,7 +66,7 @@ const wrapListMessageState = (s: State<IGroupMessage[]>) => ({
     return l;
   }),
   countMessage: () => {
-    return s.reduce((prev, current) => prev + current.messages.length,0)
+    return s.reduce((prev, current) => prev + current.messages.length, 0)
   }
 });
 

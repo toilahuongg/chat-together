@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useCallback, useRef } from "react";
 import { IMessage } from "server/types/message.type";
-import IRoom from "server/types/room.type";
+import IRoom, { IMessageRoom } from "server/types/room.type";
 import { IUser, IUserData } from "server/types/user.type";
 import { Socket } from "socket.io-client";
 import { useFetchAuth } from "./useFetchAuth";
@@ -111,7 +111,21 @@ export const useProccessSocket = (socket: Socket) => {
     });
 
     socket.on('update-profile', (u: IUser) => {
+      
       user.data.set(u);
+    });
+    socket.on('update-room', ({ message, user: u, ...room}: IMessageRoom) => {
+      if (group.get()._id === room._id) {
+        group.data.set(room);
+        listMessage.addNotify(message!);
+        listGroup.updateGroup({ message: {
+          ...message!,
+          readers: [...new Set([...message!.readers, user._id.get() ])]
+        }, user: u, ...room});
+        (async() => {
+          await instance.post(`/api/room/${message!.roomID}/read-messages`, {}, { cancelToken: axiosCancelSource.current.token })
+        })();
+      } else listGroup.updateGroup({ message, user: u, ...room});
     });
   }, [friends, pendingFriendsRequest, friendsRequestSent, group.get()._id])
 }

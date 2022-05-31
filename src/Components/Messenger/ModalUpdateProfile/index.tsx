@@ -78,20 +78,7 @@ const ModalUpdateProfile: React.FC<TProps> = ({
       </Modal.Header>
       <Modal.Body>
         <Tabs
-          tabs={[
-            {
-              id: 'general',
-              label: 'Thông tin chung'
-            },
-            {
-              id: 'change-password',
-              label: 'Mật khẩu'
-            },
-            {
-              id: 'avatar',
-              label: 'Avatar'
-            }
-          ]}
+          tabs={tabs}
           selected={selected}
           onSelect={(val: string) => setSelected(val)}
         />

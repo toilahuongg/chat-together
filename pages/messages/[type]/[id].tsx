@@ -75,7 +75,7 @@ const Message = () => {
               <div className={styles.nav}>
                 <div className={styles.navLeft}>
                   <Avatar
-                    src={`https://ui-avatars.com/api/?name=${String.fromCharCode(Math.floor(Math.random() * 25 + 65))}&background=random`}
+                    src={group.data.avatar.get() || `https://ui-avatars.com/api/?name=A`}
                     alt="avatar"
                     width={58}
                     height={58}

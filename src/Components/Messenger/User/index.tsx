@@ -28,13 +28,11 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, isChe
     if (isMounted.current) return;
     try {
       setLoading(true);
-      const response = await instance.post(`/api/friend/${isFriendRequestSent ? 'retake-friend-request' : 'friend-request'}/${data._id}`, {}, {
+      await instance.post(`/api/friend/${isFriendRequestSent ? 'retake-friend-request' : 'friend-request'}/${data._id}`, {}, {
         headers: {
           'x-exclude-socket-id': socket?.id!
         }
       });
-      const result = response.data;
-      toast.success(result.message);
       onUpdate(data._id);
     } catch (error: any) {
       console.log(error);
@@ -50,13 +48,11 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, isChe
     if (isMounted.current) return;
     try {
       setLoading(true);
-      const response = await instance.post(`/api/friend/accept-friend-request/${data._id}`, {}, {
+      await instance.post(`/api/friend/accept-friend-request/${data._id}`, {}, {
         headers: {
           'x-exclude-socket-id': socket?.id!
         }
       });
-      const result = response.data;
-      toast.success(result.message);
       onUpdate(data._id);
     } catch (error: any) {
       console.log(error);
@@ -71,13 +67,11 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, isChe
     if (isMounted.current) return;
     try {
       setLoadingUnaccept(true);
-      const response = await instance.post(`/api/friend/denie-friend-request/${data._id}`, {}, {
+      await instance.post(`/api/friend/denie-friend-request/${data._id}`, {}, {
         headers: {
           'x-exclude-socket-id': socket?.id!
         }
       });
-      const result = response.data;
-      toast.success(result.message);
       onUpdate(data._id, true);
     } catch (error: any) {
       console.log(error);
@@ -92,13 +86,11 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, isChe
     if (isMounted.current) return;
     try {
       setLoading(true);
-      const response = await instance.post(`/api/friend/unfriend/${data._id}`, {}, {
+      await instance.post(`/api/friend/unfriend/${data._id}`, {}, {
         headers: {
           'x-exclude-socket-id': socket?.id!
         }
       });
-      const result = response.data;
-      toast.success(result.message);
       onUpdate(data._id);
     } catch (error: any) {
       console.log(error);

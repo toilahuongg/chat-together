@@ -1,6 +1,6 @@
 import express from 'express'
 import passport from 'passport'
-import RoomModel, { Room } from '../models/room.model'
+import RoomModel from '../models/room.model'
 import UserModel, { User } from '../models/user.model'
 import MessageModel from '../models/message.model'
 import mongoose from 'mongoose'

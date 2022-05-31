@@ -83,6 +83,21 @@ const wrapListGroupState = (s: State<IMessageRoom[]>, instance: AxiosInstance) =
       return data;
     });
   }),
+  updateGroup: ({ message, ...room }: IMessageRoom) => s.set(g => {
+    if (g.some(({ _id }) => _id === room._id)) 
+      return g.map(data => {
+        if (data._id === room._id) return {
+          ...room,
+          message,
+          createdAt: message!.createdAt
+        }
+        return data;
+      });
+    else {
+      g.unshift({ message, ...room });
+      return g;
+    }
+  }),
   findById: (roomID: string) => s.attach(Downgraded).get().find(({ _id }) => _id === roomID),
   findPrivateByUserID: (userID: string) => s.attach(Downgraded).get().find(({ isGroup, userIDs }) => !isGroup && userIDs.includes(userID))
 });

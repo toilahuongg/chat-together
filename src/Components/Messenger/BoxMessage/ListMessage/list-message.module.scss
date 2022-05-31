@@ -5,6 +5,14 @@
   padding: 0 10px;
 }
 
+.notify {
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  margin: 5px 0;
+  gap: 10px;
+  color: rgb(129, 129, 129);
+}
 .message {
   display: flex;
   gap: 10px;

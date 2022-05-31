@@ -5,7 +5,6 @@ import passport from 'passport';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 import multer from 'multer';
-import fetch from 'node-fetch';
 
 import { signToken, verifyToken } from '../helpers/jwt';
 import UserModel, { User } from '../models/user.model';
@@ -13,7 +12,7 @@ import { IUserData } from '../types/user.type';
 import randomChars from '../helpers/randomChars';
 import RoomModel from '../models/room.model';
 import { GROUPS_QUERY } from '../constants';
-import FormData from 'form-data';
+import { uploadImage } from '../helpers/uploadImage';
 
 dotenv.config();
 const upload = multer();
@@ -236,23 +235,7 @@ Router.put('/api/user/update-profile', passport.authenticate('jwt', { session: f
         }
         let avatar = '';
         if (req.file) {
-            const formData = new FormData();
-            formData.append('width', width);
-            formData.append('height', height);
-            formData.append('allowMimes[0]', 'image/png');
-            formData.append('allowMimes[1]', 'image/jpeg');
-            formData.append('file', req.file?.buffer, {
-                contentType: 'image/jpeg',
-                filename: 'image.jpg',
-              });
-            const response = await fetch(`${process.env.SERVER_FILE_MANAGER}/api/upload`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'x-app-name': process.env.APP_NAME!
-                }
-            });
-            const data= await response.json();
+            const data = await uploadImage(req.file?.buffer, width, height);
             avatar = data.url;
         }
         const result = await UserModel.findOneAndUpdate({ _id: userID }, {

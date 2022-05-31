@@ -30,7 +30,7 @@ const Group: React.FC<TProps> = ({ data, userID, updateReaders }) => {
 			router.push(`/messages/${isGroup ? 'r/' + _id : 'u/' + userIDs.find(id => id !== userID)}`);
 		}}>
 			<Avatar
-				src={`https://ui-avatars.com/api/?name=${String.fromCharCode(Math.floor(Math.random() * 25 + 65))}&background=random`}
+				src={data?.avatar ||'/images/avatar-default.jpg'}
 				alt="avatar"
 			/>
 			<div className={styles.infoGroup}>

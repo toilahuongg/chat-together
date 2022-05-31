@@ -1,11 +1,14 @@
 import express from 'express';
 import passport from 'passport';
 import mongoose from 'mongoose';
+import multer from 'multer';
 
 import UserModel, { User } from '../models/user.model';
-import RoomModel, { Room } from '../models/room.model';
+import RoomModel from '../models/room.model';
 import MessageModel from '../models/message.model'
+import { uploadImage } from '../helpers/uploadImage';
 
+const upload = multer();
 const Router = express.Router();
 /**
  * Tạo phòng
@@ -47,17 +50,72 @@ Router.post('/api/room', passport.authenticate('jwt', { session: false }), async
 /**
  * Sửa phòng
  */
-Router.put('/api/room/:id', passport.authenticate('jwt', { session: false }), async (req, res) => {
+Router.put('/api/room/:id/rename', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
+        const userID = req.auth?._id.toString()!;
         const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
         const { id } = req.params;
-        const { name, settings } = req.body as { name: string[], settings: any };
-        const result = await RoomModel.findOneAndUpdate({ _id: id }, { name, settings }, { new: true });
-        if (!result) return res.status(500).json({ message: 'Không tồn tại Group' });
-        for (const _id of result.userIDs) {
-            await User.EventToUser(_id, 'update-room', result, [excludeSocketId]);
+        const { name } = req.body as { name: string };
+        const room = await RoomModel.findOneAndUpdate({ _id: id }, { name }, { new: true }).lean();
+        const message = await MessageModel.create({
+            sender: userID,
+            roomID: id,
+            readers: [userID],
+            msg: {
+                type: 'notify',
+                value: `đã thay đổi tên nhóm thành "${name}"`
+            }
+        });
+        if (!room) return res.status(500).json({ message: 'Không tồn tại Group' });
+        for (const _id of room.userIDs) {
+            await User.EventToUser(_id, 'update-room', {
+                ...room,
+                message,
+                user: req.auth
+            }, [excludeSocketId]);
         }
-        return res.status(200).json(result);
+        return res.status(200).json({
+            ...room,
+            message,
+            user: req.auth
+        });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "lỗi hệ thống" })
+    }
+});
+
+Router.put('/api/room/:id/change-avatar', passport.authenticate('jwt', { session: false }), upload.single('image'), async (req, res) => {
+    try {
+        const userID = req.auth?._id.toString()!;
+        if (!req.file) return res.status(500).send("File doesn't exists");
+        const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
+        const { id } = req.params;
+        const { width, height } = req.body;
+        const data = await uploadImage(req.file.buffer, width, height);
+        const room = await RoomModel.findOneAndUpdate({ _id: id }, { avatar: data.url }, { new: true }).lean();
+        const message = await MessageModel.create({
+            sender: userID,
+            roomID: id,
+            readers: [userID],
+            msg: {
+                type: 'notify',
+                value: 'đã thay đổi ảnh nhóm'
+            }
+        });
+        if (!room) return res.status(500).json({ message: 'Không tồn tại Group' });
+        for (const _id of room.userIDs) {
+            await User.EventToUser(_id, 'update-room', {
+                ...room,
+                message,
+                user: req.auth
+            }, [excludeSocketId]);
+        }
+        return res.status(200).json({
+            ...room,
+            message,
+            user: req.auth
+        });
     } catch (err) {
         console.log(err);
         return res.status(500).json({ message: "lỗi hệ thống" })
