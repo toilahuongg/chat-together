@@ -1,24 +1,25 @@
 import { useState } from '@hookstate/core';
 import { useRouter } from 'next/router';
 import React, { useEffect } from 'react';
+import Head from 'next/head';
+import axios from 'axios';
 import Avatar from '@src/Components/Layout/Avatar';
 import InputBox from '@src/Components/Messenger/BoxMessage/InputBox';
 import ListMessage from '@src/Components/Messenger/BoxMessage/ListMessage';
 import withAuth from '@src/Components/withAuth';
 import { showGroupSettingState } from '@src/hooks/useGroupSetting';
-import IconSettings from '@src/styles/svg/settings.svg';
-import IconUser3 from '@src/styles/svg/user3.svg';
-
-import styles from './message.module.scss';
+import GroupSettings from '@src/Components/Messenger/GroupSettings';
 import useListGroup, { useGroup } from '@src/hooks/useListGroup';
 import { useListUserOfGroup } from '@src/hooks/useFriends';
 import useUser from '@src/hooks/useUser';
-import Head from 'next/head';
 import useListMessage from '@src/hooks/useListMessage';
 import Loading from '@src/Components/Layout/Loading';
 import { useFetchAuth } from '@src/hooks/useFetchAuth';
 import IRoom from 'server/types/room.type';
-import axios from 'axios';
+
+import IconUser3 from '@src/styles/svg/user3.svg';
+import IconSettings from '@src/styles/svg/settings.svg';
+import styles from './message.module.scss';
 
 const Message = () => {
   const router = useRouter();
@@ -103,7 +104,7 @@ const Message = () => {
             {
               showGroupSetting.get() && (
                 <div className={styles.settings}>
-                  Hello
+                  <GroupSettings />
                 </div>
               )
             }

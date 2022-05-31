@@ -109,5 +109,9 @@ export const useProccessSocket = (socket: Socket) => {
         })();
       } else if (checkGroup(room)) listGroup.updateMessage({ message, user, room });
     });
+
+    socket.on('update-profile', (u: IUser) => {
+      user.data.set(u);
+    });
   }, [friends, pendingFriendsRequest, friendsRequestSent, group.get()._id])
 }

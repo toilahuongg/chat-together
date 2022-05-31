@@ -61,7 +61,7 @@ const Nav = () => {
                     </button>
                 </div>
             </div>
-            <ModalUpdateProfile isShow={isShow} onClose={() => setShow(false)} />
+            {isShow && <ModalUpdateProfile isShow={isShow} onClose={() => setShow(false)} /> }
 
         </>
     )

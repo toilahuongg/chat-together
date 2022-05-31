@@ -11,5 +11,6 @@ export const defaultUser = (): IUser => ({
     refreshToken: '',
     password: '',
     friends: [],
-    avatar: ''
+    avatar: '',
+    isSocial: false
 });

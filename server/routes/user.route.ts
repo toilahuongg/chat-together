@@ -6,7 +6,6 @@ import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 import multer from 'multer';
 import fetch from 'node-fetch';
-import fs from 'fs';
 
 import { signToken, verifyToken } from '../helpers/jwt';
 import UserModel, { User } from '../models/user.model';
@@ -36,7 +35,8 @@ Router.post('/api/auth/sign-in-with-social', async (req, res) => {
             fullname: displayName,
             email,
             username: slug(displayName),
-            password: bcrypt.hashSync(randomChars(10), parseInt(process.env.SALT_ROUNDS || '', 10))
+            password: bcrypt.hashSync(randomChars(10), parseInt(process.env.SALT_ROUNDS || '', 10)),
+            isSocial: true
         })
         payload = {
             _id: newUser._id,
@@ -224,6 +224,7 @@ Router.post('/api/login', async (req, res) => {
 
 Router.put('/api/user/update-profile', passport.authenticate('jwt', { session: false }), upload.single('image'), async (req, res) => {
     try {
+        const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
         const userID = req.auth?._id!;
         const { width, height, fullname, password, newPassword, email, phone } = req.body;
         const user = await UserModel.findOne({ _id: userID });
@@ -261,6 +262,23 @@ Router.put('/api/user/update-profile', passport.authenticate('jwt', { session: f
             phone,
             avatar
         }, { new: true }).lean();
+        const groups = await RoomModel.find({
+            $and: [
+                {
+                    userIDs: { $in: [new mongoose.Types.ObjectId(userID)] },
+                },
+                {
+                    isGroup: false
+                }
+            ]
+        });
+        await Promise.all(groups.map(async (group) => {
+            const fIds = group.userIDs.filter(id => id !== userID);
+            await group.updateOne({ [`name2.${fIds[0]}`]: fullname });
+        }));
+        result!.password = "";
+        result!.refreshToken = "";
+        await User.EventToUser(userID, "update-profile", result!, [excludeSocketId]);
         return res.status(200).json(result);
     } catch (error: any) {
         console.log(error);

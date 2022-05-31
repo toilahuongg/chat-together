@@ -2,9 +2,6 @@ import express from 'express'
 import passport from 'passport'
 import UserModel, { User } from '../models/user.model'
 import ObjectID from 'mongoose'
-import RequestNotExist from '../helpers/exception/RequestNotExist'
-import UnknownFriendRelation from '../helpers/exception/UnknownFriendRelation'
-import UserNotExist from '../helpers/exception/UserNotExist'
 import RoomModel from '../models/room.model'
 import mongoose from 'mongoose'
 const router = express.Router()
@@ -61,25 +58,21 @@ router.post("/api/friend/retake-friend-request/:retakeUserID", passport.authenti
         const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
         const userID = req.auth?._id.toString()!;
         const retakeUserID = req.params.retakeUserID
-        await User.RemoveFriendRequest(userID, retakeUserID)
-            .then(async () => {
-                res.status(200).json({ message: "Rút lời mời kết bạn thành công" })
-                // Người huỷ
-                await User.EventToUser(userID, "retake-friend-request-sent", { userID: retakeUserID }, [excludeSocketId])
-                // Người bị huỷ lời mời
-                await User.EventToUser(retakeUserID, "retake-pending-friend-request", { userID: userID })
-            })
-            .catch(err => {
-                if (err instanceof RequestNotExist) {
-                    res.status(403).json({ message: "Chưa từng gửi lời mời kết bạn đến user này" })
-                    return
-                }
-                if (err instanceof UserNotExist) {
-                    return res.status(403).json({ message: "User không tồn tại" })
-                }
-                throw new Error()
-            })
-        return
+        await UserModel.updateOne({ _id: userID }, {
+            $pull: {
+                friendRequestSent: retakeUserID
+            }
+        })
+        // xóa friend request phía người nhận
+        await UserModel.updateOne({ _id: retakeUserID }, {
+            $pull: {
+                pendingFriendRequest: userID
+            }
+        })
+        await User.EventToUser(userID, "retake-friend-request-sent", { userID: retakeUserID }, [excludeSocketId])
+        // Người bị huỷ lời mời
+        await User.EventToUser(retakeUserID, "retake-pending-friend-request", { userID: userID })
+        return res.status(200).json({ oke: 1 });
     }
     catch (err) {
         console.error("ERR: Lỗi hệ thống")
@@ -94,23 +87,20 @@ router.post('/api/friend/denie-friend-request/:userDenieID', passport.authentica
         const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
         const userID = req.auth?._id.toString()!;
         const userDenieID = req.params.userDenieID
-        await User.DenieFriendRequest(userID, userDenieID)
-            .then(async () => {
-                res.status(200).json({ message: "Từ chối lời mời kết bạn thành công" })
-                // Người từ chối
-                await User.EventToUser(userID, "denie-pending-friend-request", { userID: userDenieID }, [excludeSocketId])
-                // Người bị từ chối
-                await User.EventToUser(userDenieID, "denie-friend-request-sent", { userID: userID })
-            })
-            .catch(err => {
-                if (err instanceof UserNotExist) {
-                    return res.status(403).json({ message: "User không tồn tại" })
-                }
-                if (err instanceof RequestNotExist) {
-                    return res.status(403).json({ message: "Chưa từng được user này gửi lời mời kết bạn" })
-                }
-                throw err
-            })
+        await UserModel.updateOne({ _id: userID }, {
+            $pull: {
+                pendingFriendRequest: userDenieID
+            }
+        })
+        await UserModel.updateOne({ _id: userDenieID }, {
+            $pull: {
+                friendRequestSent: userID
+            }
+        })
+        await User.EventToUser(userID, "denie-pending-friend-request", { userID: userDenieID }, [excludeSocketId])
+        // Người bị từ chối
+        await User.EventToUser(userDenieID, "denie-friend-request-sent", { userID: userID })
+        return res.status(200).json({ oke: 1 });
     }
     catch (err) {
         console.log("ERR: Lỗi hệ thống")
@@ -123,21 +113,19 @@ router.post('/api/friend/unfriend/:id', passport.authenticate("jwt", { session: 
         const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
         const userID = req.auth?._id.toString()!;
         const idUnfriend = req.params.id
-        await User.RemoveFriend(userID, idUnfriend)
-            .then(async () => {
-                await User.EventToUser(userID, "unfriend", { userID: idUnfriend }, [excludeSocketId])
-                await User.EventToUser(idUnfriend, "unfriend", { userID: userID })
-                return res.status(200).send({ message: "unfriend thành công" })
-            })
-            .catch(err => {
-                if (err instanceof UserNotExist) {
-                    return res.status(403).json({ message: "User không tồn tại" })
-                }
-                if (err instanceof UnknownFriendRelation) {
-                    return res.status(403).json({ message: "Không phải là quan hệ bạn bè" })
-                }
-                throw err
-            })
+        await UserModel.updateOne({ _id: userID }, {
+            $pull: {
+                friends: idUnfriend
+            }
+        })
+        await UserModel.updateOne({ _id: idUnfriend }, {
+            $pull: {
+                friends: userID
+            }
+        })
+        await User.EventToUser(userID, "unfriend", { userID: idUnfriend }, [excludeSocketId])
+        await User.EventToUser(idUnfriend, "unfriend", { userID: userID })
+        return res.status(200).send({ message: "unfriend thành công" })
     }
     catch (err) {
         console.log("ERR: Lỗi hệ thống")

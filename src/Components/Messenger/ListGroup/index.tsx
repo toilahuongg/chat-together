@@ -77,8 +77,8 @@ const ListGroup = () => {
 					)) : !isLoading && 'Không có group'}
 				</InfiniteScroll>
 			</div>
-			<ModalAddFriends isShow={showState.get()} onClose={() => !unmount.current && showState.set(false)} />
-			<ModalAddGroup isShow={showAddGroup.get()} onClose={() => !unmount.current && showAddGroup.set(false)} />
+			{showState.get() && <ModalAddFriends isShow={showState.get()} onClose={() => !unmount.current && showState.set(false)} />}
+			{showAddGroup.get() && <ModalAddGroup isShow={showAddGroup.get()} onClose={() => !unmount.current && showAddGroup.set(false)} />}
 		</div>
 	)
 }

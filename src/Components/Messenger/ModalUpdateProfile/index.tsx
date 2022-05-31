@@ -1,18 +1,18 @@
 import Button from '@src/Components/Layout/Button';
 import Modal from '@src/Components/Layout/Modal';
-import React, { useEffect } from 'react';
+import React from 'react';
 import useUser from '@src/hooks/useUser';
 import Tabs from '@src/Components/Layout/Tabs';
-import ChangeAvatar from './ChangeAvatar';
+import ChangeAvatar from '../../ChangeAvatar';
 import { Area } from 'react-easy-crop';
 import getCroppedImg from '@src/helpers/cropImage';
-import axios from 'axios';
 import TextField from '@src/Components/Layout/TextField';
 import { useState } from '@hookstate/core';
 import { defaultUser } from '@src/constants/user.constant';
 import { IUser } from 'server/types/user.type';
 import { validateConfirmPassword, validateEmail, validateFullname, validatePassword, validatePhone } from '@src/validators/user.validator';
 import { useFetchAuth } from '@src/hooks/useFetchAuth';
+import useSocket from '@src/hooks/useSocket';
 
 type TProps = {
   isShow: boolean,
@@ -23,15 +23,18 @@ const ModalUpdateProfile: React.FC<TProps> = ({
   onClose = () => { }
 }) => {
   const user = useUser();
+  const socket = useSocket();
   const instance = useFetchAuth();
   const errorState = useState({ ...defaultUser(), confirmPassword: '' });
   const cloneDataUser = useState(JSON.parse(JSON.stringify(user.data.get())) as IUser);
   const [selected, setSelected] = React.useState('general');
   const [newPassword, setNewPassword] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
   const [confirmPassword, setConfirmPassword] = React.useState('');
   const [croppedAreaPixels, setCroppedAreaPixels] = React.useState<Area | null>(null);
 
   const handleSave = async () => {
+    setLoading(true);
     const {croppedImage, width, height} = await getCroppedImg(
       cloneDataUser.avatar.get() || '',
       croppedAreaPixels,
@@ -46,11 +49,28 @@ const ModalUpdateProfile: React.FC<TProps> = ({
     formData.append('password', rawData.password);
     formData.append('newPassword', newPassword);
     formData.append('image', croppedImage);
-    await instance.put('/api/user/update-profile', formData, {
-      headers: { "Content-Type": "multipart/form-data" }
+    const response = await instance.put('/api/user/update-profile', formData, {
+      headers: { "Content-Type": "multipart/form-data", 'x-exclude-socket-id': socket?.id! }
     });
+    user.data.set(response.data);
+    setLoading(false);
+    onClose();
   }
 
+  const tabs  = [{
+    id: 'general',
+    label: 'Thông tin chung'
+  }];
+
+  if (!user.isSocial) tabs.push({
+    id: 'change-password',
+    label: 'Mật khẩu'
+  });
+  tabs.push({
+    id: 'avatar',
+    label: 'Avatar'
+  });
+  
   return (
     <Modal isShow={isShow} onClose={onClose} size="lg">
       <Modal.Header>
@@ -104,7 +124,7 @@ const ModalUpdateProfile: React.FC<TProps> = ({
             />
           </>
         )}
-        {selected === 'change-password' && (
+        {selected === 'change-password' && !user.isSocial && (
           <>
             <TextField
               label="Mật khẩu cũ"
@@ -144,7 +164,7 @@ const ModalUpdateProfile: React.FC<TProps> = ({
       </Modal.Body>
       <Modal.Footer align="right">
         <Button onClick={onClose}> Đóng </Button>
-        <Button onClick={handleSave} variable="primary"> Lưu </Button>
+        <Button onClick={handleSave} variable="primary" loading={loading}> Lưu </Button>
       </Modal.Footer>
     </Modal>
   )
