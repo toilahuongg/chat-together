@@ -8,6 +8,7 @@ export interface IMessage {
     },
     roomID: string,
     readers: string[],
+    images: string[],
     createdAt: string
 }
 
@@ -23,5 +24,6 @@ export interface IMessageModel extends mongoose.Document {
         value: string
     },
     roomID: mongoose.Types.ObjectId,
-    readers: mongoose.Types.ObjectId[]
+    readers: mongoose.Types.ObjectId[],
+    images: string[],
 }

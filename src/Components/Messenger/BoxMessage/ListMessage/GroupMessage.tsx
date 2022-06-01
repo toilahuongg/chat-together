@@ -15,7 +15,7 @@ const GroupMessage: React.FC<TProps> = ({ data }) => {
   if (data.sender === 'notify') return (
     <div className={styles.notify}>
       {data.messages.map(message => {
-        const u = user.data._id.get() === message.sender ? { fullname: 'Bạn'} : listUser.get().find(({ _id }) => _id === message.sender);
+        const u = user.data._id.get() === message.sender ? { fullname: 'Bạn' } : listUser.get().find(({ _id }) => _id === message.sender);
         return <div key={message._id}> {u?.fullname}: {message.msg.value} </div>
       })}
     </div>
@@ -37,9 +37,28 @@ const GroupMessage: React.FC<TProps> = ({ data }) => {
         {data.messages.length && (data.messages.length > 1 ?
           data.messages.map(message => <Message key={message._id} data={message} />)
           : (
-            <div className={classNames(styles, ['content', 'single'])}>
-              {data.messages[0].msg.value}
-            </div>
+            <>
+              <div
+                className={classNames(styles, ['content', 'single'])}
+                style={data.messages[0]._id.includes('sending') ?
+                  { background: '#F8B400' } :
+                  data.messages[0]._id.includes('error') ?
+                    { background: '#F32424' } : {}}
+              >
+                {data.messages[0].msg.value}
+              </div>
+              {data.messages[0].images.length > 0 && (
+                <div className={styles.images}>
+                  {data.messages[0].images.map(image =>
+                    <div key={image} className={styles.img}>
+                      <img src={image} alt="" loading="lazy" />
+                    </div>
+                  )}
+                </div>
+              )}
+
+            </>
+
           ))
         }
       </div>

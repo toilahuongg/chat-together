@@ -26,7 +26,7 @@ const Avatar: React.FC<TProps> = ({
       className={styles.avatar}
       style={style}
     >
-      <img src={src} alt={alt} />
+      <img src={src} alt={alt} loading="lazy" />
     </div>
   )
 }

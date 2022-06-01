@@ -13,7 +13,10 @@ const MessageSchema = new Schema<IMessageModel>({
     },
     readers: [{
         type: Schema.Types.ObjectId
-    }]
+    }],
+    images: [
+        {type: String}
+    ]
 }, { timestamps: true });
 
 const MessageModel = model('messages', MessageSchema);

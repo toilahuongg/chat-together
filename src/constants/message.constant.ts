@@ -9,5 +9,6 @@ export const defaultMessage = (): IMessage => ({
     roomID: '',
     sender: '',
     readers: [],
+    images: [],
     createdAt: ''
 });

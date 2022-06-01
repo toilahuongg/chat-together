@@ -2,17 +2,18 @@ import useListMessage, { useMessage, useSignalSend } from '@src/hooks/useListMes
 import { useFetchAuth } from '@src/hooks/useFetchAuth';
 import useListGroup, { useGroup } from '@src/hooks/useListGroup';
 import { defaultMessage } from '@src/constants/message.constant';
-import { FormEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import randomChars from 'server/helpers/randomChars';
 import useUser from '@src/hooks/useUser';
 import useSocket from '@src/hooks/useSocket';
+import EmojiPicker, { SKIN_TONE_MEDIUM_LIGHT } from 'emoji-picker-react';
+import { useOnClickOutside } from '@src/hooks/useOnClickOutside';
 
 import IconImageGallery from '@src/styles/svg/image-gallery.svg';
 import IconSmile from '@src/styles/svg/smile.svg';
 import IconSend from '@src/styles/svg/send-message.svg';
+import IconClose from '@src/styles/svg/icons8-close.svg';
 import styles from './input-box.module.scss';
-import EmojiPicker, { SKIN_TONE_MEDIUM_LIGHT } from 'emoji-picker-react';
-import { useOnClickOutside } from '@src/hooks/useOnClickOutside';
 
 const InputBox = () => {
   const instance = useFetchAuth();
@@ -24,9 +25,12 @@ const InputBox = () => {
   const listGroup = useListGroup();
   const signalSend = useSignalSend();
   const roomID = group.data._id.get();
+  const [files, setFiles] = useState<File[]>([]);
+  const [blobs, setBlobs] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
   const [isShowEmoij, setShowEmoij] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputFilesRef = useRef<HTMLInputElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
   useOnClickOutside(divRef, () => setShowEmoij(false));
 
@@ -46,14 +50,20 @@ const InputBox = () => {
         msg: {
           type: 'text',
           value: value
-        }
+        },
+        images: blobs
       }
       listMessage.add(msg);
+      setBlobs([]);
       message.data.set(defaultMessage());
-      await instance.post(`/api/message/${roomID}/send-message`, {
-        message: value
-      }, {
+      const formData = new FormData();
+      formData.append('message', value);
+      for (const f of files) {
+        formData.append('images', f);
+      }
+      await instance.post(`/api/message/${roomID}/send-message`, formData, {
         headers: {
+          'Content-Type': 'multipart/form-data',
           'x-exclude-socket-id': socket?.id!
         }
       }).then((res) => {
@@ -63,17 +73,51 @@ const InputBox = () => {
         console.log(error);
         listMessage.updateMessage({ ...msg, _id: 'error' + randomID }, 'sending' + randomID);
       });
+      setFiles([]);
       signalSend.set(randomChars(5));
       setSending(false);
     } catch (error) {
       console.log(error);
     }
   }
+
+  const handleDeleteFile = (index: number) => {
+    setFiles(f => {
+      f.splice(index, 1);
+      return [...f];
+    });
+    setBlobs(f => {
+      f.splice(index, 1);
+      return [...f];
+    });
+  }
   return (
-    <form onSubmit={handleSubmit}>
+    <div className={styles.wrapper}>
+      {
+        blobs.length > 0 && (
+          <div className={styles.listImage}>
+            {
+              blobs.map((url, index) => (
+                <div className={styles.image} key={url}>
+                  <img src={url} width="64" height="64" />
+                  <span onClick={() => handleDeleteFile(index)}> <IconClose /> </span>
+                </div>
+              ))
+            }
+          </div>
+        )
+      }
+      <input ref={inputFilesRef} type="file" accept=".jpg,.png,.gif" onChange={(e) => {
+        const listFile = Array.from(Array(e.target.files?.length || 0).keys()).map((i) => e.target.files?.item(i)).filter(c => c) as File[];
+        setFiles(listFile);
+        setBlobs(listFile.map(f => URL.createObjectURL(f)));
+        inputRef.current?.focus();
+      }} multiple hidden />
       <div className={styles.inputBox}>
         <div className={styles.advancedMessage}>
-          <button> <IconImageGallery /> </button>
+          <button onClick={(e) => {
+            inputFilesRef.current?.click()
+          }}> <IconImageGallery /> </button>
           <div className={styles.emoij} ref={divRef}>
             <button onClick={(e) => setShowEmoij(true)}>
               <IconSmile />
@@ -81,7 +125,6 @@ const InputBox = () => {
             <div className={styles.popover} style={{ display: isShowEmoij ? 'block' : 'none' }}>
               <EmojiPicker
                 onEmojiClick={(event, value) => {
-                  event.preventDefault();
                   message.data.msg.set((m) => ({ type: m.type, value: m.value + value.emoji }));
                   inputRef.current?.focus();
                 }}
@@ -93,19 +136,20 @@ const InputBox = () => {
             </div>
           </div>
         </div>
-        <div className={styles.inputMessage}>
+        <form onSubmit={handleSubmit} className={styles.inputMessage}>
           <input
             ref={inputRef}
             placeholder="Enter your message..."
             value={message.get().msg.value}
             onChange={(e) => message.data.msg.set({ type: 'text', value: e.target.value })}
           />
-        </div>
-        <div className={styles.btnSend}>
-          <button type="submit"> <IconSend /> </button>
-        </div>
+          <div className={styles.btnSend}>
+            <button type="submit"> <IconSend /> </button>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
+
   )
 }
 

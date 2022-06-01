@@ -9,7 +9,12 @@ type TProps = {
 }
 const Message: React.FC<TProps> = ({ data }) => {
   return (
-    <div className={styles.content} style={data._id.includes('sending') ? { background: '#F8B400'} : data._id.includes('error') ? { background: '#F32424'} :  {}}>
+    <div className={styles.content}
+      style={data._id.includes('sending') ?
+        { background: '#F8B400' } :
+        data._id.includes('error') ?
+          { background: '#F32424' } : {}}
+    >
       {data.msg.value}
     </div>
   )

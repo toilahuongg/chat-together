@@ -29,7 +29,8 @@ const wrapListMessageState = (s: State<IGroupMessage[]>) => ({
             if (message.msg.type === 'notify') {
               if (m.length && m[0].sender === 'notify') m[0].messages.unshift(message);
               else m.unshift({ sender: 'notify', messages: [message] });
-            } else if (m.length && m[0].sender === message.sender) m[0].messages.unshift(message);
+            } else if (m.length && message.images.length === 0 && m[0].sender === message.sender && m[0].messages[0].images.length === 0)
+              m[0].messages.unshift(message);
             else m.unshift({ sender: message.sender, messages: [message] })
           }
         }
@@ -41,7 +42,8 @@ const wrapListMessageState = (s: State<IGroupMessage[]>) => ({
   ),
   add: (message: IMessage) => s.set(m => {
     if (!m.some(g => g.messages.some(({ _id }) => _id === message._id))) {
-      if (m.length && m[m.length - 1].sender === message.sender) m[m.length - 1].messages.push(message);
+      if (m.length && message.images.length === 0 && m[m.length - 1].sender === message.sender && m[m.length - 1].messages[0].images.length === 0) 
+        m[m.length - 1].messages.push(message);
       else m.push({ sender: message.sender, messages: [message] })
     }
     return m;
