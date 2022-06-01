@@ -44,3 +44,12 @@
     justify-content: center;
   }
 }
+
+.emoij {
+  position: relative;
+  .popover {
+    position: absolute;
+    bottom: calc(100% + 20px);
+    left: 0;
+  }
+}

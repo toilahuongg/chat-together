@@ -1,15 +1,15 @@
+import dynamic from 'next/dynamic';
 import { useState } from '@hookstate/core';
 import { useRouter } from 'next/router';
 import React, { useEffect } from 'react';
 import Head from 'next/head';
 import axios from 'axios';
 import Avatar from '@src/Components/Layout/Avatar';
-import InputBox from '@src/Components/Messenger/BoxMessage/InputBox';
 import ListMessage from '@src/Components/Messenger/BoxMessage/ListMessage';
 import withAuth from '@src/Components/withAuth';
 import { showGroupSettingState } from '@src/hooks/useGroupSetting';
 import GroupSettings from '@src/Components/Messenger/GroupSettings';
-import useListGroup, { useGroup } from '@src/hooks/useListGroup';
+import { useGroup } from '@src/hooks/useListGroup';
 import { useListUserOfGroup } from '@src/hooks/useFriends';
 import useUser from '@src/hooks/useUser';
 import useListMessage from '@src/hooks/useListMessage';
@@ -21,13 +21,14 @@ import IconUser3 from '@src/styles/svg/user3.svg';
 import IconSettings from '@src/styles/svg/settings.svg';
 import styles from './message.module.scss';
 
+const InputBox = dynamic(() => import('@src/Components/Messenger/BoxMessage/InputBox'), {ssr: false});
+
 const Message = () => {
   const router = useRouter();
   const { id, type } = router.query;
   const user = useUser();
   const instance = useFetchAuth();
   const showGroupSetting = useState(showGroupSettingState);
-  const { findPrivateByUserID, findById } = useListGroup();
   const group = useGroup();
   const listUserOfGroup = useListUserOfGroup();
   const [loading, setLoading] = React.useState(false);
