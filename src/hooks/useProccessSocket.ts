@@ -5,7 +5,7 @@ import IRoom, { IMessageRoom } from "server/types/room.type";
 import { IUser, IUserData } from "server/types/user.type";
 import { Socket } from "socket.io-client";
 import { useFetchAuth } from "./useFetchAuth";
-import { useFriends, useFriendsRequestSent, usePendingFriendsRequest } from "./useFriends";
+import { useFriends, useFriendsRequestSent, useListUserOfGroup, usePendingFriendsRequest } from "./useFriends";
 import useListGroup, { useGroup, useTxtSearchGroup } from "./useListGroup";
 import useListMessage from "./useListMessage";
 import useUser from "./useUser";
@@ -18,6 +18,7 @@ export const useProccessSocket = (socket: Socket) => {
   const pendingFriendsRequest = usePendingFriendsRequest();
   const friendsRequestSent = useFriendsRequestSent();
   const listGroup = useListGroup();
+  const listUserOfGroup = useListUserOfGroup();
   const group = useGroup();
   const listMessage = useListMessage();
 	const searchTextState = useTxtSearchGroup();
@@ -91,8 +92,8 @@ export const useProccessSocket = (socket: Socket) => {
     //* End: Huỷ kết bạn *//
 
     // Tạo group
-    socket.on('new-room', (newGroup: IRoom) => {
-      listGroup.add({ ...newGroup, message: null, user: null});
+    socket.on('new-room', (room: IMessageRoom) => {
+      listGroup.add(room);
     });
     // Them tin nhan
     socket.on('new-message', ({ message, user, room }: { message: IMessage, user: IUserData, room: IRoom }) => {
@@ -123,7 +124,10 @@ export const useProccessSocket = (socket: Socket) => {
           readers: [...new Set([...message!.readers, user._id.get() ])]
         }, user: u, ...room});
         (async() => {
-          await instance.post(`/api/room/${message!.roomID}/read-messages`, {}, { cancelToken: axiosCancelSource.current.token })
+          await Promise.all([
+            await instance.post(`/api/room/${message!.roomID}/read-messages`, {}, { cancelToken: axiosCancelSource.current.token }),
+            await instance.get(`/api/room/${group.data._id.get()}/users`).then(res => listUserOfGroup.list.set(res.data))
+          ]);
         })();
       } else listGroup.updateGroup({ message, user: u, ...room});
     });

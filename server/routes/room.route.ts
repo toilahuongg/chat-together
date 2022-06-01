@@ -31,17 +31,29 @@ Router.post('/api/room', passport.authenticate('jwt', { session: false }), async
                 if (username) NAME += `, ${username}`
             })
         }
-        const result = await RoomModel.create({
+        const room = await RoomModel.create({
             name: NAME,
             isGroup: true,
             userIDs: listIds,
             ownerID: userID,
             settings: {},
         });
+        const message = await MessageModel.create({
+            sender: userID,
+            roomID: room._id,
+            readers: [userID],
+            msg: {
+                type: 'notify',
+                value: 'đã tạo nhóm'
+            }
+        });
         for (const id of listIds) {
-            await User.EventToUser(id, 'new-room', result, [excludeSocketId]);
+
+            //@ts-ignore;
+            await User.EventToUser(id, 'new-room', { ...room._doc, message, user: req.auth }, [excludeSocketId]);
         }
-        return res.status(200).json(result)
+        //@ts-ignore;
+        return res.status(200).json({ ...room._doc, message, user: req.auth })
     } catch (err) {
         console.log(err);
         return res.status(500).json({ message: "lỗi hệ thống" })
@@ -165,7 +177,7 @@ Router.get('/api/room/:id/users', passport.authenticate('jwt', { session: false 
         const { id } = req.params;
         const result = await RoomModel.findOne({ _id: id }).lean();
         if (!result) return res.status(500).json({ message: 'Không tồn tại Group' });
-        const users = await UserModel.find({ _id: { $in: result.userIDs }}).lean();
+        const users = await UserModel.find({ _id: { $in: result.userIDs } }).lean();
         return res.status(200).json(users);
     } catch (err) {
         console.log(err);
@@ -176,7 +188,7 @@ Router.get('/api/room/:id/users', passport.authenticate('jwt', { session: false 
 /**
  * Lấy tin nhắn trong phòng
  */
- Router.get('/api/room/:id/messages', passport.authenticate('jwt', { session: false }), async (req, res) => {
+Router.get('/api/room/:id/messages', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         const userID = req.auth?._id.toString()!;
         const { id } = req.params;
@@ -184,7 +196,7 @@ Router.get('/api/room/:id/users', passport.authenticate('jwt', { session: false 
         const limit = 15;
         let match = { roomID: id };
         if (lastId) match['_id'] = { $lt: lastId };
-        else await MessageModel.updateMany({ roomID: id }, { $addToSet: { readers: userID }});
+        else await MessageModel.updateMany({ roomID: id }, { $addToSet: { readers: userID } });
         const messages = await MessageModel.find(match).sort({ createdAt: -1 }).limit(limit).lean();
         const count = await MessageModel.count({ roomID: id });
         return res.status(200).json({ messages, count });
@@ -198,7 +210,7 @@ Router.post('/api/room/:id/read-messages', passport.authenticate('jwt', { sessio
     try {
         const userID = req.auth?._id.toString()!;
         const { id } = req.params;
-        await MessageModel.updateMany({ roomID: id }, { $addToSet: { readers: userID }});
+        await MessageModel.updateMany({ roomID: id }, { $addToSet: { readers: userID } });
         return res.status(200).json({ message: "success" });
     } catch (err) {
         console.log(err);
@@ -206,4 +218,41 @@ Router.post('/api/room/:id/read-messages', passport.authenticate('jwt', { sessio
     }
 });
 
+Router.post('/api/room/:id/add-member', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    try {
+        const userID = req.auth?._id.toString()!;
+        const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
+        const { id } = req.params;
+        const { userIDs } = req.body as { userIDs: string };
+        const room = await RoomModel.findOneAndUpdate({ _id: id }, { 
+            $addToSet: { userIDs: { $each: userIDs } }
+         }, { new: true }).lean();
+        const users = await UserModel.find({ _id: { $in: userIDs }}).lean();
+        const message = await MessageModel.create({
+            sender: userID,
+            roomID: id,
+            readers: [userID],
+            msg: {
+                type: 'notify',
+                value: `đã thêm ${users.map(u => u.fullname).join(', ')} vào nhóm`
+            }
+        });
+        if (!room) return res.status(500).json({ message: 'Không tồn tại Group' });
+        for (const _id of room.userIDs) {
+            await User.EventToUser(_id, 'update-room', {
+                ...room,
+                message,
+                user: req.auth
+            }, [excludeSocketId]);
+        }
+        return res.status(200).json({
+            ...room,
+            message,
+            user: req.auth
+        });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "lỗi hệ thống" })
+    }
+});
 export default Router;

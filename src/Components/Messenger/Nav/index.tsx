@@ -1,6 +1,6 @@
 import { useState } from '@hookstate/core';
 
-import { showListGroupState } from '@src/hooks/useListGroup';
+import useListGroup, { showListGroupState } from '@src/hooks/useListGroup';
 import { showFriendsState } from '@src/hooks/useFriends';
 import useAuth from '@src/hooks/useAuth';
 import useSocket from '@src/hooks/useSocket';
@@ -19,6 +19,7 @@ const Nav = () => {
     const user = useUser();
     const { setAccessToken, setRefreshToken } = useAuth();
     const showListGroup = useState(showListGroupState);
+    const listGroup = useListGroup();
     const showModalFriends = useState(showFriendsState);
     const [isShow, setShow] = React.useState(false);
     return (
@@ -55,6 +56,7 @@ const Nav = () => {
                     <button onClick={() => {
                         setAccessToken('');
                         setRefreshToken('');
+                        listGroup.list.set([]);
                         socket.disconnect();
                     }}>
                         <IconLogout />

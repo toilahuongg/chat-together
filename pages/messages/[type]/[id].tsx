@@ -43,23 +43,29 @@ const Message = () => {
     const axiosCancelSource = axios.CancelToken.source();
     if (id && type) {
       (async () => {
-        setLoading(true);
-        let g: IRoom | null;
-        if (type === 'r') {
-          g = await instance.get(`/api/room/${id}`, { cancelToken: axiosCancelSource.token }).then(res => res.data);
-        } else {
-          g = await instance.get(`/api/room/${id}/private`, { cancelToken: axiosCancelSource.token }).then(res => res.data);
+        try {
+          setLoading(true);
+          let g: IRoom | null;
+          if (type === 'r') {
+            g = await instance.get(`/api/room/${id}`, { cancelToken: axiosCancelSource.token }).then(res => res.data);
+          } else {
+            g = await instance.get(`/api/room/${id}/private`, { cancelToken: axiosCancelSource.token }).then(res => res.data);
+          }
+          if (!g) {
+            router.push("/");
+            return;
+          }
+          group.data.set(g);
+          const response = await instance.get(`/api/room/${g._id}/users`, { cancelToken: axiosCancelSource.token });
+          listUserOfGroup.list.set(response.data);
+          setLoading(false);
+        } catch (error) {
+          console.log(error);
+          router.push('/');
         }
-        if (!g) {
-          router.push("/404");
-          return;
-        }
-        group.data.set(g);
-        const response = await instance.get(`/api/room/${g._id}/users`, { cancelToken: axiosCancelSource.token });
-        listUserOfGroup.list.set(response.data);
-        setLoading(false);
       })();
     }
+
     return () => {
       axiosCancelSource.cancel();
     }

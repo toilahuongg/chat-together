@@ -3,7 +3,46 @@
   border-radius: 5px;
   user-select: none;
   cursor: pointer;
+
   &:hover {
     background-color: #efefef;
+  }
+
+
+}
+
+.listUser {
+  max-height: 300px;
+  overflow-y: auto;
+
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .fullname {
+    flex: 1;
+  }
+}
+
+.addMember {
+  margin-top: 5px;
+  border: none;
+  background: none;
+  outline: none;
+  background: #00AC4F;
+  border-radius: 10px;
+  padding: 0.75em 1em;
+  width: 100%;
+  text-align: center;
+  color: #fff;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+
+  &:hover {
+    background: rgb(15, 122, 5);
+
   }
 }
