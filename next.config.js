@@ -8,5 +8,5 @@ module.exports = {
 
     return config;
   },
-  generateBuildId: async () => nextBuildId({ dir: __dirname })
+  generateBuildId: async () => nextBuildId({ dir: __dirname,  description : true })
 };
