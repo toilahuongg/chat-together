@@ -13,6 +13,7 @@ import AppProvider from '@src/Components/AppProvider';
 
 import 'react-toastify/dist/ReactToastify.css';
 import '@src/styles/main.scss';
+import Head from 'next/head';
 
 TopBarProgress.config({
   barColors: {
@@ -34,6 +35,9 @@ function MyApp({ Component, pageProps }: AppProps) {
   });
   return (
     <>
+      <Head>
+        <link rel="shortcut icon" href="/images/favicon.ico" />
+      </Head>
       {progress && <TopBarProgress />}
       <ToastContainer
         position="top-right"
