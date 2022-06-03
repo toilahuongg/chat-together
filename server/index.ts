@@ -29,7 +29,13 @@ const bootstrap = async () => {
   const server = express()
   const httpServer = new http.Server(server);
   const { pubClient, subClient } = socketManager;
-  const io = new Server(httpServer);
+  const io = new Server(httpServer,{
+    maxHttpBufferSize: 1e8,
+    pingTimeout: 60000
+  });
+  httpServer.on('connection', (socket) => {
+    socket.on('error', () => console.log('poof!'));
+});
   await Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
     //@ts-ignore
     io.adapter(createAdapter(pubClient, subClient));
@@ -39,7 +45,7 @@ const bootstrap = async () => {
   SocketIO.Init(io);
   server.use(compression({
     level: 6,
-    threshold: 100*1024
+    threshold: 100 * 1024
   }))
   server.use(passport.initialize());
   server.use(cors());

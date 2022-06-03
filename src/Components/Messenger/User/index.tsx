@@ -112,7 +112,7 @@ const User: React.FC<TProps> = ({ data, type, isFriendRequestSent = false, isChe
       <Avatar
         width={48}
         height={48}
-        src={data.avatar}
+        src={data.avatar || '/images/avatar-default.jpg'}
         alt="Avatar"
       />
       <div className={styles.user}>

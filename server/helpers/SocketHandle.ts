@@ -11,11 +11,7 @@ const socketHandle = (io: Server) => {
     const socketManager = SocketManager;
     try {
         let userID = "";
-        io.on("connect", (socket) => {
-            socket.on("error", (err) => console.log('1'));
-        });
         io.use(async (socket, next) => {
-            socket.on("error", (err) => console.log('2'));
             if (socket.handshake.auth && socket.handshake.auth.token) {
                 try {
                     const tokenDecript = await verifyToken(socket.handshake.auth.token, process.env.TOKEN_SECRET || '');
@@ -69,14 +65,14 @@ const socketHandle = (io: Server) => {
                         if (sockets && sockets.length) {
                             for (let j = 0; j < sockets.length; j++) {
                                 SocketIO.sendEvent({
-                                    data: {
-                                        userID: userID,
-                                        status: "offline"
-                                    },
-                                    eventName: "user-status",
-                                    socketID: sockets[j],
-                                    userID: friends[i]
-                                });
+                                        data: {
+                                            userID: userID,
+                                            status: "offline"
+                                        },
+                                        eventName: "user-status",
+                                        socketID: sockets[j],
+                                        userID: friends[i]
+                                    });
                             }
                         }
                     }
