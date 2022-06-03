@@ -29,10 +29,7 @@ const bootstrap = async () => {
   const server = express()
   const httpServer = new http.Server(server);
   const { pubClient, subClient } = socketManager;
-  const io = new Server(httpServer,{
-    maxHttpBufferSize: 1e8,
-    pingTimeout: 60000
-  });
+  const io = new Server(httpServer);
   httpServer.on('connection', (socket) => {
     socket.on('error', () => console.log('poof!'));
 });
