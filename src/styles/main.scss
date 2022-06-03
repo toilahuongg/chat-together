@@ -1,1 +1,15 @@
-@import "common";
+
+.slider {
+  max-width: 500px;
+  margin: auto;
+}
+.flex-center {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+* {
+  box-sizing: border-box;
+}

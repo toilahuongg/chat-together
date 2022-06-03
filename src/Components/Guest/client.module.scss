@@ -4,8 +4,24 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	height: 100vh;
 }
+.title {
+	text-align: center;
+	margin-bottom: 100px;
+	font-size: 64px;
+	color: #248f43;
+	text-shadow: 0 2px 5px;
+}
+@media (max-width: 768px) {
+  .wrapper {
+    justify-content: center;
+  }
+	.title {
+		font-size: 48px;
+		color: #248f43;
+	}
+}
+
 .container {
 	width: 278px;
 }
@@ -25,7 +41,7 @@
 	flex-flow: column;
 	gap: 5px;
 	a {
-		color: #FF4747;
+		color: #248f43;
 		font-weight: 500;
 	}
 }
