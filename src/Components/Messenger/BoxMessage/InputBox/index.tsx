@@ -2,7 +2,7 @@ import useListMessage, { useMessage, useSignalSend } from '@src/hooks/useListMes
 import { useFetchAuth } from '@src/hooks/useFetchAuth';
 import useListGroup, { useGroup } from '@src/hooks/useListGroup';
 import { defaultMessage } from '@src/constants/message.constant';
-import { FormEvent, useRef, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import randomChars from 'server/helpers/randomChars';
 import useUser from '@src/hooks/useUser';
 import useSocket from '@src/hooks/useSocket';
@@ -17,6 +17,7 @@ import styles from './input-box.module.scss';
 
 const InputBox = () => {
   const instance = useFetchAuth();
+  const unmount = useRef(false);
   const socket = useSocket();
   const user = useUser();
   const message = useMessage();
@@ -32,8 +33,13 @@ const InputBox = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const inputFilesRef = useRef<HTMLInputElement>(null);
   const divRef = useRef<HTMLDivElement>(null);
-  useOnClickOutside(divRef, () => setShowEmoij(false));
+  useOnClickOutside(divRef, () => !unmount.current && setShowEmoij(false));
 
+  useEffect(() => {
+    return () => {
+      unmount.current = true;
+    }
+  }, []);
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (sending) return;
@@ -122,17 +128,19 @@ const InputBox = () => {
             <button onClick={(e) => setShowEmoij(true)}>
               <IconSmile />
             </button>
-            <div className={styles.popover} style={{ display: isShowEmoij ? 'block' : 'none' }}>
-              <EmojiPicker
-                onEmojiClick={(event, value) => {
-                  message.data.msg.set((m) => ({ type: m.type, value: m.value + value.emoji }));
-                  inputRef.current?.focus();
-                }}
-                disableAutoFocus={true}
-                skinTone={SKIN_TONE_MEDIUM_LIGHT}
-                groupNames={{ smileys_people: 'PEOPLE' }}
-                native
-              />
+            <div className={styles.popover}>
+              {isShowEmoij && (
+                <EmojiPicker
+                  onEmojiClick={(event, value) => {
+                    message.data.msg.set((m) => ({ type: m.type, value: m.value + value.emoji }));
+                    inputRef.current?.focus();
+                  }}
+                  disableAutoFocus={true}
+                  skinTone={SKIN_TONE_MEDIUM_LIGHT}
+                  groupNames={{ smileys_people: 'PEOPLE' }}
+                  native
+                />
+              )}
             </div>
           </div>
         </div>

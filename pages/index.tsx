@@ -1,23 +1,30 @@
-import type { NextPage } from 'next'
 import GuestHome from '@src/Components/Guest/Home';
-import useAuth from '@src/hooks/useAuth';
 import Slider from '@src/Components/Guest/Slider';
+import useAuth from '@src/hooks/useAuth';
+import useWindowSize from '@src/hooks/useWindowSize';
+import type { NextPage } from 'next';
 import Head from 'next/head';
-
 import styles from './style.module.scss';
+
 const Home: NextPage = () => {
   const { isAuth } = useAuth();
+  const size = useWindowSize();
   return isAuth ? (
-    <div className={styles.home}>
+    <>
       <Head>
         <title> Chat together </title>
       </Head>
-      <div className="flex-center">
-        <div className="slider">
-          <Slider />
+      {size.width > 768 && (
+
+        <div className={styles.home}>
+          <div className="flex-center">
+            <div className="slider">
+              <Slider />
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   ) : <GuestHome />;
 }
 

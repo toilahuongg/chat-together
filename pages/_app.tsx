@@ -1,19 +1,19 @@
+import AppProvider from '@src/Components/AppProvider';
+import '@src/styles/main.scss';
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import type { AppProps } from 'next/app';
-import { useState } from 'react';
+import Head from 'next/head';
 import Router from 'next/router';
+import { useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import TopBarProgress from 'react-topbar-progress-indicator';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import 'dayjs/locale/vi';
+import 'react-toastify/dist/ReactToastify.css';
 dayjs.locale('vi');
 dayjs.extend(relativeTime);
 
-import AppProvider from '@src/Components/AppProvider';
 
-import 'react-toastify/dist/ReactToastify.css';
-import '@src/styles/main.scss';
-import Head from 'next/head';
 
 TopBarProgress.config({
   barColors: {

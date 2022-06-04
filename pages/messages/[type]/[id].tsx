@@ -13,6 +13,7 @@ import { useGroup } from '@src/hooks/useListGroup';
 import { useListUserOfGroup } from '@src/hooks/useFriends';
 import useUser from '@src/hooks/useUser';
 import useListMessage from '@src/hooks/useListMessage';
+import useWindowSize from '@src/hooks/useWindowSize';
 import Loading from '@src/Components/Layout/Loading';
 import { useFetchAuth } from '@src/hooks/useFetchAuth';
 import IRoom from 'server/types/room.type';
@@ -20,10 +21,12 @@ import IRoom from 'server/types/room.type';
 import IconUser3 from '@src/styles/svg/user3.svg';
 import IconSettings from '@src/styles/svg/settings.svg';
 import styles from './message.module.scss';
+import { classNames } from '@src/helpers/classNames';
 
-const InputBox = dynamic(() => import('@src/Components/Messenger/BoxMessage/InputBox'), {ssr: false});
+const InputBox = dynamic(() => import('@src/Components/Messenger/BoxMessage/InputBox'), { ssr: false });
 
 const Message = () => {
+  const size = useWindowSize();
   const router = useRouter();
   const { id, type } = router.query;
   const user = useUser();
@@ -36,8 +39,10 @@ const Message = () => {
   const { name, infoUsers, isGroup, avatar } = group.get();
   const groupName = isGroup ? name : infoUsers[user._id.get() as string]?.fullname;
   const groupAvatar = isGroup ? avatar : infoUsers[user._id.get() as string]?.avatar;
+  const classSettings = ['settings'];
+  if (showGroupSetting.get()) classSettings.push('active');
   useEffect(() => {
-    showGroupSetting.set(true);
+    showGroupSetting.set(size.width >=  1300 ? true : false);
   }, []);
   useEffect(() => {
     listMessage.list.set([]);
@@ -109,13 +114,9 @@ const Message = () => {
               <ListMessage />
               <InputBox />
             </div>
-            {
-              showGroupSetting.get() && (
-                <div className={styles.settings}>
-                  <GroupSettings />
-                </div>
-              )
-            }
+            <div className={classNames(styles, classSettings)}>
+              <GroupSettings />
+            </div>
           </>
         )
       }

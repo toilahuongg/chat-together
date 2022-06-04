@@ -4,12 +4,16 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	padding: 0 20px;
 }
 .title {
 	text-align: center;
-	margin-bottom: 100px;
+	margin-top: 50px;
+	margin-bottom: 50px;
+	line-height: 1.25;
 	font-size: 64px;
-	color: #248f43;
+	color: #379c55;
+	padding: 0 1em;
 	text-shadow: 0 2px 5px;
 }
 @media (max-width: 768px) {
@@ -18,7 +22,8 @@
   }
 	.title {
 		font-size: 48px;
-		color: #248f43;
+		margin-top: 20px;
+
 	}
 }
 

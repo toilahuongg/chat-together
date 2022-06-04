@@ -4,6 +4,12 @@
     border-right: 1px solid #e7e1e1;
 }
 
+@media (max-width: 768px) {
+    .wrapper {
+        width: 100%;
+    }
+}
+
 .wrapperHeader {
     border-bottom: 1px solid #e7e1e1;
     height: 80px;
@@ -17,7 +23,7 @@
     display: flex;
     align-items: center;
     gap: 5px;
-
+    flex: 1;
     .icon {
         width: 20px;
         height: 20px;
@@ -27,7 +33,6 @@
         flex: 1;
         position: relative;
         height: 36px;
-
         input {
             background-color: #F0F0F0;
             border: none;

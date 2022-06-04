@@ -14,15 +14,25 @@ import useUser from '@src/hooks/useUser';
 import styles from './list-group.module.scss';
 import InfiniteScroll from '@src/Components/Layout/InfiniteScroll';
 import useDebounce from '@src/hooks/useDebounce';
+import useWindowSize from '@src/hooks/useWindowSize';
+import { useRouter } from 'next/router';
 
 const ListGroup = () => {
+	const size = useWindowSize();
 	const user = useUser();
 	const unmount = useRef(false);
+	const router = useRouter();
+	let display = 'block';
 	const showState = useState(false);
 	const showAddGroup = useState(false);
 	const [isLoading, setLoading] = React.useState(false);
 	const [count, setCount] = React.useState(99);
 	const showListGroup = useState(showListGroupState);
+	if (size.width > 768) {
+		display = showListGroup.get() ? 'block' : 'none';
+	} else {
+		display = router.pathname === '/' ? 'block' : 'none'
+	}
 	const { get, updateReaders, getListGroup, list } = useListGroup();
 	const searchTextState = useTxtSearchGroup();
 	const typingTextState = useState("");
@@ -49,7 +59,7 @@ const ListGroup = () => {
 	);
 
 	return (
-		<div className={styles.wrapper} style={{ display: showListGroup.get() ? 'block' : 'none' }}>
+		<div className={styles.wrapper} style={{ display }}>
 			<div className={styles.wrapperHeader}>
 				<div className={styles.header}>
 					<div className={styles.search}>
