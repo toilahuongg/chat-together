@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 import UserModel, { User } from '../models/user.model';
 import RoomModel from '../models/room.model';
 import MessageModel from '../models/message.model'
-import { upload } from '../helpers/handleMulter';
+import { upload } from '../services/files/helpers/handleMulter';
 
 const Router = express.Router();
 /**
