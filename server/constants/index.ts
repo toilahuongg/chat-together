@@ -12,6 +12,38 @@ export const GROUPS_QUERY = [
       'preserveNullAndEmptyArrays': true
     }
   }, {
+    '$group': {
+      '_id': '$_id',
+      'name': {
+        '$first': '$name'
+      },
+      'message': {
+        '$last': '$message'
+      },
+      'isGroup': {
+        '$first': '$isGroup'
+      },
+      'userIDs': {
+        '$first': '$userIDs'
+      },
+      'ownerID': {
+        '$first': '$ownerID'
+      },
+      'avatar': {
+        '$first': '$avatar'
+      },
+      'settings': {
+        '$first': '$settings'
+      },
+      'infoUsers': {
+        '$first': '$infoUsers'
+      },
+      'createdAt': {
+        '$first': '$createdAt'
+      }
+    }
+  },
+  {
     '$lookup': {
       'from': 'users',
       'localField': 'message.sender',
