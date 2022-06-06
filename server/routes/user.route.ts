@@ -11,7 +11,7 @@ import { IUserData } from '../types/user.type';
 import randomChars from '../helpers/randomChars';
 import RoomModel from '../models/room.model';
 import { GROUPS_QUERY } from '../constants';
-import { upload } from '../services/files/helpers/handleMulter';
+import { upload } from '../helpers/handleMulter';
 
 dotenv.config();
 const Router = express.Router();

@@ -4,7 +4,7 @@ import RoomModel from '../models/room.model'
 import { User } from '../models/user.model'
 import MessageModel from '../models/message.model'
 import mongoose from 'mongoose';
-import { upload } from '../services/files/helpers/handleMulter'
+import { upload } from '../helpers/handleMulter'
 
 const router = express.Router()
 /**
