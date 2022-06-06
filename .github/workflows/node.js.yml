@@ -39,6 +39,6 @@ jobs:
         npm i
         npm run build
         npm run build:next
-        pm2 delete all
+        pm2 stop ecosystem.config.js
         pm2 start ecosystem.config.js
         pm2 save
