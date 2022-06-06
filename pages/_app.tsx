@@ -1,5 +1,3 @@
-import AppProvider from '@src/Components/AppProvider';
-import '@src/styles/main.scss';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -9,7 +7,10 @@ import Router from 'next/router';
 import { useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import TopBarProgress from 'react-topbar-progress-indicator';
+import AppProvider from '@src/Components/AppProvider';
+
 import 'react-toastify/dist/ReactToastify.css';
+import '@src/styles/main.scss';
 dayjs.locale('vi');
 dayjs.extend(relativeTime);
 

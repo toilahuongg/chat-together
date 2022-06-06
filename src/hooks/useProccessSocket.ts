@@ -96,19 +96,21 @@ export const useProccessSocket = (socket: Socket) => {
       listGroup.add(room);
     });
     // Them tin nhan
-    socket.on('new-message', ({ message, user, room }: { message: IMessage, user: IUserData, room: IRoom }) => {
+    socket.on('new-message', ({ message, user: u, room }: { message: IMessage, user: IUserData, room: IRoom }) => {
       if (group.get()._id === message.roomID) {
-        if (checkGroup(room)) listGroup.updateMessage({ message: {
-          ...message,
-          readers: [...new Set([...message.readers, user._id ])]
-        }, user, room });
+        if (checkGroup(room)) {
+          listGroup.updateMessage({ message: {
+            ...message,
+            readers: [...new Set([...message.readers, user._id.get() ])]
+          }, user: u, room });
+        }
         axiosCancelSource.current.cancel();
         axiosCancelSource.current = axios.CancelToken.source();
         listMessage.add(message);
         (async() => {
           await instance.post(`/api/room/${message.roomID}/read-messages`, {}, { cancelToken: axiosCancelSource.current.token })
         })();
-      } else if (checkGroup(room)) listGroup.updateMessage({ message, user, room });
+      } else if (checkGroup(room)) listGroup.updateMessage({ message, user: u, room });
     });
 
     socket.on('update-profile', (u: IUser) => {
