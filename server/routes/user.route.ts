@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import passport from 'passport';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
-import multer from 'multer';
 
 import { signToken, verifyToken } from '../helpers/jwt';
 import UserModel, { User } from '../models/user.model';
@@ -12,10 +11,9 @@ import { IUserData } from '../types/user.type';
 import randomChars from '../helpers/randomChars';
 import RoomModel from '../models/room.model';
 import { GROUPS_QUERY } from '../constants';
-import { uploadImage } from '../helpers/uploadImage';
+import { upload } from '../services/files/helpers/handleMulter';
 
 dotenv.config();
-const upload = multer();
 const Router = express.Router();
 /**
  * URL cho việc login bằng database
@@ -239,8 +237,7 @@ Router.put('/api/user/update-profile', passport.authenticate('jwt', { session: f
         }
         let avatar = '';
         if (req.file) {
-            const data = await uploadImage(req.file?.buffer, width, height);
-            avatar = data.url;
+            avatar = (req.file as Express.MulterS3.File).location;
         }
         const result = await UserModel.findOneAndUpdate({ _id: userID }, {
             fullname,

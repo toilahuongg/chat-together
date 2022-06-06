@@ -106,7 +106,7 @@ const Message = () => {
                   </div>
                 </div>
                 <div className={styles.navRight}>
-                  <button className={showGroupSetting.get() ? styles.active : ""} onClick={() => showGroupSetting.set(!showGroupSetting.get())}>
+                  <button className={size.width > 1300  ? (!showGroupSetting.get() ? styles.active : "") : ""} onClick={() => showGroupSetting.set(!showGroupSetting.get())}>
                     <IconSettings />
                   </button>
                 </div>

@@ -4,11 +4,9 @@ import RoomModel from '../models/room.model'
 import { User } from '../models/user.model'
 import MessageModel from '../models/message.model'
 import mongoose from 'mongoose';
-import multer from 'multer';
-import { uploadImages } from '../helpers/uploadImage'
+import { upload } from '../services/files/helpers/handleMulter'
 
 const router = express.Router()
-const upload = multer();
 /**
  * Gửi tin nhắn vào phòng 
  * vi dụ api/message/:idroom
@@ -23,11 +21,7 @@ router.post("/api/message/:id/send-message", passport.authenticate("jwt", { sess
     const room = await RoomModel.findOne({ _id: roomID, userIDs: { $in: new mongoose.Types.ObjectId(sender)} }).lean();
     if (!room) return res.status(500).json({ message: "Nhóm không tồn tại" })
     const { message } = req.body as { message: string };
-    let images = [];
-    if (req.files && req.files.length > 0) {
-        const data = await uploadImages((req.files as Express.Multer.File[]).map(file => file.buffer));
-        images = data.map(d => d.url);
-    }
+    const images = (req.files as Express.MulterS3.File[])?.map(file => file.location);
     const result = await MessageModel.create({
         sender,
         roomID,

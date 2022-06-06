@@ -51,7 +51,10 @@ jobs:
         echo SALT_ROUNDS=${{ secrets.SALT_ROUNDS }} >> .env
         echo REDIS_SERVER=${{ secrets.REDIS_SERVER }} >> .env
         echo REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} >> .env
-        echo SERVER_FILE_MANAGER=${{ secrets.SERVER_FILE_MANAGER }} >> .env
+        echo DO_ACCESS_KEY_ID=${{ secrets.DO_ACCESS_KEY_ID }} >> .env
+        echo DO_SECRET_ACCESS_KEY=${{ secrets.DO_SECRET_ACCESS_KEY }} >> .env
+        echo S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} >> .env
+        echo S3_ENDPOINT=${{ secrets.S3_ENDPOINT }} >> .env
         npm run build
         npm run build:next
         pm2 stop ecosystem.config.js

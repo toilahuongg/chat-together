@@ -1,14 +1,12 @@
 import express from 'express';
 import passport from 'passport';
 import mongoose from 'mongoose';
-import multer from 'multer';
 
 import UserModel, { User } from '../models/user.model';
 import RoomModel from '../models/room.model';
 import MessageModel from '../models/message.model'
-import { uploadImage } from '../helpers/uploadImage';
+import { upload } from '../services/files/helpers/handleMulter';
 
-const upload = multer();
 const Router = express.Router();
 /**
  * Tạo phòng
@@ -104,8 +102,8 @@ Router.put('/api/room/:id/change-avatar', passport.authenticate('jwt', { session
         const excludeSocketId = req.headers['x-exclude-socket-id'] as string;
         const { id } = req.params;
         const { width, height } = req.body;
-        const data = await uploadImage(req.file.buffer, width, height);
-        const room = await RoomModel.findOneAndUpdate({ _id: id }, { avatar: data.url }, { new: true }).lean();
+        const avatar = (req.file as Express.MulterS3.File).location;
+        const room = await RoomModel.findOneAndUpdate({ _id: id }, { avatar }, { new: true }).lean();
         const message = await MessageModel.create({
             sender: userID,
             roomID: id,
