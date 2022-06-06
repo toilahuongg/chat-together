@@ -14,26 +14,6 @@ jobs:
 
     runs-on: ubuntu-latest
     env: 
-      PORT: 3000
-      NODE_ENV: development
-      APP_NAME: chat-together
-      NEXT_PUBLIC_APP_URL: http://localhost:3000
-      MONGO_CONNECTSTRING: mongodb+srv://cluster0.ajuob.mongodb.net/chat-together
-      MONGO_USER: toilahuong
-      MONGO_PASSWORD: "@admADM1996"
-
-      TOKEN_SECRET: toilahuong
-      TOKEN_EXPIRESIN: 1h
-
-      REFRESH_TOKEN_SECRET: toilahuong
-      REFRESH_TOKEN_EXPIRESIN: 7d
-
-      SALT_ROUNDS: 10
-
-      REDIS_SERVER: redis://127.0.0.1:6379
-      REDIS_PASSWORD: Qww+BZzs5gf42ucy
-      SERVER_FILE_MANAGER: http://localhost:3001
-
     strategy:
       matrix:
         node-version: [16.x]
@@ -46,7 +26,9 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm ci
-    - run: npm i
-    - run: npm run build --if-present
-    - run: npm run start
+    - run: |
+        npm i
+        npm run build
+        pm2 delete all
+        pm2 start ecosystem.config.js
+        pm2 save
