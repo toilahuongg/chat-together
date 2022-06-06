@@ -1,3 +1,0 @@
-[submodule "server/services/files"]
-	path = server/services/files
-	url = git@github.com:TLH-submodules/files.git
